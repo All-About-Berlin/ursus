@@ -1,7 +1,39 @@
 from datetime import datetime
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader, nodes, select_autoescape
+from jinja2.ext import Extension
+from markupsafe import Markup
+from ordered_set import OrderedSet
 from pathlib import Path
 import markdown
+import logging
+
+
+class JsLoaderExtension(Extension):
+    # a set of names that trigger the extension.
+    tags = {"js", "alljs"}
+
+    def __init__(self, environment):
+        super().__init__(environment)
+        environment.extend(js_fragments=OrderedSet())
+
+    def parse(self, parser):
+        token = next(parser.stream)
+
+        if token.test('name:alljs'):
+            call = self.call_method('_render_js', args=[nodes.ContextReference()])
+            return nodes.Output([nodes.MarkSafe(call)]).set_lineno(token.lineno)
+        else:
+            body = parser.parse_statements(["name:endjs"], drop_needle=True)
+            return nodes.CallBlock(
+                self.call_method("_queue_js"), [], [], body
+            ).set_lineno(token.lineno)
+
+    def _render_js(self, caller):
+        return Markup("".join(self.environment.js_fragments))
+
+    def _queue_js(self, caller):
+        self.environment.js_fragments.add(caller())
+        return ''
 
 
 class JinjaProcessor:
@@ -12,6 +44,7 @@ class JinjaProcessor:
         self.output_path = config['output_path']
         self.template_environment = Environment(
             loader=FileSystemLoader(self.templates_path),
+            extensions=[JsLoaderExtension],
             autoescape=select_autoescape()
         )
         self.template_environment.globals = config.get('globals', {})
@@ -61,8 +94,8 @@ class MarkdownProcessor(JinjaProcessor):
         context = super().get_page_context(page_path)
         context.update({
             'entry': {
-                'title': meta.get('Title'),
-                'description': meta.get('Description'),
+                'title': meta.get('title', [''])[0],
+                'description': meta.get('description', [''])[0],
                 'body': html,
                 'date_created': datetime.now(),
                 'date_updated': datetime.now(),
