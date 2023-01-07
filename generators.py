@@ -1,5 +1,4 @@
-from importlib import import_module
-from pathlib import Path
+from utils import import_class
 import logging
 
 
@@ -12,32 +11,61 @@ class StaticSiteGenerator:
     """
     def __init__(self, **config):
         self.content_path = config['content_path']
+        self.templates_path = config['templates_path']
+        self.output_path = config['output_path']
 
-        self.file_processors = []
-        for file_processor_name in config['file_processors']:
-            module_name, class_name = file_processor_name.rsplit('.', 1)
-            module = import_module(module_name)
-            file_processor = getattr(module, class_name)
-            self.file_processors.append(file_processor(**config))
+        self.globals = config['globals']
 
-    def get_file_processors(self, file_path: Path):
-        return [
-            file_processor for file_processor in self.file_processors
-            if file_processor.should_process(file_path)
+        self.file_context_processors = [
+            import_class(class_name)(**config)
+            for class_name in config['file_context_processors']
+        ]
+        self.context_processors = [
+            import_class(class_name)(**config)
+            for class_name in config['context_processors']
         ]
 
-    def get_files(self):
+        self.renderers = [
+            import_class(class_name)(**config)
+            for class_name in config['renderers']
+        ]
+
+    def get_content_files(self):
         return [
             f.relative_to(self.content_path)
-            for f in self.content_path.rglob('*')
-            if f.is_file()
+            for f in self.content_path.rglob('[!.]*')
+            if f.is_file() and not f.name.startswith('_')
+        ]
+
+    def get_template_files(self):
+        return [
+            f.relative_to(self.templates_path)
+            for f in self.templates_path.rglob('[!.]*')
+            if f.is_file() and not f.name.startswith('_')
         ]
 
     def generate(self):
-        logging.info("Processing files...")
-        for file_path in self.get_files():
-            logging.info("Generating page: %s", file_path)
-            for file_processor in self.get_file_processors(file_path):
-                file_processor.process(file_path)
+        """
+        Build a rendering context from the content
+        """
+        context = {
+            'entries': {},
+            'globals': self.globals,
+        }
+        for file_path in self.get_content_files():
+            entry_context = {}
+            for file_context_processor in self.file_context_processors:
+                entry_context = file_context_processor.process(file_path, entry_context)
+            context['entries'][str(file_path)] = entry_context
 
-        logging.info("Done.")
+        for context_processor in self.context_processors:
+            context = context_processor.process(context)
+
+        """
+        Render entries and other templates
+        """
+        for renderer in self.renderers:
+            for uri in context['entries'].keys():
+                renderer.render_entry(uri, context)
+            for template_path in self.get_template_files():
+                renderer.render_template_file(template_path, context)

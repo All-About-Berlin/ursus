@@ -9,17 +9,20 @@ config = {
         'site_url': 'https://allaboutberlin.com',
         'now': datetime.now(),
     },
-
-    # Where the pages and assets are stored
-    'content_path': Path('site/content').resolve(),
-
-    # The generators to use
     'generators': [
         (
             'generators.StaticSiteGenerator',
             {
-                'base_url': 'https://allaboutberlin.com',
-                'file_processors': ['file_processors.MarkdownProcessor'],
+                'file_context_processors': [
+                    'file_context_processors.MarkdownContextProcessor',
+                ],
+                'context_processors': [
+                    'context_processors.IndexProcessor',
+                ],
+                'renderers': [
+                    'renderers.JinjaRenderer',
+                ],
+                'content_path': Path('site/content').resolve(),
                 'templates_path': Path('site/templates').resolve(),
                 'output_path': Path('dist').resolve(),
             }
