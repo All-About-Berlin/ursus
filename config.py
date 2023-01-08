@@ -18,6 +18,7 @@ config = {
                 ],
                 'context_processors': [
                     'context_processors.IndexProcessor',
+                    'context_processors.RelatedEntriesProcessor',
                 ],
                 'renderers': [
                     'renderers.JinjaRenderer',
