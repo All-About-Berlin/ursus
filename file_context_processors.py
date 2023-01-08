@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from markdown.extensions import Extension
 from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
+from markdown.extensions.wikilinks import WikiLinkExtension
 import markdown
 
 
@@ -16,6 +17,9 @@ class FileContextProcessor:
 
 
 class SmartyPlusExtension(SmartyExtension, Extension):
+    """
+    The SmartyPants typography extension with a few extra features.
+    """
     def educateSectionSign(self, md):
         sectionPattern = SubstituteTextPattern(
             r'§ ', ('§&nbsp;',), md
@@ -37,7 +41,12 @@ class SmartyPlusExtension(SmartyExtension, Extension):
 class MarkdownContextProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
-        self.markdown = markdown.Markdown(extensions=['meta', 'file_context_processors:SmartyPlusExtension'])
+        wikilinks_base_url = config.get('wikilinks_base_url') or config['globals']['site_url']
+        self.markdown = markdown.Markdown(extensions=[
+            'meta',
+            'file_context_processors:SmartyPlusExtension',
+            WikiLinkExtension(base_url=wikilinks_base_url, end_url='.html')
+        ])
 
     def _parse_metadata(self, raw_metadata):
         metadata = {}

@@ -11,8 +11,7 @@ config = {
     },
     'generators': [
         (
-            'generators.StaticSiteGenerator',
-            {
+            'generators.StaticSiteGenerator', {
                 'file_context_processors': [
                     'file_context_processors.MarkdownContextProcessor',
                 ],
@@ -26,6 +25,7 @@ config = {
                 'content_path': Path('site/content').resolve(),
                 'templates_path': Path('site/templates').resolve(),
                 'output_path': Path('dist').resolve(),
+                'wikilinks_base_url': 'https://allaboutberlin.com/glossary/',
             }
         ),
     ],
