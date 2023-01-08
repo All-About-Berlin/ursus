@@ -1,5 +1,7 @@
 from datetime import datetime
 from pathlib import Path
+from markdown.extensions import Extension
+from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 import markdown
 
 
@@ -13,10 +15,29 @@ class FileContextProcessor:
         return entry_context
 
 
+class SmartyPlusExtension(SmartyExtension, Extension):
+    def educateSectionSign(self, md):
+        sectionPattern = SubstituteTextPattern(
+            r'§ ', ('§&nbsp;',), md
+        )
+        self.inlinePatterns.register(sectionPattern, 'smarty-section', 10)
+
+    def educateArrow(self, md):
+        arrowPattern = SubstituteTextPattern(
+            r' ➞', ('&nbsp;➞',), md
+        )
+        self.inlinePatterns.register(arrowPattern, 'smarty-arrow', 10)
+
+    def extendMarkdown(self, md):
+        super().extendMarkdown(md)
+        self.educateSectionSign(md)
+        self.educateArrow(md)
+
+
 class MarkdownContextProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
-        self.markdown = markdown.Markdown(extensions=['meta'])
+        self.markdown = markdown.Markdown(extensions=['meta', 'file_context_processors:SmartyPlusExtension'])
 
     def _parse_metadata(self, raw_metadata):
         metadata = {}
@@ -28,6 +49,9 @@ class MarkdownContextProcessor(FileContextProcessor):
 
             if(key.startswith('date_')):
                 value = datetime.strptime(value, '%Y-%m-%d')
+
+            if(key.startswith('related_')):
+                value = [v.strip() for v in value.split(',')]
 
             metadata[key] = value
         return metadata
