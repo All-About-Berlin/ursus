@@ -6,7 +6,7 @@ import logging
 config = {
     # These variables are included in the context of every template
     'globals': {
-        'site_url': 'https://allaboutberlin.com',
+        'site_url': 'https://allaboutberlin.com/',
         'now': datetime.now(),
     },
     'generators': [
