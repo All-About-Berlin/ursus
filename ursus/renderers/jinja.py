@@ -3,20 +3,8 @@ from jinja2.ext import Extension
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
+from . import Renderer
 import shutil
-
-
-class Renderer:
-    def __init__(self, **config):
-        self.content_path = config['content_path']
-        self.templates_path = config['templates_path']
-        self.output_path = config['output_path']
-
-    def render_entry(self, uri: str, full_context: dict):
-        pass
-
-    def render_template_file(self, file_path: Path, full_context):
-        pass
 
 
 class JsLoaderExtension(Extension):

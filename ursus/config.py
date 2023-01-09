@@ -4,23 +4,22 @@ import logging
 
 
 config = {
-    # These variables are included in the context of every template
     'globals': {
         'site_url': 'https://allaboutberlin.com/',
         'now': datetime.now(),
     },
     'generators': [
         (
-            'generators.StaticSiteGenerator', {
+            'generators.static.StaticSiteGenerator', {
                 'file_context_processors': [
-                    'file_context_processors.MarkdownContextProcessor',
+                    'context_processors.markdown.MarkdownProcessor',
                 ],
                 'context_processors': [
-                    'context_processors.IndexProcessor',
-                    'context_processors.RelatedEntriesProcessor',
+                    'context_processors.index.IndexProcessor',
+                    'context_processors.related.RelatedEntriesProcessor',
                 ],
                 'renderers': [
-                    'renderers.JinjaRenderer',
+                    'renderers.jinja.JinjaRenderer',
                 ],
                 'content_path': Path('site/content').resolve(),
                 'templates_path': Path('site/templates').resolve(),

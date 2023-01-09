@@ -3,17 +3,8 @@ from pathlib import Path
 from markdown.extensions import Extension
 from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
+from . import FileContextProcessor
 import markdown
-
-
-class FileContextProcessor:
-    def __init__(self, **config):
-        self.content_path = config['content_path']
-        self.templates_path = config['templates_path']
-        self.output_path = config['output_path']
-
-    def process(self, file_path: Path, entry_context: dict):
-        return entry_context
 
 
 class SmartyPlusExtension(SmartyExtension, Extension):
@@ -38,14 +29,14 @@ class SmartyPlusExtension(SmartyExtension, Extension):
         self.educateArrow(md)
 
 
-class MarkdownContextProcessor(FileContextProcessor):
+class MarkdownProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
         wikilinks_base_url = config.get('wikilinks_base_url') or config['globals']['site_url']
         self.markdown = markdown.Markdown(extensions=[
             'footnotes',
             'meta',
-            'file_context_processors:SmartyPlusExtension',
+            SmartyPlusExtension(),
             WikiLinkExtension(base_url=wikilinks_base_url, end_url='.html')
         ])
 
