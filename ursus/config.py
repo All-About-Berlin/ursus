@@ -10,16 +10,16 @@ config = {
     },
     'generators': [
         (
-            'generators.static.StaticSiteGenerator', {
+            'ursus.generators.static.StaticSiteGenerator', {
                 'file_context_processors': [
-                    'context_processors.markdown.MarkdownProcessor',
+                    'ursus.context_processors.markdown.MarkdownProcessor',
                 ],
                 'context_processors': [
-                    'context_processors.index.IndexProcessor',
-                    'context_processors.related.RelatedEntriesProcessor',
+                    'ursus.context_processors.index.IndexProcessor',
+                    'ursus.context_processors.related.RelatedEntriesProcessor',
                 ],
                 'renderers': [
-                    'renderers.jinja.JinjaRenderer',
+                    'ursus.renderers.jinja.JinjaRenderer',
                 ],
                 'content_path': Path('site/content').resolve(),
                 'templates_path': Path('site/templates').resolve(),

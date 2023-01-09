@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+from ursus.utils import import_class
+from ursus.config import config as default_config
+import argparse
+import copy
+import logging
+
+parser = argparse.ArgumentParser(
+    prog='ursus',
+    description='Static site generator',
+    epilog='Made with ❤️ in Berlin'
+)
+parser.add_argument('-c', '--config')
+args = parser.parse_args()
+
+user_config = import_class(args.config) if args.config else {}
+config = {
+    **default_config,
+    **user_config,
+}
+
+logging.basicConfig(**config['logging'])
+
+for generator_name, generator_config in config['generators']:
+    generator = import_class(generator_name)
+    local_config = copy.deepcopy(config)
+    local_config.pop('generators')
+    local_config.update(generator_config)
+    generator(**local_config).generate()

@@ -1,4 +1,4 @@
-from utils import import_class
+from ursus.utils import import_class
 import logging
 
 
