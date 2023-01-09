@@ -39,7 +39,7 @@ A **Generator** takes your Content and your Templates, and turns them into a web
 
 ### Context processors
 
-Context processors take your content, and create a Context that the Renderers can use.
+Context processors take your content and create a Context that the Renderers use to render your website.
 
 For example, take this Entry, `posts/hello-world.md`:
 
@@ -96,7 +96,7 @@ The Context has a lot more information than the original Entry:
 - A `url` key is added.
 - An `entries` field is added, with a reference to all Entries.
 
-The Context is created and transformed by `FileContextProcessor`s and `ContextProcessor`s. You can write your own.
+The Context is created and transformed by `FileContextProcessor`s and `ContextProcessor`s. You can write your own. `FileContextProcessor`s create a Context for an individual Entry. `ContextProcessor`s transform the global context after all Entries are processed.
 
 ### Renderers
 
