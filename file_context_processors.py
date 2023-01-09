@@ -43,6 +43,7 @@ class MarkdownContextProcessor(FileContextProcessor):
         super().__init__(**config)
         wikilinks_base_url = config.get('wikilinks_base_url') or config['globals']['site_url']
         self.markdown = markdown.Markdown(extensions=[
+            'footnotes',
             'meta',
             'file_context_processors:SmartyPlusExtension',
             WikiLinkExtension(base_url=wikilinks_base_url, end_url='.html')
