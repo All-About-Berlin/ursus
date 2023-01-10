@@ -15,6 +15,7 @@ setup(
         'Markdown==3.4.1',
         'MarkupSafe==2.1.1',
         'ordered-set==4.1.0',
+        'watchdog==2.2.1',
     ],
     zip_safe=False
 )

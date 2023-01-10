@@ -1,18 +1,19 @@
 from ursus.utils import import_class
+from . import Generator
 import logging
 
 
 logger = logging.getLogger(__name__)
 
 
-class StaticSiteGenerator:
+class StaticSiteGenerator(Generator):
     """
     Turns a group of files and templates into a static website
     """
     def __init__(self, **config):
-        self.content_path = config['content_path']
+        super().__init__(**config)
+
         self.templates_path = config['templates_path']
-        self.output_path = config['output_path']
 
         self.globals = config['globals']
 
@@ -29,6 +30,9 @@ class StaticSiteGenerator:
             import_class(class_name)(**config)
             for class_name in config['renderers']
         ]
+
+    def get_watched_paths(self):
+        return [*super().get_watched_paths(), self.templates_path]
 
     def get_content_files(self):
         return [

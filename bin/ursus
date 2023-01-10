@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 from ursus.utils import import_class
 from ursus.config import config as default_config
+from watchdog.observers import Observer
 import argparse
 import copy
 import logging
+import time
+
 
 parser = argparse.ArgumentParser(
     prog='ursus',
@@ -11,6 +14,7 @@ parser = argparse.ArgumentParser(
     epilog='Made with ❤️ in Berlin'
 )
 parser.add_argument('-c', '--config')
+parser.add_argument('-w', '--watch', action='store_true')
 args = parser.parse_args()
 
 user_config = import_class(args.config) if args.config else {}
@@ -21,9 +25,30 @@ config = {
 
 logging.basicConfig(**config['logging'])
 
+if args.watch:
+    observer = Observer()
+
+
 for generator_name, generator_config in config['generators']:
-    generator = import_class(generator_name)
+    generator_class = import_class(generator_name)
     local_config = copy.deepcopy(config)
     local_config.pop('generators')
     local_config.update(generator_config)
-    generator(**local_config).generate()
+    generator = generator_class(**local_config)
+
+    generator.generate()
+
+    if args.watch:
+        for path in generator.get_watched_paths():
+            observer.schedule(
+                generator.get_observer_event_handler(), path, recursive=True
+            )
+
+if args.watch:
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    finally:
+        observer.stop()
+        observer.join()
