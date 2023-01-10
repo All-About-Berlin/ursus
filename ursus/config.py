@@ -21,8 +21,8 @@ config = {
                 'renderers': [
                     'ursus.renderers.jinja.JinjaRenderer',
                 ],
-                'content_path': Path('site/content').resolve(),
-                'templates_path': Path('site/templates').resolve(),
+                'content_path': Path('content').resolve(),
+                'templates_path': Path('templates').resolve(),
                 'output_path': Path('dist').resolve(),
                 'wikilinks_base_url': 'https://allaboutberlin.com/glossary/',
             }
