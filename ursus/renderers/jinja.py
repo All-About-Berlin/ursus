@@ -1,4 +1,4 @@
-from jinja2 import Environment, FileSystemLoader, nodes, select_autoescape, TemplateNotFound
+from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, TemplateNotFound
 from jinja2.ext import Extension
 from markupsafe import Markup
 from ordered_set import OrderedSet
@@ -35,6 +35,13 @@ class JsLoaderExtension(Extension):
         return ''
 
 
+@pass_context
+def render_filter(context, value):
+    _template = context.eval_ctx.environment.from_string(value)
+    result = _template.render(**context)
+    return result
+
+
 class JinjaRenderer(Renderer):
     def __init__(self, **config):
         super().__init__(**config)
@@ -45,6 +52,8 @@ class JinjaRenderer(Renderer):
         )
         self.template_environment.filters['daysAgo'] = lambda x, y: (y - x).days
         self.template_environment.filters['monthsAgo'] = lambda x, y: (y - x).days / 30
+        self.template_environment.filters['render'] = render_filter
+
 
     def get_page_template(self, page_path: str):
         page_path = Path(page_path)

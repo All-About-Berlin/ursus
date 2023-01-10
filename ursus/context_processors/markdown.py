@@ -3,30 +3,53 @@ from pathlib import Path
 from markdown.extensions import Extension
 from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
+from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from . import FileContextProcessor
+from xml.etree import ElementTree
 import markdown
+import re
 
 
-class SmartyPlusExtension(SmartyExtension, Extension):
-    """
-    The SmartyPants typography extension with a few extra features.
-    """
-    def educateSectionSign(self, md):
-        sectionPattern = SubstituteTextPattern(
-            r'§ ', ('§&nbsp;',), md
-        )
-        self.inlinePatterns.register(sectionPattern, 'smarty-section', 10)
-
-    def educateArrow(self, md):
-        arrowPattern = SubstituteTextPattern(
-            r' ➞', ('&nbsp;➞',), md
-        )
-        self.inlinePatterns.register(arrowPattern, 'smarty-arrow', 10)
-
+class TypographyExtension(SmartyExtension, Extension):
     def extendMarkdown(self, md):
-        super().extendMarkdown(md)
-        self.educateSectionSign(md)
-        self.educateArrow(md)
+        inline_processor = InlineProcessor(md)
+
+        sectionPattern = SubstituteTextPattern(r'§ ', ('§&nbsp;',), md)
+        inline_processor.inlinePatterns.register(sectionPattern, 'typo-section', 10)
+
+        arrowPattern = SubstituteTextPattern(r' ➞', ('&nbsp;➞',), md)
+        inline_processor.inlinePatterns.register(arrowPattern, 'typo-arrow', 10)
+
+        ellipsisPattern = SubstituteTextPattern(r'\.\.\.', ('&hellip;',), md)
+        inline_processor.inlinePatterns.register(ellipsisPattern, 'typo-ellipsis', 10)
+
+        md.treeprocessors.register(inline_processor, 'typography', 2)
+
+
+class JinjaStatementsProcessor(Treeprocessor):
+    include_statement_re = re.compile('{\%[ ]*include [^\%]*\%}')
+
+    def run(self, doc):
+        # Remove the wrapping paragraph tag around {% include %} statements that
+        # are on their own line.
+        for index, el in enumerate(doc):
+            if el.tag == 'p' and el.text and self.include_statement_re.match(el.text.strip()):
+                if index == 0:
+                    doc.text = el.text.strip()
+                else:
+                    doc[index - 1].tail = el.text.strip()
+                doc.remove(el)
+
+
+class JinjaStatementsExtension(Extension):
+    def extendMarkdown(self, md):
+        md.registerExtension(self)
+        self.md = md
+        self.reset()
+        md.treeprocessors.register(JinjaStatementsProcessor(md), 'includes', 0)
+
+    def reset(self):
+        pass
 
 
 class MarkdownProcessor(FileContextProcessor):
@@ -35,8 +58,11 @@ class MarkdownProcessor(FileContextProcessor):
         wikilinks_base_url = config.get('wikilinks_base_url') or config['globals']['site_url']
         self.markdown = markdown.Markdown(extensions=[
             'footnotes',
+            'fenced_code',
             'meta',
-            SmartyPlusExtension(),
+            'tables',
+            JinjaStatementsExtension(),
+            TypographyExtension(),
             WikiLinkExtension(base_url=wikilinks_base_url, end_url='.html')
         ])
 
