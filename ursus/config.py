@@ -25,6 +25,7 @@ config = {
                 'templates_path': Path('templates').resolve(),
                 'output_path': Path('dist').resolve(),
                 'wikilinks_base_url': 'https://allaboutberlin.com/glossary/',
+                'html_url_extension': '',
             }
         ),
     ],

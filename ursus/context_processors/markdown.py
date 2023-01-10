@@ -56,6 +56,7 @@ class MarkdownProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
         wikilinks_base_url = config.get('wikilinks_base_url') or config['globals']['site_url']
+        self.html_url_extension = config['html_url_extension']
         self.markdown = markdown.Markdown(extensions=[
             'footnotes',
             'fenced_code',
@@ -63,7 +64,7 @@ class MarkdownProcessor(FileContextProcessor):
             'tables',
             JinjaStatementsExtension(),
             TypographyExtension(),
-            WikiLinkExtension(base_url=wikilinks_base_url, end_url='.html')
+            WikiLinkExtension(base_url=wikilinks_base_url, end_url=self.html_url_extension)
         ])
 
     def _parse_metadata(self, raw_metadata):
@@ -92,6 +93,6 @@ class MarkdownProcessor(FileContextProcessor):
         entry_context.update({
             **self._parse_metadata(self.markdown.Meta),
             'body': html,
-            'url': f"/{str(file_path.with_suffix(''))}",
+            'url': f"/{str(file_path.with_suffix(self.html_url_extension))}",
         })
         return entry_context
