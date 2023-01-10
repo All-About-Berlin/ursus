@@ -44,8 +44,8 @@ class StaticSiteGenerator(Generator):
     def get_template_files(self):
         return [
             f.relative_to(self.templates_path)
-            for f in self.templates_path.rglob('[!.]*')
-            if f.is_file() and not f.name.startswith('_')
+            for f in self.templates_path.rglob('*')
+            if f.is_file() and not f.name.startswith(('_', '.'))
         ]
 
     def generate(self):
