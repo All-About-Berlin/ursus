@@ -134,4 +134,4 @@ For example:
             └── example.png
     ```
 2. Create a config file for your website. See `config.py` for an example.
-3. Call `ursus` with your config file.
+3. Call `ursus` with your config file. Use `-w` or `--watch` to reload the website on Content or Template changes.
