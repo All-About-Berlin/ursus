@@ -21,7 +21,7 @@ config = {
                 ],
                 'content_path': Path('content').resolve(),
                 'templates_path': Path('templates').resolve(),
-                'output_path': Path('dist').resolve(),
+                'output_path': Path('output').resolve(),
 
                 # The root URL of this website, without a trailing slash. For example, https://allaboutberlin.com
                 'site_url': '',
