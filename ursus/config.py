@@ -31,7 +31,7 @@ config = {
                 'wikilinks_base_url': '',
 
                 # The URL extension of HTML pages. Change this if your server changes or removes the file extension.
-                'html_url_extension': '',
+                'html_url_extension': '.html',
             }
         ),
     ],

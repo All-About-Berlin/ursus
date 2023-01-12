@@ -55,7 +55,7 @@ class JinjaStatementsExtension(Extension):
 class MarkdownProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
-        wikilinks_base_url = config.get('wikilinks_base_url', '')
+        wikilinks_base_url = config.get('wikilinks_base_url', '') + '/'
         self.html_url_extension = config['html_url_extension']
         self.markdown = markdown.Markdown(extensions=[
             'footnotes',
