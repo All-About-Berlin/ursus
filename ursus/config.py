@@ -18,6 +18,7 @@ config = {
                 ],
                 'renderers': [
                     'ursus.renderers.jinja.JinjaRenderer',
+                    'ursus.renderers.static.StaticAssetRenderer',
                 ],
                 'content_path': Path('content').resolve(),
                 'templates_path': Path('templates').resolve(),
