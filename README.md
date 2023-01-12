@@ -2,6 +2,8 @@
 
 Static site generator used by [All About Berlin](https://allaboutberlin.com). It turns Markdown files and Jinja templates into a static website.
 
+This README is incomplete, as befits a project under active development.
+
 ## Features
 
 - Customisable and extensible. It's not just for blogs.
@@ -11,7 +13,7 @@ Static site generator used by [All About Berlin](https://allaboutberlin.com). It
 
 ### Content and Entries
 
-**Content** is what fills your website: text, images, videos. A single piece of content is called an **Entry**.
+**Content** is what fills your website: text, images, videos. A single piece of content is called an **Entry**. The location of the Content is set by the `content_path` config parameter. By default, it's under `./content`. You can have a different `content_path` for each Generator.
 
 Content is usually *rendered* to create a working website. Some content is rendered with Templates.
 
@@ -25,23 +27,34 @@ For example:
 
 **Templates** are used to render your Content. The same templates can be applied to different Entries, or even reused for a different website. That's why they are kept separate from your content.
 
+The location of the Templates is set by the `templates_path` config parameter. By default, it's under `./templates`. You can have a different `templates_path` for each Generator.
+
 For example:
 
 - HTML templates that wrap a nice theme around your Content.
-- Images and other assets that are part of the website's theme
+- Images and other static assets that are part of the website's theme
 
+### Output
+
+This is the final product created by Ursus. By default, the Output is a static website. You can configure Ursus to produce different types of Outputs in different locations.
+
+The location of the Output is set by the `output_path` config parameter. By default, it's under `./output`. You can have a different `output_path` for each Generator.
 
 ## How Ursus works
 
-### The Generator
+### Generators
 
-A **Generator** takes your Content and your Templates, and turns them into a website. The default **StaticSiteGenerator** generates static websites, but you can write a custom Generator to turn your Content into an eBook, a PDF, or anything other sort of output.
+A **Generator** takes your Content and your Templates and produces an Output. The default **StaticSiteGenerator** generates a static website. You can write your own Generator to output an eBook, a PDF, or anything else. You can have multiple Generators if you need to produce multiple Outputs.
+
+#### StaticSiteGenerator
+
+Generates a static website.
 
 ### Context processors
 
-Context processors take your content and create a Context that the Renderers use to render your website.
+A **ContextProcessor** turns your Content into an object that the Renderer uses to render Templates.
 
-For example, take this Entry, `posts/hello-world.md`:
+For example, the **MarkdownProcessor** generates context out of a markdown file. Take this example markdown file:
 
 ```markdown
 Title: Hello world!
@@ -55,7 +68,7 @@ Related_posts: posts/foo.md, posts/bar.md
 *This* is a template
 ```
 
-The final Context for this Entry would look like this:
+The `MarkdownProcessor` would generate a context object that looks like this:
 
 ```
 {
@@ -85,25 +98,37 @@ The final Context for this Entry would look like this:
 }
 ```
 
-This is what the Renderer would see when it renders the final HTML page for this Entry.
+Then, a Renderer can use this information to render a template into a fully working HTML page.
 
-The Context has a lot more information than the original Entry:
+`FileContextProcessor`s create or transform the context for an individual Entry. For example, the `MarkdownProcessor` above.
 
-- Metadata starting with `date_` is turned into datetime objects.
-- Metadata starting with `related_` is turned into lists of Entry objects.
-- A `url` key is added.
-- An `entries` field is added, with a reference to all Entries.
+`ContextProcessor`s transform the global context after all Entries are processed. For example, it can add a `related_content` field to your blog posts.
 
-The Context is created and transformed by `FileContextProcessor`s and `ContextProcessor`s. You can write your own. `FileContextProcessor`s create a Context for an individual Entry. `ContextProcessor`s transform the global context after all Entries are processed.
+#### MarkdownProcessor
+
+The `MarkdownProcessor` creates context for `.md` files.
+
+#### IndexProcessor
+
+The `IndexProcessor` creates an index of entries. For example, `context['entries']['posts']` returns a subset of `context['entries']` with only Entries that start with `posts/`: `posts/hello-world.md`, `posts/foo.md`, `posts/bar.md`, etc.
 
 ### Renderers
 
-**Renderer**s render the files that form your website. They render an Entry and its Context into files that appear on your website.
+**Renderer**s put your Content into Templates, and render them into the desired Outputs.
 
-For example:
+#### JinjaRenderer
 
-* The **JinjaRenderer** renders markdown Entries and Jinja templates into HTML files.
+Renders Jinja templates, fills them with your Content.
 
+Files named `_entry.*.jinja` are rendered once for each Entry with the same path. For example, `<templates_path>/posts/_entry.html.jinja` will render `<content_path>/posts/hello-world.md`, `<content_path>/posts/foo.md` and `<content_path>/posts/bar.md`. The output path is the entry name with the extension replaced. If `<templates_path>/posts/_entry.html.jinja` renders `<templates_path>/posts/hello-world.md`, the output file is `<output_path>/posts/hello-world.html`.
+
+All template files with the `.jinja` extension will be rendered. For example, `<templates_path>/posts/index.html.jinja` will be rendered as `<output_path>/posts/index.html`. Files starting with `_` are ignored.
+
+The output path is the template name without the `.jinja` extension. For example, `index.html.jinja` will be rendered as `index.html`.
+
+#### StaticAssetRenderer
+
+Simply copies static assets (CSS, JS, images, etc.) under `templates_path` to the same subdirectory in `output_path`. Files starting with `.` are ignored. Files and directories starting with `_` are ignored.
 
 ## Getting started
 
@@ -111,7 +136,7 @@ For example:
     ```
     example_site/
     ├── templates/
-    │   ├── index.html
+    │   ├── index.html.jinja
     │   ├── css/
     │   │   └──style.css
     │   ├── js/
@@ -121,8 +146,8 @@ For example:
     │   │   ├── open-sans.ttf
     │   │   └── open-sans.woff
     │   └── posts/
-    │       ├── index.html
-    │       └── _entry.html
+    │       ├── index.html.jinja
+    │       └── _entry.html.jinja
     └── content/
         ├── posts/
         │   ├── hello-world.md
@@ -131,5 +156,12 @@ For example:
         └── images/
             └── example.png
     ```
-2. Create a config file for your website. See `config.py` for an example.
-3. Call `ursus` with your config file. Use `-w` or `--watch` to reload the website on Content or Template changes.
+2. Create a config file for your website. Copy `config.py` for an example.
+3. Call `ursus`.
+
+### Command line arguments
+
+Ursus has a few command line arguments:
+
+* `-w` or `--watch`: Reload the website when Content or Template files change.
+* `-c` or `--config`: Run with the supplied configuration file. It expets a Python import path. For example, if your config is called `./ursus_config.py`, run `ursus -c ursus_config`.
