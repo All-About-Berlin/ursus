@@ -4,18 +4,19 @@ from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
 from . import Renderer
+import logging
 import shutil
+
+logger = logging.getLogger(__name__)
 
 
 class JsLoaderExtension(Extension):
     """
-    Adds the {% js %} and {% alljs %} tags.
+    Jinja extension. Adds the {% js %} and {% alljs %} tags.
 
-    All code between {% js %} tags is combined and queued for future output.
+    All javascript code between {% js %} tags is combined and queued for future output.
 
-    When {% alljs %} is called, all queued code is output. The code is output in
-    the order it was queued. It is only output once, even if queued multiple
-    times.
+    {% alljs %} outputs the queued javascript code. The code is included in order of addition. If the same code is queued multiple times, it's only output once.
     """
     tags = {"js", "alljs"}
 
@@ -51,6 +52,9 @@ def render_filter(context, value):
 
 
 class JinjaRenderer(Renderer):
+    """
+    Renders all .jinja templates in the templates directory, unless their name starts with '_'.
+    """
     def __init__(self, **config):
         super().__init__(**config)
         self.template_environment = Environment(
@@ -63,54 +67,31 @@ class JinjaRenderer(Renderer):
         self.template_environment.filters['render'] = render_filter
         self.template_environment.filters.update(config.get('jinja_filters', {}))
 
-    def get_page_template(self, page_path: str):
-        page_path = Path(page_path)
-        potential_templates = []
-
-        # This is an index entry
-        if not page_path.suffix:
-            potential_templates.append(self.templates_path / page_path / 'index.html')
-
-        # Find an _entry.html template in the parent directories
-        potential_templates += [parent_dir / '_entry.html' for parent_dir in page_path.parents]
-
-        try:
-            return [
-                template_path for template_path in potential_templates
-                if (self.templates_path / template_path).exists()
-            ][0]
-        except IndexError:
-            raise TemplateNotFound(potential_templates)
-
     def _render_template(self, template_path: Path, template_context: dict, output_path: Path):
-        output_path = (self.output_path / output_path).with_suffix('.html')
+        logger.info('Rendering %s', str(output_path))
+        output_path = self.output_path / output_path
         output_path.parent.mkdir(parents=True, exist_ok=True)
         template = self.template_environment.get_template(str(template_path))
         template.stream(**template_context).dump(str(output_path))
 
-    def render_entry(self, uri: str, full_context: dict):
-        if not uri.endswith('.md'):
-            return
+    def get_templates_to_render(self):
+        return [
+            p.relative_to(self.templates_path)
+            for p in self.templates_path.rglob('[!_]*.jinja') if p.is_file()
+        ]
 
-        output_path = Path(uri).with_suffix('.html')
-        template_context = {
-            **full_context['globals'],
-            'entry': full_context['entries'][uri],
-            'entries': full_context['entries'],
-        }
-
-        self._render_template(self.get_page_template(uri), template_context, output_path)
-
-    def render_template_file(self, file_path: Path, full_context):
-        # HTML templates like 404.html
-        if file_path.suffix == '.html':
-            output_path = file_path.with_suffix('.html')
-            template_context = {
-                **full_context['globals'],
-                'entries': full_context['entries'],
-            }
-            self._render_template(file_path, template_context, output_path)
-        # Any other file
-        else:
-            (self.output_path / file_path).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(self.templates_path / file_path, self.output_path / file_path)
+    def render(self, full_context):
+        for template_path in self.get_templates_to_render():
+            # Render once for every entry in that directory
+            if template_path.with_suffix('').stem == 'entry':
+                for entry_uri, entry in full_context['entries'][str(template_path.parent)].items():
+                    entry_context = {
+                        **full_context,
+                        'entry': entry
+                    }
+                    output_suffix = template_path.with_suffix('').suffix
+                    output_path = Path(entry_uri).with_suffix(output_suffix)
+                    self._render_template(template_path, entry_context, output_path)
+            # Render once
+            else:
+                self._render_template(template_path, full_context, template_path.with_suffix(''))

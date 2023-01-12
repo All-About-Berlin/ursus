@@ -53,8 +53,8 @@ class StaticSiteGenerator(Generator):
         Build a rendering context from the content
         """
         context = {
+            **self.globals,
             'entries': {},
-            'globals': self.globals,
         }
         for file_path in self.get_content_files():
             entry_context = {}
@@ -69,7 +69,4 @@ class StaticSiteGenerator(Generator):
         Render entries and other templates
         """
         for renderer in self.renderers:
-            for uri in context['entries'].keys():
-                renderer.render_entry(uri, context)
-            for template_path in self.get_template_files():
-                renderer.render_template_file(template_path, context)
+            renderer.render(context)
