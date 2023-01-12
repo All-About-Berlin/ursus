@@ -79,11 +79,9 @@ The final Context for this Entry would look like this:
         'images/example.png': {...},
     }
 
-    # You set these variables in your config. They can contain anything you want.
-    'globals': {
-        'site_url': 'https://example.com/',
-        'custom_variable': 'foobar',
-    },
+    # This variable comes from the "globals" section of your config. It's an
+    # example. You can set your own.
+    'twitter_profile_url': 'https://twitter.com/aboutberlin',
 }
 ```
 
