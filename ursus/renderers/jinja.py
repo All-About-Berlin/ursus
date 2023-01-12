@@ -8,7 +8,15 @@ import shutil
 
 
 class JsLoaderExtension(Extension):
-    # a set of names that trigger the extension.
+    """
+    Adds the {% js %} and {% alljs %} tags.
+
+    All code between {% js %} tags is combined and queued for future output.
+
+    When {% alljs %} is called, all queued code is output. The code is output in
+    the order it was queued. It is only output once, even if queued multiple
+    times.
+    """
     tags = {"js", "alljs"}
 
     def __init__(self, environment):
@@ -53,7 +61,7 @@ class JinjaRenderer(Renderer):
         self.template_environment.filters['daysAgo'] = lambda x, y: (y - x).days
         self.template_environment.filters['monthsAgo'] = lambda x, y: (y - x).days / 30
         self.template_environment.filters['render'] = render_filter
-
+        self.template_environment.filters.update(config.get('jinja_filters', {}))
 
     def get_page_template(self, page_path: str):
         page_path = Path(page_path)
@@ -94,6 +102,7 @@ class JinjaRenderer(Renderer):
         self._render_template(self.get_page_template(uri), template_context, output_path)
 
     def render_template_file(self, file_path: Path, full_context):
+        # HTML templates like 404.html
         if file_path.suffix == '.html':
             output_path = file_path.with_suffix('.html')
             template_context = {
@@ -101,6 +110,7 @@ class JinjaRenderer(Renderer):
                 'entries': full_context['entries'],
             }
             self._render_template(file_path, template_context, output_path)
+        # Any other file
         else:
             (self.output_path / file_path).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(self.templates_path / file_path, self.output_path / file_path)

@@ -1,12 +1,10 @@
-from datetime import datetime
 from pathlib import Path
 import logging
 
 
 config = {
+    # These variables are directly available in every renderer's context
     'globals': {
-        'site_url': 'https://allaboutberlin.com/',
-        'now': datetime.now(),
     },
     'generators': [
         (
@@ -24,7 +22,15 @@ config = {
                 'content_path': Path('content').resolve(),
                 'templates_path': Path('templates').resolve(),
                 'output_path': Path('dist').resolve(),
-                'wikilinks_base_url': 'https://allaboutberlin.com/glossary/',
+
+                # The root URL of this website, without a trailing slash. For example, https://allaboutberlin.com
+                'site_url': '',
+
+                # The base URL prepended to all markdown wikilinks, without a trailing slash.
+                # For example, https://allaboutberlin.com/glossary
+                'wikilinks_base_url': '',
+
+                # The URL extension of HTML pages. Change this if your server changes or removes the file extension.
                 'html_url_extension': '',
             }
         ),
