@@ -24,10 +24,17 @@ class StaticAssetRenderer(Renderer):
                 ])
             )
 
+        def has_changed(path: Path):
+            path = path.relative_to(self.templates_path)
+            if (self.output_path / path).exists():
+                return (self.templates_path / path).stat().st_mtime > (self.output_path / path).stat().st_mtime
+            else:
+                return True
+
         return [
             p.relative_to(self.templates_path)
             for p in self.templates_path.rglob('*')
-            if p.is_file() and not is_ignored(p)
+            if p.is_file() and has_changed(p) and not is_ignored(p)
         ]
 
     def render(self, full_context):
