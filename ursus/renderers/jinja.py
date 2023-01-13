@@ -1,4 +1,4 @@
-from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, TemplateNotFound
+from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape
 from jinja2.ext import Extension
 from markupsafe import Markup
 from ordered_set import OrderedSet
@@ -22,7 +22,7 @@ class JsLoaderExtension(Extension):
 
     def __init__(self, environment):
         super().__init__(environment)
-        environment.extend(js_fragments=OrderedSet(), js_fragments_template=None)
+        environment.extend(js_fragments=OrderedSet())
 
     def parse(self, parser):
         token = next(parser.stream)
@@ -37,9 +37,9 @@ class JsLoaderExtension(Extension):
             ).set_lineno(token.lineno)
 
     def _render_js(self, caller):
-        output = Markup("".join(self.environment.js_fragments))
+        output = "".join(self.environment.js_fragments)
         self.environment.js_fragments.clear()
-        return output
+        return Markup(output)
 
     def _queue_js(self, caller):
         self.environment.js_fragments.add(caller())
@@ -48,9 +48,7 @@ class JsLoaderExtension(Extension):
 
 @pass_context
 def render_filter(context, value):
-    _template = context.eval_ctx.environment.from_string(value)
-    result = _template.render(**context)
-    return result
+    return context.eval_ctx.environment.from_string(value).render(**context)
 
 
 class JinjaRenderer(Renderer):
