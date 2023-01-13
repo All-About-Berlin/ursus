@@ -5,6 +5,7 @@ from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from PIL import Image
+from ursus.renderers.image import image_paths_for_sizes
 from . import FileContextProcessor
 from xml.etree import ElementTree
 import markdown
@@ -12,6 +13,9 @@ import re
 
 
 class TypographyExtension(SmartyExtension, Extension):
+    """
+    Minor typographic improvements
+    """
     def extendMarkdown(self, md):
         inline_processor = InlineProcessor(md)
 
@@ -28,6 +32,9 @@ class TypographyExtension(SmartyExtension, Extension):
 
 
 class JinjaStatementsProcessor(Treeprocessor):
+    """
+    Escapes Jinja statements like {% include "..." %}
+    """
     include_statement_re = re.compile('{\%[ ]*include [^\%]*\%}')
 
     def run(self, root):
@@ -43,11 +50,6 @@ class JinjaStatementsProcessor(Treeprocessor):
 
 
 class ResponsiveImageProcessor(Treeprocessor):
-    """
-    Replaces markdown images with <figure> tags that serve different image sizes.
-
-    Uses the image title as the <figcaption>.
-    """
     allowed_parents = (
         'a', 'p', 'pre', 'ul', 'ol', 'dl', 'div', 'blockquote', 'noscript', 'section', 'nav', 'article',
         'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
@@ -60,36 +62,55 @@ class ResponsiveImageProcessor(Treeprocessor):
         super().__init__(md)
 
     def _swap_element(self, parent, old, new):
+        """
+        Replaces `old` element with `new` in `parent` element
+        """
         for index, element in enumerate(parent):
             if element == old:
                 parent[index] = new
+                return
 
-    def _replace_img(self, img, parents):
+    def _set_image_dimensions(self, img):
+        """
+        Adds width and height attributes to an <img> tag
+        """
         src = img.attrib.get('src')
-        width = None
-        height = None
 
-        # Add width=, height=, srcset= and sizes= to local images
         if src.startswith('/') or src.startswith(self.site_url + '/'):
             image_path = self.images_path / src.removeprefix(self.site_url).removeprefix('/')
             if image_path.exists():
                 with Image.open(image_path) as pil_image:
                     width, height = pil_image.size
+                    img.attrib['width'] = str(width)
+                    img.attrib['height'] = str(height)
 
-        # Set <img> dimensions
-        if width:
-            img.attrib['width'] = str(width)
-        if height:
-            img.attrib['height'] = str(height)
+    def _set_image_srcset(self, img):
+        """
+        Adds srcset attribute to <img> element
+        """
+        src = img.attrib.get('src')
 
-        def elem_has_single_child(element):
-            return len(element) == 1 and not element.text
+        if src.startswith('/') or src.startswith(self.site_url + '/'):
+            sources = []
+            image_path = Path(src.removeprefix(self.site_url).removeprefix('/'))
+            for max_dimensions, resized_image_path in image_paths_for_sizes(image_path, self.image_sizes):
+                width, height = max_dimensions
+                sources.append(f"{self.site_url}/{str(resized_image_path)} {width}w")
+
+            sources.append(f"{self.site_url}/{str(image_path)}")  # Default size
+
+            if sources:
+                img.attrib['srcset'] = ", ".join(sources)
+
+    def _upgrade_img(self, img, parents):
+        self._set_image_dimensions(img)
+        self._set_image_srcset(img)
 
         # Wrap image in <figure> tag, but only if the parent element allows a <figure>
-        # If the parent is a <a>, apply the link to the <img> inside the <figure>
         if parents[0].tag in self.allowed_parents:
             figure = ElementTree.Element('figure')
 
+            # If the parent is a <a>, wrap the <img> inside the <figure> with <a>
             if parents[0].tag == 'a':
                 a = ElementTree.Element('a', attrib=parents[0].attrib)
                 a.append(img)
@@ -104,6 +125,9 @@ class ResponsiveImageProcessor(Treeprocessor):
                 figcaption.text = title
                 figure.append(figcaption)
                 img.attrib.pop('title')
+
+            def elem_has_single_child(element):
+                return len(element) == 1 and not element.text
 
             if parents[0].tag == 'a':
                 # A <p> with only this <a><img/></a> as a child.
@@ -138,12 +162,16 @@ class ResponsiveImageProcessor(Treeprocessor):
                 parents.append(parent)
                 child = parent
 
-            self._replace_img(img, parents)
+            self._upgrade_img(img, parents)
 
 
 class ResponsiveImagesExtension(Extension):
     """
-    Replaces regular images with responsive <figure> tags
+    Transforms how <img> tags are rendered:
+
+    - Adds srcset= to images to make them responsive
+    - Wraps block images in a <figure> tag, and replaces the title with a <figcaption>
+
     """
     def __init__(self, images_path: Path, image_sizes: dict, site_url: str):
         self.images_path = images_path
@@ -194,7 +222,7 @@ class MarkdownProcessor(FileContextProcessor):
             TypographyExtension(),
             ResponsiveImagesExtension(
                 images_path=config['content_path'],
-                image_sizes=config.get('image_sizes'),
+                image_sizes=config.get('output_image_sizes'),
                 site_url=config.get('site_url')
             ),
             WikiLinkExtension(

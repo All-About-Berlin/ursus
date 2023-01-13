@@ -8,6 +8,14 @@ import shutil
 logger = logging.getLogger(__name__)
 
 
+def image_paths_for_sizes(original_image_path: Path, output_image_sizes: dict):
+    """
+    Given the original image path, get the paths of the different sizes of this image
+    """
+    for key, size in output_image_sizes.items():
+        yield size, original_image_path.parent / key / original_image_path.name
+
+
 class ImageRenderer(Renderer):
     """
     Resizes images
@@ -21,8 +29,7 @@ class ImageRenderer(Renderer):
         self.output_image_sizes = config.get('output_image_sizes', {})
 
     def get_output_sizes(self, image_path: Path):
-        for key, size in self.output_image_sizes.items():
-            yield size, image_path.parent / key / image_path.name
+        return image_paths_for_sizes(image_path, self.output_image_sizes)
 
     def get_images(self):
         def is_image(path: Path):
@@ -47,6 +54,7 @@ class ImageRenderer(Renderer):
         for image_path in self.get_images():
             # Resize to different sizes
             if image_path.suffix != '.svg':
+                logger.info('Resizing %s', str(image_path))
                 for max_dimensions, output_path in self.get_output_sizes(image_path):
                     abs_output_path = self.output_path / output_path
                     if not abs_output_path.exists():
