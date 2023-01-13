@@ -4,6 +4,7 @@ from markdown.extensions import Extension
 from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
+from PIL import Image
 from . import FileContextProcessor
 from xml.etree import ElementTree
 import markdown
@@ -29,16 +30,142 @@ class TypographyExtension(SmartyExtension, Extension):
 class JinjaStatementsProcessor(Treeprocessor):
     include_statement_re = re.compile('{\%[ ]*include [^\%]*\%}')
 
-    def run(self, doc):
+    def run(self, root):
         # Remove the wrapping paragraph tag around {% include %} statements that
         # are on their own line.
-        for index, el in enumerate(doc):
+        for index, el in enumerate(root):
             if el.tag == 'p' and el.text and self.include_statement_re.match(el.text.strip()):
                 if index == 0:
-                    doc.text = el.text.strip()
+                    root.text = el.text.strip()
                 else:
-                    doc[index - 1].tail = el.text.strip()
-                doc.remove(el)
+                    root[index - 1].tail = el.text.strip()
+                root.remove(el)
+
+
+class ResponsiveImageProcessor(Treeprocessor):
+    """
+    Replaces markdown images with <figure> tags that serve different image sizes.
+
+    Uses the image title as the <figcaption>.
+    """
+    allowed_parents = (
+        'a', 'p', 'pre', 'ul', 'ol', 'dl', 'div', 'blockquote', 'noscript', 'section', 'nav', 'article',
+        'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
+    )
+
+    def __init__(self, md, image_sizes: Path, images_path: Path, site_url: str):
+        self.images_path = images_path
+        self.image_sizes = image_sizes
+        self.site_url = site_url
+        super().__init__(md)
+
+    def _swap_element(self, parent, old, new):
+        for index, element in enumerate(parent):
+            if element == old:
+                parent[index] = new
+
+    def _replace_img(self, img, parents):
+        src = img.attrib.get('src')
+        width = None
+        height = None
+
+        # Add width=, height=, srcset= and sizes= to local images
+        if src.startswith('/') or src.startswith(self.site_url + '/'):
+            image_path = self.images_path / src.removeprefix(self.site_url).removeprefix('/')
+            if image_path.exists():
+                with Image.open(image_path) as pil_image:
+                    width, height = pil_image.size
+
+        # Set <img> dimensions
+        if width:
+            img.attrib['width'] = str(width)
+        if height:
+            img.attrib['height'] = str(height)
+
+        def elem_has_single_child(element):
+            return len(element) == 1 and not element.text
+
+        # Wrap image in <figure> tag, but only if the parent element allows a <figure>
+        # If the parent is a <a>, apply the link to the <img> inside the <figure>
+        if parents[0].tag in self.allowed_parents:
+            figure = ElementTree.Element('figure')
+
+            if parents[0].tag == 'a':
+                a = ElementTree.Element('a', attrib=parents[0].attrib)
+                a.append(img)
+                figure.append(a)
+            else:
+                figure.append(img)
+
+            # Convert the image title= to a <figcaption>
+            title = img.attrib.get('title')
+            if title:
+                figcaption = ElementTree.Element('figcaption')
+                figcaption.text = title
+                figure.append(figcaption)
+                img.attrib.pop('title')
+
+            if parents[0].tag == 'a':
+                # A <p> with only this <a><img/></a> as a child.
+                if (
+                    parents[1].tag == 'p'
+                    and elem_has_single_child(parents[0])
+                    and elem_has_single_child(parents[1])
+                ):
+                    self._swap_element(parents[2], parents[1], figure)
+                else:
+                    return
+            elif parents[0].tag == 'p':
+                # A <p> with only this <img> as a child.
+                if elem_has_single_child(parents[0]):
+                    self._swap_element(parents[1], parents[0], figure)
+                # A <p> with other things in it
+                else:
+                    return
+            else:
+                self._swap_element(parents[0], img, figure)
+
+    def run(self, root):
+        parent_map = {}
+        for parent in root.iter():
+            for child in parent:
+                parent_map[child] = parent
+
+        for img in root.iter('img'):
+            child = img
+            parents = []
+            while parent := parent_map.get(child):
+                parents.append(parent)
+                child = parent
+
+            self._replace_img(img, parents)
+
+
+class ResponsiveImagesExtension(Extension):
+    """
+    Replaces regular images with responsive <figure> tags
+    """
+    def __init__(self, images_path: Path, image_sizes: dict, site_url: str):
+        self.images_path = images_path
+        self.image_sizes = image_sizes or {}
+        self.site_url = site_url or ''
+
+    def extendMarkdown(self, md):
+        md.registerExtension(self)
+        self.md = md
+        self.reset()
+        md.treeprocessors.register(
+            ResponsiveImageProcessor(
+                md,
+                images_path=self.images_path,
+                image_sizes=self.image_sizes,
+                site_url=self.site_url,
+            ),
+            'figure', 0
+        )
+
+    def reset(self):
+        pass
 
 
 class JinjaStatementsExtension(Extension):
@@ -57,6 +184,7 @@ class MarkdownProcessor(FileContextProcessor):
         super().__init__(**config)
         wikilinks_base_url = config.get('wikilinks_base_url', '') + '/'
         self.html_url_extension = config['html_url_extension']
+
         self.markdown = markdown.Markdown(extensions=[
             'footnotes',
             'fenced_code',
@@ -64,7 +192,15 @@ class MarkdownProcessor(FileContextProcessor):
             'tables',
             JinjaStatementsExtension(),
             TypographyExtension(),
-            WikiLinkExtension(base_url=wikilinks_base_url, end_url=self.html_url_extension)
+            ResponsiveImagesExtension(
+                images_path=config['content_path'],
+                image_sizes=config.get('image_sizes'),
+                site_url=config.get('site_url')
+            ),
+            WikiLinkExtension(
+                base_url=wikilinks_base_url,
+                end_url=self.html_url_extension
+            ),
         ])
 
     def _parse_metadata(self, raw_metadata):

@@ -11,7 +11,7 @@ class StaticAssetRenderer(Renderer):
     """
     Copies static assets in `templates_path` to `output_path`.
     """
-    ignored_suffixes = ('.jinja', '')
+    ignored_suffixes = ('.jinja', )
 
     def get_assets_to_copy(self):
         def is_ignored(path: Path):
