@@ -116,6 +116,35 @@ The `IndexProcessor` creates an index of entries. For example, `context['entries
 
 **Renderer**s put your Content into Templates, and render them into the desired Outputs.
 
+#### ImageRenderer
+
+Renders images in different sizes. Set `output_image_sizes` in your config to enable it.
+```
+config = {
+    ...
+    'generators': [
+        (
+            'ursus.generators.static.StaticSiteGenerator', {
+                'renderers': [
+                    ...
+                    'ursus.renderers.image.ImageRenderer',
+                    ...
+                ],
+                'output_image_sizes': {
+                    'content2x': (1600, 2400),
+                    'content1.5x': (1200, 1800),
+                    'content1x': (800, 1200),
+                    'content0.75x': (600, 900),
+                    'content0.5x': (400, 600),
+                },
+                ...
+            }
+        )
+    ],
+    ...
+}
+```
+
 #### JinjaRenderer
 
 Renders Jinja templates, fills them with your Content.
