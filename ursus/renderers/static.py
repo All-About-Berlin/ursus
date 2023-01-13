@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class StaticAssetRenderer(Renderer):
+    """
+    Copies static assets in `templates_path` to `output_path`.
+    """
     ignored_suffixes = ('.jinja', '')
 
     def get_assets_to_copy(self):

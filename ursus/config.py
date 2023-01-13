@@ -19,10 +19,22 @@ config = {
                 'renderers': [
                     'ursus.renderers.jinja.JinjaRenderer',
                     'ursus.renderers.static.StaticAssetRenderer',
+                    'ursus.renderers.image.ImageRenderer',
                 ],
                 'content_path': Path('content').resolve(),
                 'templates_path': Path('templates').resolve(),
                 'output_path': Path('output').resolve(),
+
+                """
+                # Uncomment to resize your content images to different sizes
+                'output_image_sizes': {
+                    'content2x': (1600, 2400),
+                    'content1.5x': (1200, 1800),
+                    'content1x': (800, 1200),
+                    'content0.75x': (600, 900),
+                    'content0.5x': (400, 600),
+                },
+                """
 
                 # The root URL of this website, without a trailing slash. For example, https://allaboutberlin.com
                 'site_url': '',

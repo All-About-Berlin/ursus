@@ -18,9 +18,6 @@ class IndexProcessor(ContextProcessor):
                 }
             return super().__getitem__(key)
 
-    def __init__(self, **config):
-        pass
-
     def process(self, full_context: dict):
         full_context['entries'] = self.IndexDict(full_context['entries'])
         return full_context
