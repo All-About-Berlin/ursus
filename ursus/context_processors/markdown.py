@@ -5,7 +5,7 @@ from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from PIL import Image
-from ursus.renderers.image import image_paths_for_sizes
+from ursus.renderers.image import ImageRenderer, image_paths_for_sizes
 from . import FileContextProcessor
 from xml.etree import ElementTree
 import markdown
@@ -78,7 +78,8 @@ class ResponsiveImageProcessor(Treeprocessor):
 
         if src.startswith('/') or src.startswith(self.site_url + '/'):
             image_path = self.images_path / src.removeprefix(self.site_url).removeprefix('/')
-            if image_path.exists():
+            suffix = image_path.suffix
+            if image_path.exists() and suffix in ImageRenderer.image_suffixes and suffix != '.svg':
                 with Image.open(image_path) as pil_image:
                     width, height = pil_image.size
                     img.attrib['width'] = str(width)
