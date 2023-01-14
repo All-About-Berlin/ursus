@@ -186,11 +186,28 @@ Simply copies static assets (CSS, JS, images, etc.) under `templates_path` to th
             └── example.png
     ```
 2. Create a config file for your website. Copy `config.py` for an example.
-3. Call `ursus`.
+3. Call the `ursus` command.
 
-### Command line arguments
+### Running Ursus
 
-Ursus has a few command line arguments:
+Ursus comes with the `ursus` command. It accepts these arguments:
 
 * `-w` or `--watch`: Reload the website when Content or Template files change.
-* `-c` or `--config`: Run with the supplied configuration file. It expets a Python import path. For example, if your config is called `./ursus_config.py`, run `ursus -c ursus_config`.
+* `-c` or `--config`: Run with the supplied configuration file. It accepts a Python file path `path/to/ursus_config.py`, or a Python module name `project.conf.ursus.py`
+
+#### Building from Sublime Text
+
+You can configure Sublime Text to run Ursus when you press Cmd + B:
+
+```json
+// Sublime user settings or project config
+{
+    // ...
+    "build_systems": [{
+        "cmd": ["ursus", "-c", "$project_path/path/to/ursus_config.py"],
+        "name": "Ursus",
+    }],
+    // ...
+}
+
+```

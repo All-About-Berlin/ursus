@@ -5,8 +5,6 @@ from watchdog.observers import Observer
 import argparse
 import copy
 import logging
-import os
-import sys
 import time
 
 
@@ -15,12 +13,16 @@ parser = argparse.ArgumentParser(
     description='Static site generator',
     epilog='Made with ❤️ in Berlin'
 )
-parser.add_argument('-c', '--config')
-parser.add_argument('-w', '--watch', action='store_true')
+parser.add_argument(
+    '-c', '--config',
+    help="Path to a Python config file or module. The `config` variable will be imported from that file."
+)
+parser.add_argument(
+    '-w', '--watch', action='store_true',
+    help="Watch <content_path> and <templates_path> for changes"
+)
 args = parser.parse_args()
 
-
-sys.path.append(os.getcwd())
 user_config = import_config(args.config) if args.config else {}
 config = {
     **default_config,
