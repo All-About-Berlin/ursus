@@ -18,6 +18,7 @@ setup(
         'ordered-set==4.1.0',
         'Pillow==9.4.0',  # Pillow-simd is much faster, but requires binaries to be installed separately.
         'watchdog==2.2.1',
+        'coloredlogs==15.0.1',
     ],
     zip_safe=False,
 )

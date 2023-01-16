@@ -28,6 +28,7 @@ config = {
                 """
                 # Uncomment to resize your content images to different sizes
                 'output_image_sizes': {
+                    '': (3200, 4800),  # Default image size
                     'content2x': (1600, 2400),
                     'content1.5x': (1200, 1800),
                     'content1x': (800, 1200),
@@ -50,7 +51,7 @@ config = {
     ],
     'logging': {
         'datefmt': '%Y-%m-%d %H:%M:%S',
-        'format': '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
+        'fmt': '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
         'level': logging.INFO,
     }
 }

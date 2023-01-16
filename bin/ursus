@@ -3,8 +3,8 @@ from ursus.utils import import_class, import_config
 from ursus.config import config as default_config
 from watchdog.observers import Observer
 import argparse
+import coloredlogs
 import copy
-import logging
 import time
 
 
@@ -29,7 +29,7 @@ config = {
     **user_config,
 }
 
-logging.basicConfig(**config['logging'])
+coloredlogs.install(**config['logging'])
 
 if args.watch:
     observer = Observer()
