@@ -5,11 +5,15 @@ from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from PIL import Image
-from ursus.renderers.image import ImageRenderer, image_paths_for_sizes
+from ursus.renderers.image import is_image, image_is_resizable, image_paths_for_sizes
 from . import FileContextProcessor
 from xml.etree import ElementTree
+import logging
 import markdown
 import re
+
+
+logger = logging.getLogger(__name__)
 
 
 class TypographyExtension(SmartyExtension, Extension):
@@ -78,8 +82,7 @@ class ResponsiveImageProcessor(Treeprocessor):
 
         if src.startswith('/') or src.startswith(self.site_url + '/'):
             image_path = self.images_path / src.removeprefix(self.site_url).removeprefix('/')
-            suffix = image_path.suffix
-            if image_path.exists() and suffix in ImageRenderer.image_suffixes and suffix != '.svg':
+            if image_path.exists() and is_image(image_path) and image_is_resizable(image_path):
                 with Image.open(image_path) as pil_image:
                     width, height = pil_image.size
                     img.attrib['width'] = str(width)
@@ -94,14 +97,22 @@ class ResponsiveImageProcessor(Treeprocessor):
         if src.startswith('/') or src.startswith(self.site_url + '/'):
             sources = []
             image_path = Path(src.removeprefix(self.site_url).removeprefix('/'))
-            for max_dimensions, resized_image_path in image_paths_for_sizes(image_path, self.image_sizes):
-                width, height = max_dimensions
-                sources.append(f"{self.site_url}/{str(resized_image_path)} {width}w")
 
-            sources.append(f"{self.site_url}/{str(image_path)}")  # Default size
+            if image_is_resizable(image_path):
+                for max_dimensions, resized_image_path, is_default in image_paths_for_sizes(image_path, self.image_sizes):
+                    width, height = max_dimensions
+                    sources.append(f"{self.site_url}/{str(resized_image_path)} {width}w")
+                    if is_default:
+                        img.attrib['src'] = f"{self.site_url}/{str(resized_image_path)}"
 
-            if sources:
-                img.attrib['srcset'] = ", ".join(sources)
+                if sources:
+                    img.attrib['srcset'] = ", ".join(sources)
+
+                if '' not in self.image_sizes:
+                    logger.warning(
+                        "No default image size set in `output_image_sizes`. "
+                        f"This <img> src points to an image that might not be there: {src}"
+                    )
 
     def _upgrade_img(self, img, parents):
         self._set_image_dimensions(img)

@@ -57,11 +57,13 @@ A **ContextProcessor** turns your Content into an object that the Renderer uses 
 For example, the **MarkdownProcessor** generates context out of a markdown file. Take this example markdown file:
 
 ```markdown
+---
 Title: Hello world!
 Description: This is an example page
 Date_created: 2022-10-10
 Date_updated: 2023-01-01
 Related_posts: posts/foo.md, posts/bar.md
+---
 
 ## Hello beautiful world
 
@@ -118,30 +120,44 @@ The `IndexProcessor` creates an index of entries. For example, `context['entries
 
 #### ImageRenderer
 
-Renders images in different sizes. Set `output_image_sizes` in your config to enable it.
-```
+Renders images in `content_path` with a few changes:
+
+- Images are compressed and optimized.
+- Images are resized according to the `output_image_sizes`. The images are shrunk if needed, but never stretched.
+- The original image is hard linked in the output directory.
+- Images that can't be resized (like SVG) are hard linked in the output directory.
+- Image EXIF data is removed.
+
+This renderer does nothing unless `output_image_sizes` is set:
+```python
 config = {
-    ...
+    # ...
     'generators': [
         (
             'ursus.generators.static.StaticSiteGenerator', {
                 'renderers': [
-                    ...
+                    # ...
                     'ursus.renderers.image.ImageRenderer',
-                    ...
+                    # ...
                 ],
                 'output_image_sizes': {
-                    'content2x': (1600, 2400),
-                    'content1.5x': (1200, 1800),
+                    # 'Transform name': (max width, max height),
+
+                    # An empty name generates images in the same <output_path> directory.
+                    # This image size is used by default.
+                    # <content_path>/images/img.jpg -> <output_path>/images/img.jpg
+                    '': (1600, 2400),
+
+                    # A name generates images in a subdirectory
+                    # <content_path>/images/img.jpg -> <output_path>/images/content2x/img.jpg
+                    'original': (4000, 4000),
                     'content1x': (800, 1200),
-                    'content0.75x': (600, 900),
-                    'content0.5x': (400, 600),
                 },
-                ...
+                # ...
             }
         )
     ],
-    ...
+    # ...
 }
 ```
 

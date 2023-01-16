@@ -10,6 +10,7 @@ setup(
     license='MIT',
     packages=['ursus'],
     scripts=['bin/ursus'],
+    python_requires='>=3.10',
     install_requires=[
         'Jinja2==3.1.2',
         'Markdown==3.4.1',
@@ -18,5 +19,5 @@ setup(
         'Pillow==9.4.0',  # Pillow-simd is much faster, but requires binaries to be installed separately.
         'watchdog==2.2.1',
     ],
-    zip_safe=False
+    zip_safe=False,
 )
