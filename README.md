@@ -110,6 +110,15 @@ Then, a Renderer can use this information to render a template into a fully work
 
 The `MarkdownProcessor` creates context for `.md` files.
 
+It makes a few changes:
+
+- Lazyload images (`loading=lazy`)
+- Convert images to `<figure>` tags when appropriate
+- Set the `srcset` to load responsive images from the `output_image_sizes` config.
+- Put the front matter in the context
+    - `Related_*` keys are replaced by a list of related entry dicts
+    - `Date_` keys are converted to `datetime` objects
+
 #### IndexProcessor
 
 The `IndexProcessor` creates an index of entries. For example, `context['entries']['posts']` returns a subset of `context['entries']` with only Entries that start with `posts/`: `posts/hello-world.md`, `posts/foo.md`, `posts/bar.md`, etc.

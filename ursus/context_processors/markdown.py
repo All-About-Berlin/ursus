@@ -114,9 +114,13 @@ class ResponsiveImageProcessor(Treeprocessor):
                         f"This <img> src points to an image that might not be there: {src}"
                     )
 
+    def _set_image_lazyload(self, img):
+        img.attrib['loading'] = 'lazy'
+
     def _upgrade_img(self, img, parents):
         self._set_image_dimensions(img)
         self._set_image_srcset(img)
+        self._set_image_lazyload(img)
 
         # Wrap image in <figure> tag, but only if the parent element allows a <figure>
         if parents[0].tag in self.allowed_parents:
