@@ -17,7 +17,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
-class TypographyExtension(SmartyExtension, Extension):
+class TypographyExtension(Extension):
     """
     Minor typographic improvements
     """
@@ -32,6 +32,12 @@ class TypographyExtension(SmartyExtension, Extension):
 
         ellipsisPattern = SubstituteTextPattern(r'\.\.\.', ('&hellip;',), md)
         inline_processor.inlinePatterns.register(ellipsisPattern, 'typo-ellipsis', 10)
+
+        squaredPattern = SubstituteTextPattern(r'\^2\^', ('²',), md)
+        inline_processor.inlinePatterns.register(squaredPattern, 'squared', 65)
+
+        cubedPattern = SubstituteTextPattern(r'\^3\^', ('³',), md)
+        inline_processor.inlinePatterns.register(cubedPattern, 'cubed', 65)
 
         md.treeprocessors.register(inline_processor, 'typography', 2)
 
