@@ -3,6 +3,7 @@ from pathlib import Path
 from markdown.extensions import Extension
 from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
+from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from PIL import Image
 from ursus.renderers.image import is_image, image_is_resizable, image_paths_for_sizes
@@ -223,6 +224,20 @@ class JinjaStatementsExtension(Extension):
         pass
 
 
+class SuperscriptExtension(Extension):
+    """
+    ^text^ is converted to <sup>text</sup>
+    """
+
+    # match ^, at least one character that is not ^, and ^ again
+    SUPERSCRIPT_RE = r"(\^)([^\^]+)\2"
+
+    def extendMarkdown(self, md):
+        """Insert 'superscript' pattern before 'not_strong' pattern (priority 70)."""
+
+        md.inlinePatterns.register(SimpleTagPattern(self.SUPERSCRIPT_RE, "sup"), 'superscript', 60)
+
+
 class MarkdownProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
@@ -245,6 +260,7 @@ class MarkdownProcessor(FileContextProcessor):
                 base_url=wikilinks_base_url,
                 end_url=self.html_url_extension
             ),
+            SuperscriptExtension(),
         ])
 
     def _parse_metadata(self, raw_metadata):
