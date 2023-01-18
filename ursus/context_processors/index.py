@@ -19,5 +19,6 @@ class IndexProcessor(ContextProcessor):
             return super().__getitem__(key)
 
     def process(self, full_context: dict):
-        full_context['entries'] = self.IndexDict(full_context['entries'])
+        if not isinstance(full_context['entries'], self.IndexDict):
+            full_context['entries'] = self.IndexDict(full_context['entries'])
         return full_context

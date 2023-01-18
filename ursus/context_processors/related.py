@@ -4,36 +4,21 @@ from . import ContextProcessor
 
 class RelatedEntriesProcessor(ContextProcessor):
     """
-    Replaces reference to entries with the entries themselves. It only applies to
-    entry fields that start with 'related_'.
-
-    For example:
-    {
-        'guides/moving-to-berlin': {
-            'related_guides': [
-                'guides/find-a-flat.md',
-                'glossary/Anmeldung.md',
-            ]
-        }
-    }
+    Entry fields that start with related_* return a list of entries, instead of
+    a list of entry URIs.
     """
     class RelatedEntryReferenceDict(UserDict):
-        def __init__(self, data, reference_data):
-            self.reference_data = reference_data
-            super().__init__(data)
-
-        def _get_reference(self, key):
-            return self.reference_data[key]
+        def __init__(self, entry, all_entries):
+            self.all_entries = all_entries
+            super().__init__(entry)
 
         def __getitem__(self, key):
             if key.startswith('related_') and key in self.data:
-                related_uris = self.data[key]
-                if isinstance(related_uris, str):
-                    self._get_reference(self.data['key'])
-                else:
-                    return [
-                        self._get_reference(uri) for uri in related_uris
-                    ]
+                related_value = self.data[key]
+                if isinstance(related_value, str):  # Single URI string
+                    return self.all_entries[related_value]
+                else:  # List of URI strings
+                    return [self.all_entries[subvalue] for subvalue in related_value]
             return super().__getitem__(key)
 
     def __init__(self, **config):
@@ -41,6 +26,7 @@ class RelatedEntriesProcessor(ContextProcessor):
 
     def process(self, full_context: dict):
         for uri, entry in full_context['entries'].items():
-            full_context['entries'][uri] = self.RelatedEntryReferenceDict(entry, full_context['entries'])
+            if type(full_context['entries'][uri]) is not self.RelatedEntryReferenceDict:
+                full_context['entries'][uri] = self.RelatedEntryReferenceDict(entry, full_context['entries'])
 
         return full_context

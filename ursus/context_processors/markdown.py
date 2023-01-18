@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 from markdown.extensions import Extension
 from markdown.extensions.smarty import SubstituteTextPattern
-from markdown.extensions.wikilinks import WikiLinkExtension
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
@@ -107,11 +106,11 @@ class ResponsiveImageProcessor(Treeprocessor):
             image_path = Path(src.removeprefix(self.site_url).removeprefix('/'))
 
             if image_is_resizable(image_path):
-                for max_dimensions, resized_image_path, is_default in image_paths_for_sizes(image_path, self.image_sizes):
+                for max_dimensions, output_path, is_default in image_paths_for_sizes(image_path, self.image_sizes):
                     width, height = max_dimensions
-                    sources.append(f"{self.site_url}/{str(resized_image_path)} {width}w")
+                    sources.append(f"{self.site_url}/{str(output_path)} {width}w")
                     if is_default:
-                        img.attrib['src'] = f"{self.site_url}/{str(resized_image_path)}"
+                        img.attrib['src'] = f"{self.site_url}/{str(output_path)}"
 
                 if sources:
                     img.attrib['srcset'] = ", ".join(sources)
@@ -289,14 +288,13 @@ class MarkdownProcessor(FileContextProcessor):
         return metadata
 
     def process(self, file_path: Path, entry_context: dict):
-        if not file_path.suffix == '.md':
-            return
+        if file_path.suffix == '.md':
+            with (self.content_path / file_path).open(encoding='utf-8') as f:
+                html = self.markdown.reset().convert(f.read())
+            entry_context.update({
+                **self._parse_metadata(self.markdown.Meta),
+                'body': html,
+                'url': f"/{str(file_path.with_suffix(self.html_url_extension))}",
+            })
 
-        with (self.content_path / file_path).open(encoding='utf-8') as f:
-            html = self.markdown.reset().convert(f.read())
-        entry_context.update({
-            **self._parse_metadata(self.markdown.Meta),
-            'body': html,
-            'url': f"/{str(file_path.with_suffix(self.html_url_extension))}",
-        })
         return entry_context

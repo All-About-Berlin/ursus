@@ -24,7 +24,7 @@ class Generator:
         self.output_path = config['output_path']
         self.content_path = config['content_path']
 
-    def generate(self):
+    def generate(self, changed_files=None):
         pass
 
     def get_watched_paths(self):
@@ -34,6 +34,6 @@ class Generator:
         return GeneratorObserverEventHandler(generator=self)
 
     def on_file_change(self, change_type, file_path: str):
-        if Path(file_path).is_file():
+        if file_path.is_file():
             logger.info("File changed: %s", file_path)
-            self.generate()
+            self.generate(changed_files=[file_path])
