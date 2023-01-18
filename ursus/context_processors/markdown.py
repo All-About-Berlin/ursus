@@ -254,6 +254,7 @@ class MarkdownProcessor(FileContextProcessor):
             'fenced_code',
             'meta',
             'tables',
+            'toc',
             JinjaStatementsExtension(),
             TypographyExtension(),
             ResponsiveImagesExtension(
@@ -291,9 +292,11 @@ class MarkdownProcessor(FileContextProcessor):
         if file_path.suffix == '.md':
             with (self.content_path / file_path).open(encoding='utf-8') as f:
                 html = self.markdown.reset().convert(f.read())
+
             entry_context.update({
                 **self._parse_metadata(self.markdown.Meta),
                 'body': html,
+                'table_of_contents': self.markdown.toc_tokens,
                 'url': f"/{str(file_path.with_suffix(self.html_url_extension))}",
             })
 
