@@ -1,10 +1,11 @@
 from datetime import datetime
 from pathlib import Path
 from markdown.extensions import Extension
-from markdown.extensions.smarty import SmartyExtension, SubstituteTextPattern
+from markdown.extensions.smarty import SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
+from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
 from PIL import Image
 from ursus.renderers.image import is_image, image_is_resizable, image_paths_for_sizes
 from . import FileContextProcessor
@@ -247,7 +248,6 @@ class SuperscriptExtension(Extension):
 class MarkdownProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
-        wikilinks_base_url = config.get('wikilinks_base_url', '') + '/'
         self.html_url_extension = config['html_url_extension']
 
         self.markdown = markdown.Markdown(extensions=[
@@ -262,11 +262,13 @@ class MarkdownProcessor(FileContextProcessor):
                 image_sizes=config.get('output_image_sizes'),
                 site_url=config.get('site_url')
             ),
-            WikiLinkExtension(
-                base_url=wikilinks_base_url,
-                end_url=self.html_url_extension
-            ),
             SuperscriptExtension(),
+            WikiLinkPlusExtension(dict(
+                base_url=config.get('wikilinks_base_url', '') + '/',
+                url_whitespace='%20',
+                html_class=None,
+                image_class=None,
+            )),
         ])
 
     def _parse_metadata(self, raw_metadata):

@@ -12,13 +12,14 @@ setup(
     scripts=['bin/ursus'],
     python_requires='>=3.10',
     install_requires=[
+        'coloredlogs==15.0.1',
         'Jinja2==3.1.2',
         'Markdown==3.4.1',
         'MarkupSafe==2.1.1',
+        'mdx_wikilink_plus==1.4.1',
         'ordered-set==4.1.0',
         'Pillow==9.4.0',  # Pillow-simd is much faster, but requires binaries to be installed separately.
         'watchdog==2.2.1',
-        'coloredlogs==15.0.1',
     ],
     zip_safe=False,
 )
