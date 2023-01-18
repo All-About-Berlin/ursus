@@ -62,4 +62,6 @@ class StaticSiteGenerator(Generator):
         Render entries and other templates
         """
         for renderer in self.renderers:
-            renderer.render(self.context)
+            renderer.render(self.context, changed_files)
+
+        logger.info("Done.")

@@ -3,6 +3,7 @@ from jinja2.ext import Extension
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
+from ursus.utils import get_files_in_path
 from . import Renderer
 import logging
 
@@ -62,36 +63,52 @@ class JinjaRenderer(Renderer):
             extensions=[JsLoaderExtension],
             autoescape=select_autoescape()
         )
-        self.template_environment.filters['daysAgo'] = lambda x, y: (y - x).days
-        self.template_environment.filters['monthsAgo'] = lambda x, y: (y - x).days / 30
         self.template_environment.filters['render'] = render_filter
         self.template_environment.filters.update(config.get('jinja_filters', {}))
 
-    def _render_template(self, template_path: Path, template_context: dict, output_path: Path):
+    def render_template(self, template_path: Path, template_context: dict, output_path: Path):
         logger.info('Rendering %s', str(output_path))
         output_path = self.output_path / output_path
         output_path.parent.mkdir(parents=True, exist_ok=True)
         template = self.template_environment.get_template(str(template_path))
         template.stream(**template_context).dump(str(output_path))
 
-    def get_templates_to_render(self, changed_files):
-        return [
-            p.relative_to(self.templates_path)
-            for p in self.templates_path.rglob('[!_]*.jinja') if p.is_file()
-        ]
+    def render_entry(self, template_path: Path, full_context: dict, entry_uri: str):
+        """
+        Renders an Entry into a template
+        """
+        context = {
+            **full_context,
+            'entry': full_context['entries'][entry_uri]
+        }
+        output_suffix = template_path.with_suffix('').suffix
+        output_path = Path(entry_uri).with_suffix(output_suffix)
+        self.render_template(template_path, context, output_path)
 
     def render(self, full_context, changed_files=None):
-        for template_path in self.get_templates_to_render(changed_files):
-            # Render once for every entry in that directory
+        template_paths = get_files_in_path(self.templates_path, suffix='.jinja')
+
+        edited_entry_uris = {
+            str(f.relative_to(self.content_path))
+            for f in (changed_files or [])
+            if f.is_relative_to(self.content_path)
+        }
+
+        # First pass: entry.*.jinja templates for entries that were edited
+        if edited_entry_uris:
+            for template_path in template_paths:
+                if template_path.with_suffix('').stem == 'entry':
+                    for entry_uri in edited_entry_uris:
+                        if entry_uri.startswith(str(template_path.parent) + '/'):
+                            self.render_entry(template_path, full_context, entry_uri)
+
+        # Second pass: all other templates
+        for template_path in template_paths:
+            # Same template, rendered for multiple entries
             if template_path.with_suffix('').stem == 'entry':
-                for entry_uri, entry in full_context['entries'][str(template_path.parent)].items():
-                    entry_context = {
-                        **full_context,
-                        'entry': entry
-                    }
-                    output_suffix = template_path.with_suffix('').suffix
-                    output_path = Path(entry_uri).with_suffix(output_suffix)
-                    self._render_template(template_path, entry_context, output_path)
+                for entry_uri in full_context['entries'][str(template_path.parent)].keys():
+                    if entry_uri not in edited_entry_uris:
+                        self.render_entry(template_path, full_context, entry_uri)
             # Render once
             else:
-                self._render_template(template_path, full_context, template_path.with_suffix(''))
+                self.render_template(template_path, full_context, template_path.with_suffix(''))

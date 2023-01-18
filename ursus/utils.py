@@ -36,7 +36,7 @@ def is_ignored_file(path: Path, root_path=None):
     )
 
 
-def get_files_in_path(path: Path, whitelist=None):
+def get_files_in_path(path: Path, whitelist=None, suffix=None):
     """
     Returns a list of valid, visible files under a given path. If whitelist is set, only files in this list are
     returned. The returned paths are relative to `path`.
@@ -44,12 +44,12 @@ def get_files_in_path(path: Path, whitelist=None):
     if whitelist:
         files = []
         for f in whitelist:
-            if f.is_relative_to(path):
-                files.append(f.relative_to(path))
-            elif f.is_absolute() and (path / f).exists():
+            if (not f.is_absolute()) and (path / f).exists():
                 files.append(f)
+            elif f.is_absolute() and f.is_relative_to(path):
+                files.append(f.relative_to(path))
     else:
-        files = path.rglob('[!._]*')
+        files = path.rglob('[!._]*' + (suffix or ''))
 
     return [
         f.relative_to(path) for f in files
