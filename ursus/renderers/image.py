@@ -1,6 +1,7 @@
 from . import Renderer
 from pathlib import Path
 from PIL import Image
+from ursus.utils import get_files_in_path
 import logging
 
 
@@ -42,21 +43,8 @@ class ImageRenderer(Renderer):
         super().__init__(**config)
         self.output_image_sizes = config.get('output_image_sizes', {})
 
-    def get_images(self):
-        def is_ignored(path: Path):
-            return (
-                path.stem.startswith(('_', '.'))
-                or any([
-                    p.stem.startswith(('_', '.'))
-                    for p in path.relative_to(self.content_path).parents
-                ])
-            )
-
-        return [
-            p.relative_to(self.content_path)
-            for p in self.content_path.rglob('*')
-            if is_image(p) and not is_ignored(p)
-        ]
+    def get_images(self, changed_files=None):
+        return [f for f in get_files_in_path(self.content_path, changed_files) if is_image(f)]
 
     def convert_image(self, image_path: Path, overwrite=False):
         """
@@ -93,8 +81,8 @@ class ImageRenderer(Renderer):
         to_path.unlink(missing_ok=True)
         to_path.hardlink_to(self.content_path / image_path)
 
-    def render(self, full_context):
-        for image_path in self.get_images():
+    def render(self, full_context, changed_files=None):
+        for image_path in self.get_images(changed_files):
             if image_is_resizable(image_path):
                 self.convert_image(image_path, overwrite=False)
             else:

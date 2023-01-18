@@ -74,14 +74,14 @@ class JinjaRenderer(Renderer):
         template = self.template_environment.get_template(str(template_path))
         template.stream(**template_context).dump(str(output_path))
 
-    def get_templates_to_render(self):
+    def get_templates_to_render(self, changed_files):
         return [
             p.relative_to(self.templates_path)
             for p in self.templates_path.rglob('[!_]*.jinja') if p.is_file()
         ]
 
-    def render(self, full_context):
-        for template_path in self.get_templates_to_render():
+    def render(self, full_context, changed_files=None):
+        for template_path in self.get_templates_to_render(changed_files):
             # Render once for every entry in that directory
             if template_path.with_suffix('').stem == 'entry':
                 for entry_uri, entry in full_context['entries'][str(template_path.parent)].items():

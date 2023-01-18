@@ -1,4 +1,4 @@
-from ursus.utils import import_class
+from ursus.utils import import_class, get_files_in_path
 from . import Generator
 import logging
 
@@ -38,26 +38,7 @@ class StaticSiteGenerator(Generator):
         return [*super().get_watched_paths(), self.templates_path]
 
     def get_content_files(self, changed_files=None):
-        if changed_files is not None:
-            files = [
-                f for f in changed_files
-                if f.is_relative_to(self.content_path)
-            ]
-        else:
-            files = self.content_path.rglob('[!.]*')
-
-        return [
-            f.relative_to(self.content_path)
-            for f in files
-            if f.is_file() and not f.name.startswith('_')
-        ]
-
-    def get_template_files(self):
-        return [
-            f.relative_to(self.templates_path)
-            for f in self.templates_path.rglob('*')
-            if f.is_file() and not f.name.startswith(('_', '.'))
-        ]
+        return get_files_in_path(self.content_path, changed_files)
 
     def generate(self, changed_files=None):
         """
@@ -75,7 +56,7 @@ class StaticSiteGenerator(Generator):
             })
 
         for context_processor in self.context_processors:
-            self.context = context_processor.process(self.context)
+            self.context = context_processor.process(self.context, changed_files)
 
         """
         Render entries and other templates

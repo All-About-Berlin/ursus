@@ -24,7 +24,7 @@ class RelatedEntriesProcessor(ContextProcessor):
     def __init__(self, **config):
         pass
 
-    def process(self, full_context: dict):
+    def process(self, full_context: dict, changed_files=None):
         for uri, entry in full_context['entries'].items():
             if type(full_context['entries'][uri]) is not self.RelatedEntryReferenceDict:
                 full_context['entries'][uri] = self.RelatedEntryReferenceDict(entry, full_context['entries'])
