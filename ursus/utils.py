@@ -1,5 +1,7 @@
 from importlib import import_module
 from pathlib import Path
+from PIL import Image
+import fitz
 import sys
 
 
@@ -55,3 +57,31 @@ def get_files_in_path(path: Path, whitelist=None, suffix=None):
         f.relative_to(path) for f in files
         if f.is_file() and not is_ignored_file(f, path)
     ]
+
+
+def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
+    if not output_path.is_absolute():
+        raise ValueError(f"output_path {str(output_path)} is relative. It must be absolute.")
+
+    pil_image.thumbnail(max_size, Image.ANTIALIAS)
+    save_args = {'optimize': True}
+    if output_path.suffix == '.jpg':
+        save_args['progressive'] = True
+    elif output_path.suffix == '.webp':
+        save_args['exact'] = True
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Note: The saved image is stripped of EXIF data
+    pil_image.save(output_path, **save_args)
+
+
+def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path):
+    """
+    Creates an image preview of a PDF file
+    """
+    width, height = max_size
+    doc = fitz.open(pdf_path)
+    pixmap = doc[0].get_pixmap(alpha=False)
+    thumbnail = Image.frombytes('RGB', [pixmap.width, pixmap.height], pixmap.samples)
+    make_image_thumbnail(thumbnail, max_size, output_path)

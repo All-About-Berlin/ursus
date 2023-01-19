@@ -6,7 +6,7 @@ from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
 from PIL import Image
-from ursus.renderers.image import is_image, image_is_resizable, image_paths_for_sizes
+from ursus.renderers.image import is_image, image_is_resizable, get_image_sizes
 from . import FileContextProcessor
 from xml.etree import ElementTree
 import logging
@@ -106,18 +106,19 @@ class ResponsiveImageProcessor(Treeprocessor):
             image_path = Path(src.removeprefix(self.site_url).removeprefix('/'))
 
             if image_is_resizable(image_path):
-                for max_dimensions, output_path, is_default in image_paths_for_sizes(image_path, self.image_sizes):
-                    width, height = max_dimensions
-                    sources.append(f"{self.site_url}/{str(output_path)} {width}w")
-                    if is_default:
-                        img.attrib['src'] = f"{self.site_url}/{str(output_path)}"
+                for size_config in get_image_sizes(image_path, self.image_sizes):
+                    width, height = size_config['max_size']
+                    output_url = f"{self.site_url}/{str(size_config['output_path'])}"
+                    sources.append(f"{output_url} {width}w")
+                    if size_config['is_default_size']:
+                        img.attrib['src'] = output_url
 
                 if sources:
                     img.attrib['srcset'] = ", ".join(sources)
 
                 if '' not in self.image_sizes:
                     logger.warning(
-                        "No default image size set in `output_image_sizes`. "
+                        "No default image size set in `image_sizes`. "
                         f"This <img> src points to an image that might not be there: {src}"
                     )
 
@@ -259,7 +260,7 @@ class MarkdownProcessor(FileContextProcessor):
             TypographyExtension(),
             ResponsiveImagesExtension(
                 images_path=config['content_path'],
-                image_sizes=config.get('output_image_sizes'),
+                image_sizes=config.get('image_sizes'),
                 site_url=config.get('site_url')
             ),
             SuperscriptExtension(),

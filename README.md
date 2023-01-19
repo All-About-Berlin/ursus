@@ -114,7 +114,7 @@ It makes a few changes:
 
 - Lazyload images (`loading=lazy`)
 - Convert images to `<figure>` tags when appropriate
-- Set the `srcset` to load responsive images from the `output_image_sizes` config.
+- Set the `srcset` to load responsive images from the `image_sizes` config.
 - Put the front matter in the context
     - `Related_*` keys are replaced by a list of related entry dicts
     - `Date_` keys are converted to `datetime` objects
@@ -132,12 +132,12 @@ The `IndexProcessor` creates an index of entries. For example, `context['entries
 Renders images in `content_path` with a few changes:
 
 - Images are compressed and optimized.
-- Images are resized according to the `output_image_sizes`. The images are shrunk if needed, but never stretched.
+- Images are resized according to the `image_sizes`. The images are shrunk if needed, but never stretched.
 - The original image is hard linked in the output directory.
 - Images that can't be resized (like SVG) are hard linked in the output directory.
 - Image EXIF data is removed.
 
-This renderer does nothing unless `output_image_sizes` is set:
+This renderer does nothing unless `image_sizes` is set:
 ```python
 config = {
     # ...
@@ -149,7 +149,7 @@ config = {
                     'ursus.renderers.image.ImageRenderer',
                     # ...
                 ],
-                'output_image_sizes': {
+                'image_sizes': {
                     # 'Transform name': (max width, max height),
 
                     # An empty name generates images in the same <output_path> directory.

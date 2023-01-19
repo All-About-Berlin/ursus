@@ -27,13 +27,20 @@ config = {
 
                 """
                 # Uncomment to resize your content images to different sizes
-                'output_image_sizes': {
-                    '': (3200, 4800),  # Default image size
-                    'content2x': (1600, 2400),
-                    'content1.5x': (1200, 1800),
-                    'content1x': (800, 1200),
-                    'content0.75x': (600, 900),
-                    'content0.5x': (400, 600),
+                'image_sizes': {
+                    '': {  # Default image size
+                        'max_size': (3200, 4800),
+                    }
+                    'thumbnails': {
+                        'exclude': '*.pdf',
+                        'max_size': (400, 400),
+                        'output_types': ('original', '.webp'),
+                    }
+                    'pdfPreviews': {
+                        'include': ('documents/*.pdf', 'forms/*.pdf'),
+                        'max_size': (300, 500),
+                        'output_types': ('.webp', '.png'),
+                    }
                 },
                 """
 
