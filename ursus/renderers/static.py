@@ -1,8 +1,7 @@
 from . import Renderer
 from pathlib import Path
-from ursus.utils import get_files_in_path
+from ursus.utils import get_files_in_path, hard_link_file
 import logging
-import shutil
 
 
 logger = logging.getLogger(__name__)
@@ -28,6 +27,6 @@ class StaticAssetRenderer(Renderer):
 
     def render(self, full_context, changed_files=None):
         for asset_path in self.get_assets_to_copy(changed_files):
-            logger.info('Copying %s', str(asset_path))
-            (self.output_path / asset_path).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(self.templates_path / asset_path, self.output_path / asset_path)
+            # TODO: Hard link instead of copying
+            logger.info('Linking %s', str(asset_path))
+            hard_link_file(self.templates_path / asset_path, self.output_path / asset_path)

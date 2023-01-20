@@ -77,9 +77,17 @@ def get_files_in_path(path: Path, whitelist=None, suffix=None):
     ]
 
 
+def hard_link_file(input_path: Path, output_path: Path):
+    assert input_path.is_absolute(), f"input_path {str(input_path)} is relative. It must be absolute."
+    assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.unlink(missing_ok=True)
+    output_path.hardlink_to(input_path)
+
+
 def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
-    if not output_path.is_absolute():
-        raise ValueError(f"output_path {str(output_path)} is relative. It must be absolute.")
+    assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
 
     pil_image.thumbnail(max_size, Image.ANTIALIAS)
     save_args = {'optimize': True}
@@ -98,6 +106,8 @@ def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path):
     """
     Creates an image preview of a PDF file
     """
+    assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
+
     width, height = max_size
     doc = fitz.open(pdf_path)
     pixmap = doc[0].get_pixmap(alpha=False)

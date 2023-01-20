@@ -1,7 +1,8 @@
 from . import Renderer
 from pathlib import Path
 from PIL import Image
-from ursus.utils import get_files_in_path, make_image_thumbnail, make_pdf_thumbnail, is_image, is_pdf, is_svg
+from ursus.utils import get_files_in_path, make_image_thumbnail, make_pdf_thumbnail, is_image, is_pdf, is_svg, \
+    hard_link_file
 import logging
 
 
@@ -64,39 +65,28 @@ class ImageTransformRenderer(Renderer):
         Converts a file to images of preconfigured sizes
         """
         for transform in get_image_transforms(input_path, self.image_transforms):
-            output_image_path = self.output_path / transform['output_path']
+            abs_output_path = self.output_path / transform['output_path']
             max_size = transform['max_size']
 
-            if overwrite or not output_image_path.exists():
+            if overwrite or not abs_output_path.exists():
                 abs_input_path = self.content_path / input_path
                 if is_pdf(abs_input_path):
-                    if output_image_path.suffix.lower() == '.pdf':
+                    if abs_output_path.suffix.lower() == '.pdf':
                         logger.info('Linking %s to %s', str(input_path), str(transform['output_path']))
-                        self.hard_link_file(input_path)
+                        hard_link_file(abs_input_path, abs_output_path)
                     else:
                         logger.info('Generating %s preview as %s', str(input_path), str(transform['output_path']))
-                        make_pdf_thumbnail(self.content_path / input_path, max_size, output_image_path)
+                        make_pdf_thumbnail(self.content_path / input_path, max_size, abs_output_path)
                 elif is_svg(abs_input_path):
-                    if output_image_path.suffix.lower() == '.svg':
+                    if abs_output_path.suffix.lower() == '.svg':
                         logger.info('Linking %s to %s', str(input_path), str(transform['output_path']))
-                        self.hard_link_file(input_path)
+                        hard_link_file(abs_input_path, abs_output_path)
                     else:
-                        raise ValueError(f"Can't convert {str(input_path)} to {output_image_path.suffix}")
+                        raise ValueError(f"Can't convert {str(input_path)} to {abs_output_path.suffix}")
                 else:
                     logger.info('Converting %s to %s', str(input_path), str(transform['output_path']))
                     with Image.open(abs_input_path) as pil_image:
-                        make_image_thumbnail(pil_image, max_size, output_image_path)
-
-    def hard_link_file(self, file_path: Path):
-        """
-        Creates a hard link to a <content_path> file in the <output_path>.
-
-        This is equivalent to copying, but without using extra storage space.
-        """
-        output_file_path = self.output_path / file_path
-        output_file_path.parent.mkdir(parents=True, exist_ok=True)
-        output_file_path.unlink(missing_ok=True)
-        output_file_path.hardlink_to(self.content_path / file_path)
+                        make_image_thumbnail(pil_image, max_size, abs_output_path)
 
     def render(self, full_context, changed_files=None):
         for file_path in self.get_files(changed_files):
