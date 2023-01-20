@@ -289,7 +289,7 @@ class MarkdownProcessor(FileContextProcessor):
         return metadata
 
     def process(self, file_path: Path, entry_context: dict):
-        if file_path.suffix == '.md':
+        if file_path.suffix.lower() == '.md':
             with (self.content_path / file_path).open(encoding='utf-8') as f:
                 html = self.markdown.reset().convert(f.read())
 

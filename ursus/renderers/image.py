@@ -70,14 +70,14 @@ class ImageTransformRenderer(Renderer):
             if overwrite or not output_image_path.exists():
                 abs_input_path = self.content_path / input_path
                 if is_pdf(abs_input_path):
-                    if output_image_path.suffix == '.pdf':
+                    if output_image_path.suffix.lower() == '.pdf':
                         logger.info('Linking %s to %s', str(input_path), str(transform['output_path']))
                         self.hard_link_file(input_path)
                     else:
                         logger.info('Generating %s preview as %s', str(input_path), str(transform['output_path']))
                         make_pdf_thumbnail(self.content_path / input_path, max_size, output_image_path)
                 elif is_svg(abs_input_path):
-                    if output_image_path.suffix == '.svg':
+                    if output_image_path.suffix.lower() == '.svg':
                         logger.info('Linking %s to %s', str(input_path), str(transform['output_path']))
                         self.hard_link_file(input_path)
                     else:

@@ -83,9 +83,9 @@ def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
 
     pil_image.thumbnail(max_size, Image.ANTIALIAS)
     save_args = {'optimize': True}
-    if output_path.suffix == '.jpg':
+    if output_path.suffix.lower() == '.jpg':
         save_args['progressive'] = True
-    elif output_path.suffix == '.webp':
+    elif output_path.suffix.lower() == '.webp':
         save_args['exact'] = True
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
