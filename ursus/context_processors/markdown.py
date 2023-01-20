@@ -6,7 +6,8 @@ from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
 from PIL import Image
-from ursus.renderers.image import is_image, get_image_transforms
+from ursus.renderers.image import is_image
+from ursus.utils import make_figure_element, make_picture_element
 from . import FileContextProcessor
 from xml.etree import ElementTree
 import logging
@@ -66,8 +67,8 @@ class ResponsiveImageProcessor(Treeprocessor):
         'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
     )
 
-    def __init__(self, md, image_transforms, images_path: Path, site_url: str):
-        self.images_path = images_path
+    def __init__(self, md, image_transforms, output_path: Path, site_url: str):
+        self.output_path = output_path
         self.image_transforms = image_transforms
         self.site_url = site_url
         super().__init__(md)
@@ -81,96 +82,60 @@ class ResponsiveImageProcessor(Treeprocessor):
                 parent[index] = new
                 return
 
-    def _set_image_dimensions(self, img):
-        """
-        Adds width and height attributes to an <img> tag
-        """
-        src = img.attrib.get('src')
-
-        if src.startswith('/') or src.startswith(self.site_url + '/'):
-            image_path = self.images_path / src.removeprefix(self.site_url).removeprefix('/')
-            if image_path.exists() and is_image(image_path) and image_path.suffix != '.svg':
-                with Image.open(image_path) as pil_image:
-                    width, height = pil_image.size
-                    img.attrib['width'] = str(width)
-                    img.attrib['height'] = str(height)
-
-    def _set_image_srcset(self, img):
-        """
-        Adds srcset attribute to <img> element
-        """
-        src = img.attrib.get('src')
-
-        if src.startswith('/') or src.startswith(self.site_url + '/'):
-            sources = []
-            image_path = Path(src.removeprefix(self.site_url).removeprefix('/'))
-
-            for transform in get_image_transforms(image_path, self.image_transforms):
-                width, height = transform['max_size']
-                output_url = f"{self.site_url}/{str(transform['output_path'])}"
-                sources.append(f"{output_url} {width}w")
-                if transform['is_default']:
-                    img.attrib['src'] = output_url
-
-            if sources:
-                img.attrib['srcset'] = ", ".join(sources)
-
-            if '' not in self.image_transforms:
-                logger.warning(
-                    "No default image size set in `image_transforms`. "
-                    f"This <img> src points to an image that might not be there: {src}"
-                )
-
-    def _set_image_lazyload(self, img):
-        img.attrib['loading'] = 'lazy'
-
     def _upgrade_img(self, img, parents):
-        self._set_image_dimensions(img)
-        self._set_image_srcset(img)
-        self._set_image_lazyload(img)
+        # Create <picture> with <source> for the different image types and sizes
+        # Only apply to local images
+        img_src = img.attrib.get('src')
+        if img_src.startswith('/') or img_src.startswith(self.site_url + '/'):
+            image_path = Path(img_src.removeprefix(self.site_url).removeprefix('/'))
 
-        # Wrap image in <figure> tag, but only if the parent element allows a <figure>
-        if parents[0].tag in self.allowed_parents:
-            figure = ElementTree.Element('figure')
+            parent = parents[0]
+            grandparent = parents[1]
 
-            # If the parent is a <a>, wrap the <img> inside the <figure> with <a>
-            if parents[0].tag == 'a':
-                a = ElementTree.Element('a', attrib=parents[0].attrib)
-                a.append(img)
-                figure.append(a)
-            else:
-                figure.append(img)
-
-            # Convert the image title= to a <figcaption>
-            title = img.attrib.get('title')
-            if title:
-                figcaption = ElementTree.Element('figcaption')
-                figcaption.text = title
-                figure.append(figcaption)
-                img.attrib.pop('title')
-
-            def elem_has_single_child(element):
+            def has_single_child(element):
                 return len(element) == 1 and not element.text
 
-            if parents[0].tag == 'a':
-                # A <p> with only this <a><img/></a> as a child.
-                if (
-                    parents[1].tag == 'p'
-                    and elem_has_single_child(parents[0])
-                    and elem_has_single_child(parents[1])
-                ):
-                    self._swap_element(parents[2], parents[1], figure)
-                else:
-                    return
-            elif parents[0].tag == 'p':
-                # A <p> with only this <img> as a child.
-                if elem_has_single_child(parents[0]):
-                    self._swap_element(parents[1], parents[0], figure)
-                # A <p> with other things in it
-                else:
-                    return
-            else:
-                self._swap_element(parents[0], img, figure)
+            img_attrs = img.attrib
+            a_attrs = None
+            image_maker = make_figure_element
+
+            element_to_swap = img
+            containing_element = parent
+
+            # A valid <figure> parent with an empty <a> wrapping this <img>
+            # In this case, wrap the <figure> around the <a>
+            # li > a > img becomes li > figure > a > picture
+            if (
+                parent.tag == 'a'
+                and has_single_child(parent)
+                and grandparent.tag in self.allowed_parents
+            ):
+                a_attrs = parent.attrib
+                element_to_swap = parent
+                containing_element = grandparent
+
+                # An empty <p> with an empty <a> with this <img>
+                # Replace the whole thing with a <figure> containing the <a>
+                # p > a > img becomes p > figure > a > picture
+                if grandparent.tag == 'p' and has_single_child(grandparent):
+                    element_to_swap = grandparent
+
+                    greatgrandparent = parents[2]
+                    containing_element = greatgrandparent
+
+            # An empty <p> with this <img>
+            # p > img becomes figure > picture
+            elif parent.tag == 'p' and has_single_child(parent):
+                element_to_swap = parent
+                containing_element = grandparent
+
+            # This element does not allow a <figure>. Just use a <picture>.
+            elif parent.tag not in self.allowed_parents:
+                image_maker = make_picture_element
+
+            image = image_maker(image_path, self.output_path, self.image_transforms, img_attrs, a_attrs, self.site_url)
+
+            self._swap_element(containing_element, element_to_swap, image)
 
     def run(self, root):
         parent_map = {}
@@ -196,8 +161,8 @@ class ResponsiveImagesExtension(Extension):
     - Wraps block images in a <figure> tag, and replaces the title with a <figcaption>
 
     """
-    def __init__(self, images_path: Path, image_transforms: dict, site_url: str):
-        self.images_path = images_path
+    def __init__(self, output_path: Path, image_transforms: dict, site_url: str):
+        self.output_path = output_path
         self.image_transforms = image_transforms or {}
         self.site_url = site_url or ''
 
@@ -208,7 +173,7 @@ class ResponsiveImagesExtension(Extension):
         md.treeprocessors.register(
             ResponsiveImageProcessor(
                 md,
-                images_path=self.images_path,
+                output_path=self.output_path,
                 image_transforms=self.image_transforms,
                 site_url=self.site_url,
             ),
@@ -258,7 +223,7 @@ class MarkdownProcessor(FileContextProcessor):
             JinjaStatementsExtension(),
             TypographyExtension(),
             ResponsiveImagesExtension(
-                images_path=config['content_path'],
+                output_path=config['content_path'],
                 image_transforms=config.get('image_transforms'),
                 site_url=config.get('site_url')
             ),

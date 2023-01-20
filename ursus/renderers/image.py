@@ -2,48 +2,11 @@ from . import Renderer
 from pathlib import Path
 from PIL import Image
 from ursus.utils import get_files_in_path, make_image_thumbnail, make_pdf_thumbnail, is_image, is_pdf, is_svg, \
-    hard_link_file
+    hard_link_file, get_image_transforms
 import logging
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_image_transforms(original_path: Path, sizes_config: dict):
-    """
-    Yields a list of image transforms that apply to a file.
-    """
-    for key, transform in sizes_config.items():
-        includes = transform.get('include', ['*'])
-        includes = [includes] if isinstance(includes, str) else includes
-
-        excludes = transform.get('exclude', [])
-        excludes = [excludes] if isinstance(excludes, str) else excludes
-
-        transform_applies_to_file = (
-            any(original_path.match(pattern) for pattern in includes)
-            and not any(original_path.match(pattern) for pattern in excludes)
-        )
-
-        if transform_applies_to_file:
-            # Normalise and deduplicate suffixes
-            # For orig_image.JPG, ('original', 'jpg') becomes ('.jpg')
-            output_suffixes = set([
-                original_path.suffix.lower() if t == 'original' else '.' + t
-                for t in transform.get('output_types', ['original'])
-            ])
-
-            for suffix in output_suffixes:
-                if suffix == original_path.suffix.lower():
-                    output_image_path = original_path
-                else:
-                    output_image_path = original_path.with_suffix(suffix)
-
-                yield {
-                    **transform,
-                    'output_path': output_image_path.parent / key / output_image_path.name,  # It works if key is empty
-                    'is_default': key == ''
-                }
 
 
 class ImageTransformRenderer(Renderer):
@@ -67,7 +30,6 @@ class ImageTransformRenderer(Renderer):
         for transform in get_image_transforms(input_path, self.image_transforms):
             abs_output_path = self.output_path / transform['output_path']
             max_size = transform['max_size']
-
             if overwrite or not abs_output_path.exists():
                 abs_input_path = self.content_path / input_path
                 if is_pdf(abs_input_path):

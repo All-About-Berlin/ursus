@@ -1,6 +1,7 @@
 from importlib import import_module
 from pathlib import Path
 from PIL import Image
+from xml.etree import ElementTree
 import fitz
 import sys
 
@@ -113,3 +114,127 @@ def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path):
     pixmap = doc[0].get_pixmap(alpha=False)
     thumbnail = Image.frombytes('RGB', [pixmap.width, pixmap.height], pixmap.samples)
     make_image_thumbnail(thumbnail, max_size, output_path)
+
+
+def get_image_transforms(original_path: Path, transforms_config: dict):
+    """
+    Yields a list of image transforms that apply to a file.
+    """
+    suffix_to_mimetype = {
+        '.apng': 'image/apng',
+        '.avif': 'image/avif',
+        '.gif': 'image/avif',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.pdf': 'application/pdf',
+        '.png': 'image/png',
+        '.svg': 'image/svg+xml',
+        '.webp': 'image/webp',
+    }
+
+    for key, transform in transforms_config.items():
+        includes = transform.get('include', ['*'])
+        includes = [includes] if isinstance(includes, str) else includes
+
+        excludes = transform.get('exclude', [])
+        excludes = [excludes] if isinstance(excludes, str) else excludes
+
+        transform_applies_to_file = (
+            any(original_path.match(pattern) for pattern in includes)
+            and not any(original_path.match(pattern) for pattern in excludes)
+        )
+
+        if transform_applies_to_file:
+            # Normalise and deduplicate suffixes
+            # For orig_image.JPG, ('original', 'jpg') becomes ('.jpg')
+            output_suffixes = set([
+                original_path.suffix.lower() if t == 'original' else '.' + t
+                for t in transform.get('output_types', ['original'])
+            ])
+
+            for suffix in output_suffixes:
+                if suffix == original_path.suffix.lower():
+                    output_image_path = original_path
+                else:
+                    output_image_path = original_path.with_suffix(suffix)
+
+                yield {
+                    **transform,
+                    'is_default': key == '',
+                    'input_mimetype': suffix_to_mimetype[original_path.suffix.lower()],
+                    'output_mimetype': suffix_to_mimetype[output_image_path.suffix.lower()],
+                    'output_path': output_image_path.parent / key / output_image_path.name,  # It works if key is empty
+                }
+
+
+def make_picture_element(original_path: Path, output_path: Path, transforms_config: dict, img_attrs={}, site_url='',):
+    """
+    Creates a responsive HTML <picture> element
+    """
+    # Mimetypes with broad support that don't require their own <source> element
+    standard_mimetypes = ('image/png', 'image/jpeg', 'image/svg+xml')
+
+    # TODO: SVG? PDF?
+    default_src = None
+
+    # Build a list of srcsets grouped by mimetype
+    sources_by_mimetype = {}
+    for transform in get_image_transforms(original_path, transforms_config):
+        width = transform['max_size'][0]
+        mimetype = transform['output_mimetype']
+
+        if mimetype.startswith('image/'):
+            srcset_part = f"{site_url}/{str(transform['output_path'])} {width}w"
+            sources_by_mimetype.setdefault(mimetype, [])
+            sources_by_mimetype[mimetype].append(srcset_part)
+
+            if not default_src and mimetype in standard_mimetypes:
+                default_src = transform['output_path']
+
+    # Create a <picture> with <source type="" srcset=""> for each mimetype
+    picture = ElementTree.Element('picture')
+    for mimetype, srcset_elements in sources_by_mimetype.items():
+        source = ElementTree.Element('source', attrib={
+            'type': mimetype,
+            'srcset': ", ".join(srcset_elements)
+        })
+        picture.append(source)
+
+    # Add an <img> with the default image to the <picture>
+    img = ElementTree.Element('img', attrib=img_attrs)
+    assert default_src is not None, f"default_src is None for {original_path}"
+    if default_src.suffix != '.svg':
+        with Image.open(output_path / default_src) as pil_image:
+            width, height = pil_image.size
+            img_attrs['width'] = str(width)
+            img_attrs['height'] = str(height)
+    img_attrs['loading'] = 'lazy'
+    img_attrs['src'] = str(default_src)
+
+    picture.append(img)
+
+    return picture
+
+
+def make_figure_element(original_path: Path, output_path: Path, transforms_config: dict, img_attrs={}, a_attrs=None, site_url=''):
+    """
+    Creates a responsive HTML <figure> element with the image title as <figcaption>. Returns a simple <picture> if there
+    is no title.
+    """
+    image = make_picture_element(original_path, output_path, transforms_config, img_attrs, site_url)
+    if a_attrs and a_attrs.get('href'):
+        wrapped_image = ElementTree.Element('a', a_attrs)
+        wrapped_image.append(image)
+    else:
+        wrapped_image = image
+
+    if not img_attrs.get('title'):
+        return wrapped_image
+
+    figure = ElementTree.Element('figure')
+    figure.append(wrapped_image)
+    figcaption = ElementTree.Element('figcaption')
+    figcaption.text = img_attrs['title']
+    figure.append(figcaption)
+
+    return figure
