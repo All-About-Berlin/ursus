@@ -45,7 +45,7 @@ config = {
     ],
     'logging': {
         'datefmt': '%Y-%m-%d %H:%M:%S',
-        'fmt': '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s',
+        'fmt': '%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s',
         'level': logging.INFO,
     }
 }
