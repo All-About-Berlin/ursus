@@ -38,6 +38,24 @@ def is_ignored_file(path: Path, root_path=None):
     )
 
 
+def is_image(path: Path):
+    assert path.is_absolute(), 'is_image must be called with an absolute path'
+
+    # Notably missing: .heif, .heic
+    image_suffixes = ('.apng', '.avif', '.gif', '.jpg', '.jpeg', '.png', '.svg', '.webp')
+    return path.is_file() and path.suffix.lower() in image_suffixes
+
+
+def is_pdf(path: Path):
+    assert path.is_absolute(), 'is_pdf must be called with an absolute path'
+    return path.is_file() and path.suffix.lower() == '.pdf'
+
+
+def is_svg(path: Path):
+    assert path.is_absolute(), 'is_svg must be called with an absolute path'
+    return path.is_file() and path.suffix.lower() == '.svg'
+
+
 def get_files_in_path(path: Path, whitelist=None, suffix=None):
     """
     Returns a list of valid, visible files under a given path. If whitelist is set, only files in this list are

@@ -114,7 +114,7 @@ It makes a few changes:
 
 - Lazyload images (`loading=lazy`)
 - Convert images to `<figure>` tags when appropriate
-- Set the `srcset` to load responsive images from the `image_sizes` config.
+- Set the `srcset` to load responsive images from the `image_transforms` config.
 - Put the front matter in the context
     - `Related_*` keys are replaced by a list of related entry dicts
     - `Date_` keys are converted to `datetime` objects
@@ -127,17 +127,17 @@ The `IndexProcessor` creates an index of entries. For example, `context['entries
 
 **Renderer**s put your Content into Templates, and render them into the desired Outputs.
 
-#### ImageRenderer
+#### ImageTransformRenderer
 
 Renders images in `content_path` with a few changes:
 
 - Images are compressed and optimized.
-- Images are resized according to the `image_sizes`. The images are shrunk if needed, but never stretched.
-- The original image is hard linked in the output directory.
+- Images are resized according to the `image_transforms`. The images are shrunk if needed, but never stretched.
+- Images that can't be transformed are hard linked to the output directory.
 - Images that can't be resized (like SVG) are hard linked in the output directory.
 - Image EXIF data is removed.
 
-This renderer does nothing unless `image_sizes` is set:
+This renderer does nothing unless `image_transforms` is set:
 ```python
 config = {
     # ...
@@ -146,21 +146,28 @@ config = {
             'ursus.generators.static.StaticSiteGenerator', {
                 'renderers': [
                     # ...
-                    'ursus.renderers.image.ImageRenderer',
+                    'ursus.renderers.image.ImageTransformRenderer',
                     # ...
                 ],
-                'image_sizes': {
-                    # 'Transform name': (max width, max height),
-
-                    # An empty name generates images in the same <output_path> directory.
-                    # This image size is used by default.
-                    # <content_path>/images/img.jpg -> <output_path>/images/img.jpg
-                    '': (1600, 2400),
-
-                    # A name generates images in a subdirectory
-                    # <content_path>/images/img.jpg -> <output_path>/images/content2x/img.jpg
-                    'original': (4000, 4000),
-                    'content1x': (800, 1200),
+                'image_transforms': {
+                    # Default transform used as <img> src
+                    # Saved as <output_path>/path/to/image.jpg
+                    '': {
+                        'max_size': (3200, 4800),
+                    },
+                    # Saved as <output_path>/path/to/image.jpg and .webp
+                    'thumbnails': {
+                        'exclude': ('*.pdf', '*.svg'),
+                        'max_size': (400, 400),
+                        'output_types': ('original', 'webp'),
+                    },
+                    # Only previews PDF files in specific locations
+                    # Saved as <output_path>/path/to/image.webp and .png
+                    'pdfPreviews': {
+                        'include': ('documents/*.pdf', 'forms/*.pdf'),  # glob patterns
+                        'max_size': (300, 500),
+                        'output_types': ('webp', 'png'),
+                    }
                 },
                 # ...
             }

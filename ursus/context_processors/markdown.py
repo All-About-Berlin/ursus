@@ -6,7 +6,7 @@ from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
 from PIL import Image
-from ursus.renderers.image import is_image, image_is_resizable, get_image_sizes
+from ursus.renderers.image import is_image, get_image_transforms
 from . import FileContextProcessor
 from xml.etree import ElementTree
 import logging
@@ -66,9 +66,9 @@ class ResponsiveImageProcessor(Treeprocessor):
         'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
     )
 
-    def __init__(self, md, image_sizes: Path, images_path: Path, site_url: str):
+    def __init__(self, md, image_transforms, images_path: Path, site_url: str):
         self.images_path = images_path
-        self.image_sizes = image_sizes
+        self.image_transforms = image_transforms
         self.site_url = site_url
         super().__init__(md)
 
@@ -89,7 +89,7 @@ class ResponsiveImageProcessor(Treeprocessor):
 
         if src.startswith('/') or src.startswith(self.site_url + '/'):
             image_path = self.images_path / src.removeprefix(self.site_url).removeprefix('/')
-            if image_path.exists() and is_image(image_path) and image_is_resizable(image_path):
+            if image_path.exists() and is_image(image_path) and image_path.suffix != '.svg':
                 with Image.open(image_path) as pil_image:
                     width, height = pil_image.size
                     img.attrib['width'] = str(width)
@@ -105,22 +105,21 @@ class ResponsiveImageProcessor(Treeprocessor):
             sources = []
             image_path = Path(src.removeprefix(self.site_url).removeprefix('/'))
 
-            if image_is_resizable(image_path):
-                for size_config in get_image_sizes(image_path, self.image_sizes):
-                    width, height = size_config['max_size']
-                    output_url = f"{self.site_url}/{str(size_config['output_path'])}"
-                    sources.append(f"{output_url} {width}w")
-                    if size_config['is_default_size']:
-                        img.attrib['src'] = output_url
+            for transform in get_image_transforms(image_path, self.image_transforms):
+                width, height = transform['max_size']
+                output_url = f"{self.site_url}/{str(transform['output_path'])}"
+                sources.append(f"{output_url} {width}w")
+                if transform['is_default']:
+                    img.attrib['src'] = output_url
 
-                if sources:
-                    img.attrib['srcset'] = ", ".join(sources)
+            if sources:
+                img.attrib['srcset'] = ", ".join(sources)
 
-                if '' not in self.image_sizes:
-                    logger.warning(
-                        "No default image size set in `image_sizes`. "
-                        f"This <img> src points to an image that might not be there: {src}"
-                    )
+            if '' not in self.image_transforms:
+                logger.warning(
+                    "No default image size set in `image_transforms`. "
+                    f"This <img> src points to an image that might not be there: {src}"
+                )
 
     def _set_image_lazyload(self, img):
         img.attrib['loading'] = 'lazy'
@@ -197,9 +196,9 @@ class ResponsiveImagesExtension(Extension):
     - Wraps block images in a <figure> tag, and replaces the title with a <figcaption>
 
     """
-    def __init__(self, images_path: Path, image_sizes: dict, site_url: str):
+    def __init__(self, images_path: Path, image_transforms: dict, site_url: str):
         self.images_path = images_path
-        self.image_sizes = image_sizes or {}
+        self.image_transforms = image_transforms or {}
         self.site_url = site_url or ''
 
     def extendMarkdown(self, md):
@@ -210,7 +209,7 @@ class ResponsiveImagesExtension(Extension):
             ResponsiveImageProcessor(
                 md,
                 images_path=self.images_path,
-                image_sizes=self.image_sizes,
+                image_transforms=self.image_transforms,
                 site_url=self.site_url,
             ),
             'figure', 0
@@ -260,7 +259,7 @@ class MarkdownProcessor(FileContextProcessor):
             TypographyExtension(),
             ResponsiveImagesExtension(
                 images_path=config['content_path'],
-                image_sizes=config.get('image_sizes'),
+                image_transforms=config.get('image_transforms'),
                 site_url=config.get('site_url')
             ),
             SuperscriptExtension(),

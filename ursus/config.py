@@ -19,7 +19,7 @@ config = {
                 'renderers': [
                     'ursus.renderers.jinja.JinjaRenderer',
                     'ursus.renderers.static.StaticAssetRenderer',
-                    'ursus.renderers.image.ImageRenderer',
+                    'ursus.renderers.image.ImageTransformRenderer',
                 ],
                 'content_path': Path('content').resolve(),
                 'templates_path': Path('templates').resolve(),
@@ -27,19 +27,20 @@ config = {
 
                 """
                 # Uncomment to resize your content images to different sizes
-                'image_sizes': {
+                'image_transforms': {
                     '': {  # Default image size
-                        'max_size': (3200, 4800),
-                    }
-                    'thumbnails': {
                         'exclude': '*.pdf',
+                        'max_size': (3200, 4800),
+                    },
+                    'thumbnails': {
+                        'exclude': ('*.pdf', '*.svg'),
                         'max_size': (400, 400),
-                        'output_types': ('original', '.webp'),
-                    }
+                        'output_types': ('original', 'webp'),
+                    },
                     'pdfPreviews': {
                         'include': ('documents/*.pdf', 'forms/*.pdf'),
                         'max_size': (300, 500),
-                        'output_types': ('.webp', '.png'),
+                        'output_types': ('webp', 'png'),
                     }
                 },
                 """
