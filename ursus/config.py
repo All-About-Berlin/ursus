@@ -25,25 +25,11 @@ config = {
                 'templates_path': Path('templates').resolve(),
                 'output_path': Path('output').resolve(),
 
-                """
-                # Uncomment to resize your content images to different sizes
                 'image_transforms': {
-                    '': {  # Default image size
-                        'exclude': '*.pdf',
-                        'max_size': (3200, 4800),
+                    '': {
+                        'max_size': (5000, 5000),
                     },
-                    'thumbnails': {
-                        'exclude': ('*.pdf', '*.svg'),
-                        'max_size': (400, 400),
-                        'output_types': ('original', 'webp'),
-                    },
-                    'pdfPreviews': {
-                        'include': ('documents/*.pdf', 'forms/*.pdf'),
-                        'max_size': (300, 500),
-                        'output_types': ('webp', 'png'),
-                    }
                 },
-                """
 
                 # The root URL of this website, without a trailing slash. For example, https://allaboutberlin.com
                 'site_url': '',
