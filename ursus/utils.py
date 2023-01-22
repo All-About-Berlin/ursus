@@ -156,6 +156,10 @@ def get_image_transforms(original_path: Path, transforms_config: dict):
                 if suffix == original_path.suffix.lower():
                     output_image_path = original_path
                 else:
+                    if original_path.suffix.lower() == '.svg':
+                        # .svg images are not be converted
+                        continue
+
                     output_image_path = original_path.with_suffix(suffix)
 
                 yield {

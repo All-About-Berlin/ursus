@@ -44,7 +44,7 @@ class ImageTransformRenderer(Renderer):
                         logger.info('Linking %s to %s', str(input_path), str(transform['output_path']))
                         hard_link_file(abs_input_path, abs_output_path)
                     else:
-                        raise ValueError(f"Can't convert {str(input_path)} to {abs_output_path.suffix}")
+                        logger.warning(f"Can't convert {str(input_path)} to {abs_output_path.suffix}. Ignoring.")
                 else:
                     logger.info('Converting %s to %s', str(input_path), str(transform['output_path']))
                     with Image.open(abs_input_path) as pil_image:
