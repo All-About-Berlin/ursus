@@ -11,11 +11,16 @@ class IndexProcessor(ContextProcessor):
     class IndexDict(UserDict):
         def __getitem__(self, key):
             if key not in self.data:
-                return {
-                    entry_uri: self.data[entry_uri]
-                    for entry_uri in self.data.keys()
+                entry_uris = [
+                    entry_uri for entry_uri in self.data.keys()
                     if entry_uri.startswith(key + '/')
-                }
+                ]
+                # If there are no entries, fall back to default behaviour
+                if entry_uris:
+                    return {
+                        entry_uri: self.data[entry_uri]
+                        for entry_uri in entry_uris
+                    }
             return super().__getitem__(key)
 
     def process(self, full_context: dict, changed_files=None):
