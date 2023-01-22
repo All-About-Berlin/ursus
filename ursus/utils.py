@@ -210,10 +210,10 @@ def make_picture_element(original_path: Path, output_path: Path, transforms_conf
     if default_src.suffix != '.svg':
         with Image.open(output_path / default_src) as pil_image:
             width, height = pil_image.size
-            img_attrs['width'] = str(width)
-            img_attrs['height'] = str(height)
-    img_attrs['loading'] = 'lazy'
-    img_attrs['src'] = str(default_src)
+            img.attrib['width'] = str(width)
+            img.attrib['height'] = str(height)
+    img.attrib['loading'] = 'lazy'
+    img.attrib['src'] = str(default_src)
 
     picture.append(img)
 
