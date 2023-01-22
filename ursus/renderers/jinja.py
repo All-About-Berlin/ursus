@@ -1,4 +1,4 @@
-from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape
+from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, StrictUndefined
 from jinja2.ext import Extension
 from markupsafe import Markup
 from ordered_set import OrderedSet
@@ -94,7 +94,8 @@ class JinjaRenderer(Renderer):
         self.template_environment = Environment(
             loader=FileSystemLoader(self.templates_path),
             extensions=[JsLoaderExtension, ResponsiveImageExtension],
-            autoescape=select_autoescape()
+            autoescape=select_autoescape(),
+            undefined=StrictUndefined
         )
         self.template_environment.filters['render'] = render_filter
         self.template_environment.filters.update(config.get('jinja_filters', {}))
