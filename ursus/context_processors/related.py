@@ -16,7 +16,7 @@ class RelatedEntriesProcessor(ContextProcessor):
             if key.startswith('related_') and key in self.data:
                 related_value = self.data[key]
                 if isinstance(related_value, str):  # Single URI string
-                    return self.all_entries[related_value]
+                    return [self.all_entries[related_value]]
                 else:  # List of URI strings
                     return [self.all_entries[subvalue] for subvalue in related_value]
             return super().__getitem__(key)

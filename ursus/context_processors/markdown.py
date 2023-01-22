@@ -246,7 +246,8 @@ class MarkdownProcessor(FileContextProcessor):
                 value = datetime.strptime(value, '%Y-%m-%d')
 
             if(key.startswith('related_')):
-                value = [v.strip() for v in value.split(',')]
+                values = [v.strip() for v in value.split(',')]
+                value = values if len(values) > 1 else values[0]
 
             metadata[key] = value
         return metadata
