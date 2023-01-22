@@ -64,18 +64,25 @@ class ResponsiveImageExtension(Extension):
     def parse(self, parser):
         token = next(parser.stream)
 
-        image_path = [parser.parse_expression()]
+        args = [parser.parse_expression()]
 
-        call = self.call_method('_render_image', image_path)
+        if parser.stream.skip_if("comma"):
+            args.append(parser.parse_expression())
+        else:
+            args.append(nodes.Const(None))
+
+        call = self.call_method('_render_image', args)
         return nodes.Output([nodes.MarkSafe(call)]).set_lineno(token.lineno)
 
     @pass_context
-    def _render_image(self, context, image_path):
+    def _render_image(self, context, image_path, image_class):
+        img_attrs = {'class': image_class} if image_class else {}
         output = make_picture_element(
             original_path=Path(image_path),
             output_path=context['config']['output_path'],
             transforms_config=context['config']['image_transforms'],
-            site_url=context['config']['site_url']
+            site_url=context['config']['site_url'],
+            img_attrs=img_attrs,
         )
         return Markup(ElementTree.tostring(output, encoding='unicode'))
 
