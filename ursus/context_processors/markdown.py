@@ -2,10 +2,12 @@ from datetime import datetime
 from pathlib import Path
 from markdown.extensions import Extension
 from markdown.extensions.smarty import SubstituteTextPattern
+from markdown.extensions.footnotes import FootnoteExtension, FN_BACKLINK_TEXT, NBSP_PLACEHOLDER
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
 from ursus.utils import make_figure_element, make_picture_element
+from xml.etree import ElementTree
 from . import FileContextProcessor
 import logging
 import markdown
@@ -206,6 +208,56 @@ class SuperscriptExtension(Extension):
         md.inlinePatterns.register(SimpleTagPattern(self.SUPERSCRIPT_RE, "sup"), 'superscript', 60)
 
 
+class CustomFootnotesExtension(FootnoteExtension):
+    def extendMarkdown(self, md):
+        super().extendMarkdown(md)
+
+    def makeFootnotesDiv(self, root):
+        if not list(self.footnotes.keys()):
+            return None
+
+        container = ElementTree.Element("div")
+        container.set("class", "footnote")
+        container.set("id", "footnotes")
+        h2 = ElementTree.SubElement(container, "h2")
+        h2.text = "Footnotes"
+        ol = ElementTree.SubElement(container, "ol")
+
+        surrogate_parent = ElementTree.Element("div")
+
+        backlink_title = self.getConfig("BACKLINK_TITLE")
+
+        for index, id in enumerate(self.footnotes.keys(), start=1):
+            li = ElementTree.SubElement(ol, "li")
+            li.set("id", self.makeFootnoteId(id))
+            # Parse footnote with surrogate parent as li cannot be used.
+            # List block handlers have special logic to deal with li.
+            # When we are done parsing, we will copy everything over to li.
+            self.parser.parseChunk(surrogate_parent, self.footnotes[id])
+            for el in list(surrogate_parent):
+                li.append(el)
+                surrogate_parent.remove(el)
+            backlink = ElementTree.Element("a")
+            backlink.set("href", f"#{self.makeFootnoteRefId(id)}")
+            backlink.set("class", "footnote-backref")
+            backlink.set(
+                "title",
+                backlink_title.format(index)
+            )
+            backlink.text = FN_BACKLINK_TEXT
+
+            if len(li):
+                node = li[-1]
+                if node.tag == "p":
+                    node.text = node.text + NBSP_PLACEHOLDER
+                    node.append(backlink)
+                else:
+                    p = ElementTree.SubElement(li, "p")
+                    p.append(backlink)
+
+        return container
+
+
 class MarkdownProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
@@ -213,19 +265,19 @@ class MarkdownProcessor(FileContextProcessor):
         self.html_url_extension = config['html_url_extension']
 
         self.markdown = markdown.Markdown(extensions=[
-            'footnotes',
             'fenced_code',
             'meta',
             'tables',
             'toc',
+            CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
             JinjaStatementsExtension(),
+            SuperscriptExtension(),
             TypographyExtension(),
             ResponsiveImagesExtension(
                 output_path=config['content_path'],
                 image_transforms=config.get('image_transforms'),
                 site_url=self.site_url
             ),
-            SuperscriptExtension(),
             WikiLinkPlusExtension(dict(
                 base_url=config.get('wikilinks_base_url', '') + '/',
                 url_whitespace='%20',
