@@ -5,11 +5,8 @@ from markdown.extensions.smarty import SubstituteTextPattern
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
-from PIL import Image
-from ursus.renderers.image import is_image
 from ursus.utils import make_figure_element, make_picture_element
 from . import FileContextProcessor
-from xml.etree import ElementTree
 import logging
 import markdown
 import re
@@ -212,6 +209,7 @@ class SuperscriptExtension(Extension):
 class MarkdownProcessor(FileContextProcessor):
     def __init__(self, **config):
         super().__init__(**config)
+        self.site_url = config.get('site_url', '')
         self.html_url_extension = config['html_url_extension']
 
         self.markdown = markdown.Markdown(extensions=[
@@ -225,7 +223,7 @@ class MarkdownProcessor(FileContextProcessor):
             ResponsiveImagesExtension(
                 output_path=config['content_path'],
                 image_transforms=config.get('image_transforms'),
-                site_url=config.get('site_url')
+                site_url=self.site_url
             ),
             SuperscriptExtension(),
             WikiLinkPlusExtension(dict(
@@ -262,7 +260,7 @@ class MarkdownProcessor(FileContextProcessor):
                 **self._parse_metadata(self.markdown.Meta),
                 'body': html,
                 'table_of_contents': self.markdown.toc_tokens,
-                'url': f"/{str(file_path.with_suffix(self.html_url_extension))}",
+                'url': f"{self.site_url}/{str(file_path.with_suffix(self.html_url_extension))}",
             })
 
         return entry_context

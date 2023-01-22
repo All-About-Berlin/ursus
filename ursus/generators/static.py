@@ -31,6 +31,7 @@ class StaticSiteGenerator(Generator):
 
         self.context = {
             **config['globals'],
+            'config': config,
             'entries': {},
         }
 

@@ -3,7 +3,8 @@ from jinja2.ext import Extension
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
-from ursus.utils import get_files_in_path
+from ursus.utils import get_files_in_path, make_picture_element
+from xml.etree import ElementTree
 from . import Renderer
 import logging
 
@@ -17,7 +18,8 @@ class JsLoaderExtension(Extension):
 
     All javascript code between {% js %} tags is combined and queued for future output.
 
-    {% alljs %} outputs the queued javascript code. The code is included in order of addition. If the same code is queued multiple times, it's only output once.
+    {% alljs %} outputs the queued javascript code. The code is included in order of addition. If the same code is
+    queued multiple times, it's only output once.
     """
     tags = {"js", "alljs"}
 
@@ -47,6 +49,37 @@ class JsLoaderExtension(Extension):
         return ''
 
 
+class ResponsiveImageExtension(Extension):
+    """Jinja extension. Adds {% image 'relative/path/to/original.jpg' %} tag.
+
+    This tag is replaced by a responsive <picture> element. The correct image transforms for the given source image are
+    used.
+    """
+    tags = {"image"}
+
+    def __init__(self, environment):
+        super().__init__(environment)
+        environment.extend(js_fragments=OrderedSet())
+
+    def parse(self, parser):
+        token = next(parser.stream)
+
+        image_path = [parser.parse_expression()]
+
+        call = self.call_method('_render_image', image_path)
+        return nodes.Output([nodes.MarkSafe(call)]).set_lineno(token.lineno)
+
+    @pass_context
+    def _render_image(self, context, image_path):
+        output = make_picture_element(
+            original_path=Path(image_path),
+            output_path=context['config']['output_path'],
+            transforms_config=context['config']['image_transforms'],
+            site_url=context['config']['site_url']
+        )
+        return Markup(ElementTree.tostring(output, encoding='unicode'))
+
+
 @pass_context
 def render_filter(context, value):
     return context.eval_ctx.environment.from_string(value).render(**context)
@@ -60,7 +93,7 @@ class JinjaRenderer(Renderer):
         super().__init__(**config)
         self.template_environment = Environment(
             loader=FileSystemLoader(self.templates_path),
-            extensions=[JsLoaderExtension],
+            extensions=[JsLoaderExtension, ResponsiveImageExtension],
             autoescape=select_autoescape()
         )
         self.template_environment.filters['render'] = render_filter
