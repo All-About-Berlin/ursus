@@ -213,7 +213,7 @@ def make_picture_element(original_path: Path, output_path: Path, transforms_conf
             img.attrib['width'] = str(width)
             img.attrib['height'] = str(height)
     img.attrib['loading'] = 'lazy'
-    img.attrib['src'] = str(default_src)
+    img.attrib['src'] = f"{site_url}/{str(default_src)}"
 
     picture.append(img)
 
