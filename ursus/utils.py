@@ -227,6 +227,7 @@ def make_figure_element(original_path: Path, output_path: Path, transforms_confi
     """
     image = make_picture_element(original_path, output_path, transforms_config, img_attrs, site_url)
     if a_attrs and a_attrs.get('href'):
+        a_attrs['target'] = '_blank'
         wrapped_image = ElementTree.Element('a', a_attrs)
         wrapped_image.append(image)
     else:
