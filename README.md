@@ -123,9 +123,13 @@ It makes a few changes:
     - `Related_*` keys are replaced by a list of related entry dicts
     - `Date_` keys are converted to `datetime` objects
 
-#### IndexProcessor
+#### GetEntriesProcessor
 
-The `IndexProcessor` creates an index of entries. For example, `context['entries']['posts']` returns a subset of `context['entries']` with only Entries that start with `posts/`: `posts/hello-world.md`, `posts/foo.md`, `posts/bar.md`, etc.
+The `GetEntriesProcessor` adds a `get_entries` method to the context.
+
+```jinja
+{% set posts = get_entries('posts', sort_by='date_created', reverse=True) %}
+```
 
 ### Renderers
 
