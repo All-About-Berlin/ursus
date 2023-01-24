@@ -2,15 +2,15 @@ from pathlib import Path
 
 
 class ContextProcessor:
-    def __init__(self, **config):
+    def __init__(self, config):
         pass
 
-    def process(self, full_context: dict):
-        return full_context
+    def process(self, context: dict):
+        return context
 
 
-class FileContextProcessor:
-    def __init__(self, **config):
+class EntryContextProcessor:
+    def __init__(self, config):
         self.content_path = config['content_path']
         self.templates_path = config['templates_path']
         self.output_path = config['output_path']

@@ -21,12 +21,12 @@ class RelatedEntriesProcessor(ContextProcessor):
                     return [self.all_entries[subvalue] for subvalue in related_value]
             return super().__getitem__(key)
 
-    def __init__(self, **config):
+    def __init__(self, config):
         pass
 
-    def process(self, full_context: dict, changed_files=None):
-        for uri, entry in full_context['entries'].items():
-            if type(full_context['entries'][uri]) is not self.RelatedEntryReferenceDict:
-                full_context['entries'][uri] = self.RelatedEntryReferenceDict(entry, full_context['entries'])
+    def process(self, context: dict, changed_files=None):
+        for uri, entry in context['entries'].items():
+            if type(context['entries'][uri]) is not self.RelatedEntryReferenceDict:
+                context['entries'][uri] = self.RelatedEntryReferenceDict(entry, context['entries'])
 
-        return full_context
+        return context

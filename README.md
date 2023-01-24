@@ -106,7 +106,7 @@ The `MarkdownProcessor` would generate a context object that looks like this:
 
 Then, a Renderer can use this information to render a template into a fully working HTML page.
 
-`FileContextProcessor`s create or transform the context for an individual Entry. For example, the `MarkdownProcessor` above.
+`EntryContextProcessor`s create or transform the context for an individual Entry. For example, the `MarkdownProcessor` above.
 
 `ContextProcessor`s transform the global context after all Entries are processed. For example, it can add a `related_content` field to your blog posts.
 

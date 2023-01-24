@@ -13,8 +13,8 @@ class ImageTransformRenderer(Renderer):
     """
     Resizes images and generate PDF thumbnails
     """
-    def __init__(self, **config):
-        super().__init__(**config)
+    def __init__(self, config):
+        super().__init__(config)
         self.image_transforms = config.get('image_transforms', {})
 
     def get_files(self, changed_files=None):
@@ -50,6 +50,6 @@ class ImageTransformRenderer(Renderer):
                     with Image.open(abs_input_path) as pil_image:
                         make_image_thumbnail(pil_image, max_size, abs_output_path)
 
-    def render(self, full_context, changed_files=None):
+    def render(self, context, changed_files=None):
         for file_path in self.get_files(changed_files):
             self.transform_file(file_path, overwrite=False)

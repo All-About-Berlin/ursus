@@ -96,8 +96,8 @@ class JinjaRenderer(Renderer):
     """
     Renders all .jinja templates in the templates directory, unless their name starts with '_'.
     """
-    def __init__(self, **config):
-        super().__init__(**config)
+    def __init__(self, config):
+        super().__init__(config)
         self.template_environment = Environment(
             loader=FileSystemLoader(self.templates_path),
             extensions=[JsLoaderExtension, ResponsiveImageExtension],

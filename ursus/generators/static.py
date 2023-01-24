@@ -16,16 +16,16 @@ class StaticSiteGenerator(Generator):
         self.templates_path = config['templates_path']
 
         self.entry_context_processors = [
-            import_class(class_name)(**config)
+            import_class(class_name)(config)
             for class_name in config['entry_context_processors']
         ]
         self.global_context_processors = [
-            import_class(class_name)(**config)
+            import_class(class_name)(config)
             for class_name in config['global_context_processors']
         ]
 
         self.renderers = [
-            import_class(class_name)(**config)
+            import_class(class_name)(config)
             for class_name in config['renderers']
         ]
 

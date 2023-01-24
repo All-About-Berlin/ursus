@@ -25,8 +25,7 @@ class StaticAssetRenderer(Renderer):
             if has_changed(f) and f.suffix not in self.ignored_suffixes
         ]
 
-    def render(self, full_context, changed_files=None):
+    def render(self, context, changed_files=None):
         for asset_path in self.get_assets_to_copy(changed_files):
-            # TODO: Hard link instead of copying
             logger.info('Linking %s', str(asset_path))
             hard_link_file(self.templates_path / asset_path, self.output_path / asset_path)

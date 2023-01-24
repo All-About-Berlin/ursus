@@ -8,7 +8,7 @@ from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
 from ursus.utils import make_figure_element, make_picture_element
 from xml.etree import ElementTree
-from . import FileContextProcessor
+from . import EntryContextProcessor
 import logging
 import markdown
 import re
@@ -258,9 +258,9 @@ class CustomFootnotesExtension(FootnoteExtension):
         return container
 
 
-class MarkdownProcessor(FileContextProcessor):
-    def __init__(self, **config):
-        super().__init__(**config)
+class MarkdownProcessor(EntryContextProcessor):
+    def __init__(self, config):
+        super().__init__(config)
         self.site_url = config.get('site_url', '')
         self.html_url_extension = config['html_url_extension']
 
