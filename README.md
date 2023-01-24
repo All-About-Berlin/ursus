@@ -75,22 +75,26 @@ The `MarkdownProcessor` would generate a context object that looks like this:
 ```
 {
     # Information about this entry
-    'title': 'Hello world!',
-    'description': 'This is an example page',
-    'body': 'This is the content of your markdown file, rendered to HTML',
-    'date_created': datetime.datetime(2022, 10, 10, 0, 0, 0, 0)
-    'date_updated': datetime.datetime(2023, 1, 1, 0, 0, 0, 0)
-    'related_posts': [
-        {'title': 'Foo!', ...},
-        {'title': 'Bar!', ...}
-    ],
-    'url': 'https://example.com/posts/hello-world.html',
+    'entry' {
+        'title': 'Hello world!',
+        'description': 'This is an example page',
+        'body': 'This is the content of your markdown file, rendered to HTML',
+        'date_created': datetime.datetime(2022, 10, 10, 0, 0, 0, 0)
+        'date_updated': datetime.datetime(2023, 1, 1, 0, 0, 0, 0)
+        'related_posts': [
+            {'title': 'Foo!', ...},
+            {'title': 'Bar!', ...}
+        ],
+        'url': 'https://example.com/posts/hello-world.html',
+    },
 
     # A list of all entries
     'entries': {
         'posts/hello-world.md': {...},
         'posts/foo.md': {...},
         'posts/bar.md': {...},
+        'index.md': {...},
+        'contact.md': {...},
         'images/example.png': {...},
     }
 
@@ -141,38 +145,26 @@ This renderer does nothing unless `image_transforms` is set:
 ```python
 config = {
     # ...
-    'generators': [
-        (
-            'ursus.generators.static.StaticSiteGenerator', {
-                'renderers': [
-                    # ...
-                    'ursus.renderers.image.ImageTransformRenderer',
-                    # ...
-                ],
-                'image_transforms': {
-                    # Default transform used as <img> src
-                    # Saved as <output_path>/path/to/image.jpg
-                    '': {
-                        'max_size': (3200, 4800),
-                    },
-                    # Saved as <output_path>/path/to/image.jpg and .webp
-                    'thumbnails': {
-                        'exclude': ('*.pdf', '*.svg'),
-                        'max_size': (400, 400),
-                        'output_types': ('original', 'webp'),
-                    },
-                    # Only previews PDF files in specific locations
-                    # Saved as <output_path>/path/to/image.webp and .png
-                    'pdfPreviews': {
-                        'include': ('documents/*.pdf', 'forms/*.pdf'),  # glob patterns
-                        'max_size': (300, 500),
-                        'output_types': ('webp', 'png'),
-                    }
-                },
-                # ...
-            }
-        )
-    ],
+    'image_transforms': {
+        # Default transform used as <img> src
+        # Saved as <output_path>/path/to/image.jpg
+        '': {
+            'max_size': (3200, 4800),
+        },
+        # Saved as <output_path>/path/to/image.jpg and .webp
+        'thumbnails': {
+            'exclude': ('*.pdf', '*.svg'),  # glob patterns
+            'max_size': (400, 400),
+            'output_types': ('original', 'webp'),
+        },
+        # Only previews PDF files in specific locations
+        # Saved as <output_path>/path/to/image.webp and .png
+        'pdfPreviews': {
+            'include': ('documents/*.pdf', 'forms/*.pdf'),  # glob patterns
+            'max_size': (300, 500),
+            'output_types': ('webp', 'png'),
+        }
+    },
     # ...
 }
 ```

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from ursus.utils import import_class, import_config
-from ursus.config import config as default_config
+from ursus.config import default_config
 from watchdog.observers import Observer
 import argparse
 import coloredlogs
@@ -23,34 +23,27 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+config = copy.deepcopy(default_config)
 user_config = import_config(args.config) if args.config else {}
-config = {
+config.update({
     **default_config,
     **user_config,
-}
+})
 
 coloredlogs.install(**config['logging'])
 
 if args.watch:
     observer = Observer()
 
-
-for generator_name, generator_config in config['generators']:
-    generator_class = import_class(generator_name)
-    local_config = copy.deepcopy(config)
-    local_config.pop('generators')
-    local_config.update(generator_config)
-    generator = generator_class(**local_config)
-
-    generator.generate()
-
-    if args.watch:
-        for path in generator.get_watched_paths():
-            observer.schedule(
-                generator.get_observer_event_handler(), path, recursive=True
-            )
+generator_name = config['generator']
+generator = import_class(generator_name)(config)
+generator.generate()
 
 if args.watch:
+    for path in generator.get_watched_paths():
+        observer.schedule(
+            generator.get_observer_event_handler(), path, recursive=True
+        )
     observer.start()
     try:
         while True:

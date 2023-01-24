@@ -10,18 +10,18 @@ class StaticSiteGenerator(Generator):
     """
     Turns a group of files and templates into a static website
     """
-    def __init__(self, **config):
-        super().__init__(**config)
+    def __init__(self, config):
+        super().__init__(config)
 
         self.templates_path = config['templates_path']
 
-        self.file_context_processors = [
+        self.entry_context_processors = [
             import_class(class_name)(**config)
-            for class_name in config['file_context_processors']
+            for class_name in config['entry_context_processors']
         ]
-        self.context_processors = [
+        self.global_context_processors = [
             import_class(class_name)(**config)
-            for class_name in config['context_processors']
+            for class_name in config['global_context_processors']
         ]
 
         self.renderers = [
@@ -49,14 +49,14 @@ class StaticSiteGenerator(Generator):
 
         for file_path in self.get_content_files(changed_files):
             entry_context = {}
-            for file_context_processor in self.file_context_processors:
+            for file_context_processor in self.entry_context_processors:
                 entry_context = file_context_processor.process(file_path, entry_context)
 
             self.context['entries'].update({
                 str(file_path): entry_context
             })
 
-        for context_processor in self.context_processors:
+        for context_processor in self.global_context_processors:
             self.context = context_processor.process(self.context, changed_files)
 
         """

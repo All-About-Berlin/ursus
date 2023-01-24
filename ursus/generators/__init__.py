@@ -59,7 +59,7 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
 
 
 class Generator:
-    def __init__(self, **config):
+    def __init__(self, config):
         self.output_path = config['output_path']
         self.content_path = config['content_path']
 
