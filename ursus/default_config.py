@@ -2,7 +2,7 @@ from pathlib import Path
 import logging
 
 
-default_config = {
+config = {
     'content_path': Path('content').resolve(),
     'templates_path': Path('templates').resolve(),
     'output_path': Path('output').resolve(),

@@ -205,10 +205,11 @@ It uses hard links instead of copying files. It's faster and it saves space.
 
 ## Getting started
 
-1. Create a directory for your templates, and another for your content.
+1. **Create a directory** for your project. This is a sensible structure, because it works automatically with the default configuration:
     ```
     example_site/
-    ├── templates/
+    ├── ursus_config.py  # By default, Ursus will use this config file
+    ├── templates/  # By default, Ursus will use this templates directory
     │   ├── index.html.jinja
     │   ├── css/
     │   │   └──style.css
@@ -220,8 +221,8 @@ It uses hard links instead of copying files. It's faster and it saves space.
     │   │   └── open-sans.woff
     │   └── posts/
     │       ├── index.html.jinja
-    │       └── _entry.html.jinja
-    └── content/
+    │       └── entry.html.jinja
+    └── content/  # By default, Ursus will use this content directory
         ├── posts/
         │   ├── hello-world.md
         │   ├── foo.md
@@ -229,15 +230,15 @@ It uses hard links instead of copying files. It's faster and it saves space.
         └── images/
             └── example.png
     ```
-2. Create a config file for your website. Copy `config.py` for an example.
-3. Call the `ursus` command.
+2. **Create a config file for your website.** You can copy `ursus/default_config.py`. If you call your config `ursus_config.py` and place it in your project root, it will be loaded automatically. Otherwise you must call ursus with the `-c` argument. If no config is set, Ursus will use the defaults set in `ursus/default_config.py`.
+3. **Call the `ursus` command.**
 
 ### Running Ursus
 
 Ursus comes with the `ursus` command. It accepts these arguments:
 
 * `-w` or `--watch`: Reload the website when Content or Template files change.
-* `-c` or `--config`: Run with the supplied configuration file. It accepts a Python file path `path/to/ursus_config.py`, or a Python module name `project.conf.ursus.py`
+* `-c` or `--config`: Run with the supplied configuration file. It accepts a Python file path `path/to/your_config.py`, or a Python module name `project.conf.ursus.py`. If not set, Ursus will look for `./ursus_config.py`.
 * `-f` or `--fast`: Combined with `-w`, favours rebuild speed over completeness. It only rebuilds pages for the files that changed, not files that may refer to them.
 
 #### Building from Sublime Text
