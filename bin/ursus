@@ -41,9 +41,7 @@ generator.generate()
 
 if args.watch:
     for path in generator.get_watched_paths():
-        observer.schedule(
-            generator.get_observer_event_handler(), path, recursive=True
-        )
+        observer.schedule(generator.get_observer_event_handler(), path, recursive=True)
     observer.start()
     try:
         while True:
