@@ -2,30 +2,31 @@
 
 Static site generator used by [All About Berlin](https://allaboutberlin.com). It turns Markdown files and Jinja templates into a static website.
 
-This README is incomplete, as befits a project under active development.
+This project is in active use and development.
 
 ## Features
 
-- Customisable and extensible. It's not just for blogs.
-- Relationships between objects. For example, related content.
+Ursus allows **relationships between objects**, so that a blog post can have related glossary entries.
+
+It allows you to **include widgets in your content**. This is how I embed calculators and other widgets on All About Berlin.
+
+It uses Python Markdown to process markdown. You can configure which extensions to use, or create your own. Ursus supplies a few custom extensions.
+
+It uses Jinja to render templates.
+
+It converts images to different sizes and formats, and generates previews for PDFs. The sizes are configurable.
 
 ## Basic concepts
 
 ### Content and Entries
 
-**Content** is what fills your website: text, images, videos. A single piece of content is called an **Entry**. The location of the Content is set by the `content_path` config parameter. By default, it's under `./content`. You can have a different `content_path` for each Generator.
+**Content** is what fills your website: text, images, videos, PDFs. A single piece of content is called an **Entry**. The location of the Content is set by the `content_path` config parameter. By default, it's under `./content`, but you can change it in your config.
 
-Content is usually *rendered* to create a working website. Some content is rendered with Templates.
-
-For example:
-
-- A markdown file that is rendered into an HTML page using a Template.
-- An image that is served in different sizes
-- A PDF file for which thumbnails are created
+Content is usually *rendered* to create a working website. Some content (like Markdown files) is rendered with Templates, and other (like images) is converted to a different file format.
 
 ### Templates
 
-**Templates** are used to render your Content. The same templates can be applied to different Entries, or even reused for a different website. That's why they are kept separate from your content.
+**Templates** are used to render your Content. They are the theme of your website. The same templates can be applied to different Entries, or even reused for a different website. They are kept in a separate directory.
 
 The location of the Templates is set by the `templates_path` config parameter. By default, it's under `./templates`. You can have a different `templates_path` for each Generator.
 
@@ -42,9 +43,11 @@ The location of the Output is set by the `output_path` config parameter. By defa
 
 ## How Ursus works
 
+ContextProcessors transform the context. Then Renderers use the context to know which pages to create, and what content to put in the templates.
+
 ### Generators
 
-A **Generator** takes your Content and your Templates and produces an Output. The default **StaticSiteGenerator** generates a static website. You can write your own Generator to output an eBook, a PDF, or anything else. You can have multiple Generators if you need to produce multiple Outputs.
+A **Generator** takes your Content and your Templates and produces an Output. It's a recipe to turn your content into a final result. The default **StaticSiteGenerator** generates a static website. You could write your own Generator to output an eBook, a PDF, or anything else.
 
 #### StaticSiteGenerator
 
@@ -52,7 +55,9 @@ Generates a static website.
 
 ### Context processors
 
-A **ContextProcessor** turns your Content into an object that the Renderer uses to render Templates.
+The context is a big object that is used to render templates.
+
+A **ContextProcessor** fills this object or transforms its existing content.
 
 For example, the **MarkdownProcessor** generates context out of a markdown file. Take this example markdown file:
 
@@ -70,7 +75,7 @@ Related_posts: posts/foo.md, posts/bar.md
 *This* is a template
 ```
 
-The `MarkdownProcessor` would generate a context object that looks like this:
+The `MarkdownProcessor` generates a context object that looks like this:
 
 ```
 {
@@ -110,14 +115,17 @@ Then, a Renderer can use this information to render a template into a fully work
 
 `ContextProcessor`s transform the global context after all Entries are processed. For example, it can add a `related_content` field to your blog posts.
 
+Only Entries with matching ContextProcessors are rendered. Entry or directory names that start with `.` or `_` are not rendered. You can use this to create drafts.
+
 #### MarkdownProcessor
 
-The `MarkdownProcessor` creates context for `.md` files.
+The `MarkdownProcessor` creates context for all `.md` files in `content_path`.
 
-It makes a few changes:
+It makes a few changes to the default markdown output:
 
 - Lazyload images (`loading=lazy`)
 - Convert images to `<figure>` tags when appropriate
+- Jinja tags (`{{ ... }}` and `{% ... %}`) are rendered as-is. You can use the, to `{% include %}` template parts and `{{ variables }}` in your content.
 - Set the `srcset` to load responsive images from the `image_transforms` config.
 - Put the front matter in the context
     - `Related_*` keys are replaced by a list of related entry dicts
@@ -125,7 +133,7 @@ It makes a few changes:
 
 #### GetEntriesProcessor
 
-The `GetEntriesProcessor` adds a `get_entries` method to the context.
+The `GetEntriesProcessor` adds a `get_entries` method to the context. It's used to get a list of entries of a certain type, and sort it.
 
 ```jinja
 {% set posts = get_entries('posts', sort_by='date_created', reverse=True) %}
@@ -133,7 +141,7 @@ The `GetEntriesProcessor` adds a `get_entries` method to the context.
 
 ### Renderers
 
-**Renderer**s put your Content into Templates, and render them into the desired Outputs.
+**Renderer**s create content that make up the Output. In other words, they turn your content files into pages, correctly-sized images, RSS feeds, etc.
 
 #### ImageTransformRenderer
 
@@ -175,7 +183,13 @@ config = {
 
 #### JinjaRenderer
 
-Renders Jinja templates, fills them with your Content.
+Renders Content into Jinja templates using the context made by ContextProcessors.
+
+A Template called `<output_path>/hello-world.html.jinja` will be rendered as `<output_path>/hello-world.html`. The template has access to anything you put in the context, including the `entries` dict, and the `get_entries` method.
+
+A Template called `<output_path>/posts/entry.html.jinja` will render all Entries under `<content_path>/posts/*.md` and save them under `<output_path>/posts/*.html`. The template has access to an `entry` variable.
+
+Only Templates with the `.jinja` extension are rendered. Files or directory names that start with `.` or `_` are not rendered.
 
 Files named `_entry.*.jinja` are rendered once for each Entry with the same path. For example, `<templates_path>/posts/_entry.html.jinja` will render `<content_path>/posts/hello-world.md`, `<content_path>/posts/foo.md` and `<content_path>/posts/bar.md`. The output path is the entry name with the extension replaced. If `<templates_path>/posts/_entry.html.jinja` renders `<templates_path>/posts/hello-world.md`, the output file is `<output_path>/posts/hello-world.html`.
 
@@ -186,6 +200,8 @@ The output path is the template name without the `.jinja` extension. For example
 #### StaticAssetRenderer
 
 Simply copies static assets (CSS, JS, images, etc.) under `templates_path` to the same subdirectory in `output_path`. Files starting with `.` are ignored. Files and directories starting with `_` are ignored.
+
+It uses hard links instead of copying files. It's faster and it saves space.
 
 ## Getting started
 
