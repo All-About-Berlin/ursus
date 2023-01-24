@@ -19,7 +19,11 @@ parser.add_argument(
 )
 parser.add_argument(
     '-w', '--watch', action='store_true',
-    help="Watch <content_path> and <templates_path> for changes"
+    help="Regenerate files when <content_path> and <templates_path> change."
+)
+parser.add_argument(
+    '-f', '--fast', action='store_true',
+    help="Only regenerate templates for entries that changed, even if related pages might also change."
 )
 args = parser.parse_args()
 
@@ -35,6 +39,8 @@ coloredlogs.install(**config['logging'])
 if args.watch:
     observer = Observer()
 
+if args.fast:
+    config['fast_rebuilds'] = True
 generator_name = config['generator']
 generator = import_class(generator_name)(config)
 generator.generate()
@@ -49,3 +55,5 @@ if args.watch:
     finally:
         observer.stop()
         observer.join()
+else:
+    generator.generate()

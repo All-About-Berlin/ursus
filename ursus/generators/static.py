@@ -14,6 +14,7 @@ class StaticSiteGenerator(Generator):
         super().__init__(config)
 
         self.templates_path = config['templates_path']
+        self.fast_rebuilds = config['fast_rebuilds']
 
         self.entry_context_processors = [
             import_class(class_name)(config)
@@ -63,6 +64,6 @@ class StaticSiteGenerator(Generator):
         Render entries and other templates
         """
         for renderer in self.renderers:
-            renderer.render(self.context, changed_files)
+            renderer.render(self.context, changed_files, fast=self.fast_rebuilds)
 
         logger.info("Done.")

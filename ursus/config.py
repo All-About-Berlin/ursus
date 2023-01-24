@@ -10,6 +10,11 @@ default_config = {
     # The generator that makes something out of your content
     'generator': 'ursus.generators.static.StaticSiteGenerator',
 
+    # Rebuilds the output faster by only rebuilding templates for the changed files.
+    # Related pages (like index pages) will not be rebuild, even though they could change.
+    # If false, the pages that definitely changed are still rebuilt before others.
+    'fast_rebuilds': False,
+
     # The processors that update the context of individual entries
     'entry_context_processors': [
         'ursus.context_processors.markdown.MarkdownProcessor',

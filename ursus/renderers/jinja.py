@@ -126,7 +126,7 @@ class JinjaRenderer(Renderer):
         output_path = Path(entry_uri).with_suffix(output_suffix)
         self.render_template(template_path, specific_context, output_path)
 
-    def render(self, context, changed_files=None):
+    def render(self, context, changed_files=None, fast=False):
         template_paths = get_files_in_path(self.templates_path, suffix='.jinja')
 
         edited_entry_uris = {
@@ -144,16 +144,17 @@ class JinjaRenderer(Renderer):
                             self.render_entry(template_path, context, entry_uri)
 
         # Second pass: all other templates
-        for template_path in template_paths:
-            # Same template, rendered for multiple entries
-            if template_path.with_suffix('').stem == 'entry':
-                entries_of_type = [
-                    uri for uri, entry in context['entries'].items()
-                    if uri.startswith(str(template_path.parent) + '/')
-                ]
-                for entry_uri in entries_of_type:
-                    if entry_uri not in edited_entry_uris:
-                        self.render_entry(template_path, context, entry_uri)
-            # Render once
-            else:
-                self.render_template(template_path, context, template_path.with_suffix(''))
+        if not fast:
+            for template_path in template_paths:
+                # Same template, rendered for multiple entries
+                if template_path.with_suffix('').stem == 'entry':
+                    entries_of_type = [
+                        uri for uri, entry in context['entries'].items()
+                        if uri.startswith(str(template_path.parent) + '/')
+                    ]
+                    for entry_uri in entries_of_type:
+                        if entry_uri not in edited_entry_uris:
+                            self.render_entry(template_path, context, entry_uri)
+                # Render once
+                else:
+                    self.render_template(template_path, context, template_path.with_suffix(''))

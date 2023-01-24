@@ -50,6 +50,6 @@ class ImageTransformRenderer(Renderer):
                     with Image.open(abs_input_path) as pil_image:
                         make_image_thumbnail(pil_image, max_size, abs_output_path)
 
-    def render(self, context, changed_files=None):
+    def render(self, context, changed_files=None, fast=False):
         for file_path in self.get_files(changed_files):
             self.transform_file(file_path, overwrite=False)

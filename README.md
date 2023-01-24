@@ -222,6 +222,7 @@ Ursus comes with the `ursus` command. It accepts these arguments:
 
 * `-w` or `--watch`: Reload the website when Content or Template files change.
 * `-c` or `--config`: Run with the supplied configuration file. It accepts a Python file path `path/to/ursus_config.py`, or a Python module name `project.conf.ursus.py`
+* `-f` or `--fast`: Combined with `-w`, favours rebuild speed over completeness. It only rebuilds pages for the files that changed, not files that may refer to them.
 
 #### Building from Sublime Text
 
