@@ -57,5 +57,3 @@ if args.watch:
     finally:
         observer.stop()
         observer.join()
-else:
-    generator.generate()
