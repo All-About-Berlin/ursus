@@ -28,9 +28,9 @@ config = {
 
     # The renderers that take your templates and content, and populate the output dir
     'renderers': [
-        'ursus.renderers.jinja.JinjaRenderer',
         'ursus.renderers.static.StaticAssetRenderer',
         'ursus.renderers.image.ImageTransformRenderer',
+        'ursus.renderers.jinja.JinjaRenderer',
     ],
 
     # Transforms applied to your content images
