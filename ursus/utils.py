@@ -3,6 +3,7 @@ from pathlib import Path
 from PIL import Image
 from xml.etree import ElementTree
 import fitz
+import shutil
 import sys
 
 
@@ -78,13 +79,12 @@ def get_files_in_path(path: Path, whitelist=None, suffix=None):
     ]
 
 
-def hard_link_file(input_path: Path, output_path: Path):
+def copy_file(input_path: Path, output_path: Path):
     assert input_path.is_absolute(), f"input_path {str(input_path)} is relative. It must be absolute."
     assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.unlink(missing_ok=True)
-    output_path.hardlink_to(input_path)
+    shutil.copy(input_path, output_path)
 
 
 def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):

@@ -149,8 +149,8 @@ Renders images in `content_path` with a few changes:
 
 - Images are compressed and optimized.
 - Images are resized according to the `image_transforms`. The images are shrunk if needed, but never stretched.
-- Images that can't be transformed are hard linked to the output directory.
-- Images that can't be resized (like SVG) are hard linked in the output directory.
+- Files that can't be transformed (PDF to PDF) are copied as-is to the output directory.
+- Images that can't be resized (SVG to anything) are copied as-is to the output directory.
 - Image EXIF data is removed.
 
 This renderer does nothing unless `image_transforms` is set:

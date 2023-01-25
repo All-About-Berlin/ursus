@@ -1,6 +1,7 @@
 from ursus.utils import import_class, get_files_in_path
 from . import Generator
 import logging
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,8 @@ class StaticSiteGenerator(Generator):
         """
         Build a rendering context from the content
         """
+        start_time = time.time()
+
         logger.info("Building context...")
 
         for file_path in self.get_content_files(changed_files):
@@ -53,9 +56,11 @@ class StaticSiteGenerator(Generator):
             for file_context_processor in self.entry_context_processors:
                 entry_context = file_context_processor.process(file_path, entry_context)
 
-            self.context['entries'].update({
-                str(file_path): entry_context
-            })
+            # Leave empty entries out of the context
+            if len(entry_context):
+                self.context['entries'].update({
+                    str(file_path): entry_context
+                })
 
         for context_processor in self.global_context_processors:
             self.context = context_processor.process(self.context, changed_files)
@@ -65,5 +70,15 @@ class StaticSiteGenerator(Generator):
         """
         for renderer in self.renderers:
             renderer.render(self.context, changed_files, fast=self.fast_rebuilds)
+
+        """
+        Delete output files older than this build. This is how stale output files are deleted.
+        """
+        if not self.fast_rebuilds:
+            logger.info("Deleting stale output files...")
+            for file in self.output_path.rglob('*'):
+                if file.is_file() and file.stat().st_mtime < start_time:
+                    logger.warning(f"Deleting output file {str(file.relative_to(self.output_path))}")
+                    file.unlink()
 
         logger.info("Done.")
