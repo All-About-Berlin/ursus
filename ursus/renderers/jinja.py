@@ -1,6 +1,5 @@
-from itertools import filterfalse
 from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, StrictUndefined
-from jinja2.ext import Extension
+from jinja2.ext import Extension, do
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
@@ -109,7 +108,7 @@ class JinjaRenderer(Renderer):
         super().__init__(config)
         self.template_environment = Environment(
             loader=FileSystemLoader(self.templates_path),
-            extensions=[JsLoaderExtension, ResponsiveImageExtension],
+            extensions=[do, JsLoaderExtension, ResponsiveImageExtension],
             autoescape=select_autoescape(),
             undefined=StrictUndefined
         )
