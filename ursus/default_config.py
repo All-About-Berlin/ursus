@@ -15,13 +15,10 @@ config = {
     # If false, the pages that definitely changed are still rebuilt before others.
     'fast_rebuilds': False,
 
-    # The processors that update the context of individual entries
-    'entry_context_processors': [
+    # The processors that update the context with extra data
+    'context_processors': [
+        'ursus.context_processors.stale.StaleEntriesProcessor',
         'ursus.context_processors.markdown.MarkdownProcessor',
-    ],
-
-    # The processors that update the full context
-    'global_context_processors': [
         'ursus.context_processors.get_entries.GetEntriesProcessor',
         'ursus.context_processors.related.RelatedEntriesProcessor',
     ],

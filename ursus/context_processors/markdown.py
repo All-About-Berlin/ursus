@@ -304,16 +304,16 @@ class MarkdownProcessor(EntryContextProcessor):
             metadata[key] = value
         return metadata
 
-    def process(self, file_path: Path, entry_context: dict):
-        if file_path.suffix.lower() == '.md':
-            with (self.content_path / file_path).open(encoding='utf-8') as f:
+    def process_entry(self, entry_uri: str, entry_context: dict):
+        if entry_uri.endswith('.md'):
+            with (self.content_path / entry_uri).open(encoding='utf-8') as f:
                 html = self.markdown.reset().convert(f.read())
 
             entry_context.update({
                 **self._parse_metadata(self.markdown.Meta),
                 'body': html,
                 'table_of_contents': self.markdown.toc_tokens,
-                'url': f"{self.site_url}/{str(file_path.with_suffix(self.html_url_extension))}",
+                'url': f"{self.site_url}/{str(Path(entry_uri).with_suffix(self.html_url_extension))}",
             })
 
         return entry_context

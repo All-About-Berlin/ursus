@@ -58,7 +58,7 @@ def is_svg(path: Path):
     return path.is_file() and path.suffix.lower() == '.svg'
 
 
-def get_files_in_path(path: Path, whitelist=None, suffix=None):
+def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None):
     """
     Returns a list of valid, visible files under a given path. If whitelist is set, only files in this list are
     returned. The returned paths are relative to `path`.
@@ -67,9 +67,9 @@ def get_files_in_path(path: Path, whitelist=None, suffix=None):
         files = []
         for f in whitelist:
             if (not f.is_absolute()) and (path / f).exists():
-                files.append(f)
+                files.append(path / f)
             elif f.is_absolute() and f.is_relative_to(path):
-                files.append(f.relative_to(path))
+                files.append(f)
     else:
         files = path.rglob('[!._]*' + (suffix or ''))
 

@@ -6,7 +6,7 @@ class GetEntriesProcessor(ContextProcessor):
     """
     Adds the get_entries() method to the context root
     """
-    def process(self, context: dict, changed_files=None):
+    def process(self, context: dict, changed_files: set = None) -> dict:
         def get_entries(namespace, sort_by=None, reverse=False):
             entries = context['entries'].items()
             if namespace:

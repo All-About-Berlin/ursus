@@ -28,8 +28,8 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
             self.debounce_timer.start()
 
     def on_file_changes(self):
-        changed_files = [Path(event.src_path) for event in self.queued_events]
-        changed_files.extend([Path(e.dest_path) for e in self.queued_events if e.event_type == 'moved'])
+        changed_files = set(Path(event.src_path) for event in self.queued_events)
+        changed_files.update([Path(e.dest_path) for e in self.queued_events if e.event_type == 'moved'])
         self.queued_events.clear()
         self.generator.on_file_changes(changed_files)
 
@@ -48,5 +48,5 @@ class Generator:
     def get_observer_event_handler(self):
         return GeneratorObserverEventHandler(generator=self)
 
-    def on_file_changes(self, changed_files):
+    def on_file_changes(self, changed_files: set):
         self.generate(changed_files=changed_files)

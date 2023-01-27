@@ -165,7 +165,10 @@ class JinjaRenderer(Renderer):
 
         changed_entry_uris = set()
         changed_templates = set()
-        for file in (changed_files or []):
+        for file in (changed_files or set()):
+            if not file.exists():
+                continue
+
             if file.is_relative_to(self.content_path):
                 changed_entry_uris.add(str(file.relative_to(self.content_path)))
             elif file.is_relative_to(self.templates_path):
