@@ -1,6 +1,7 @@
 from importlib import import_module
 from pathlib import Path
 from PIL import Image
+from typing import Iterator
 from xml.etree import ElementTree
 import fitz
 import shutil
@@ -13,9 +14,15 @@ def import_class(import_path):
     return getattr(module, class_name)
 
 
-def import_config(module_or_path: str):
+def import_config(module_or_path: str) -> dict:
     """
     Imports the `config` variable from a Python file or a Python module
+
+    Args:
+        module_or_path (str): path.to.config.module, or path/to/config.py
+
+    Returns:
+        dict: The ursus config at this location
     """
     file_path = Path(module_or_path)
     if file_path.exists():
@@ -27,9 +34,14 @@ def import_config(module_or_path: str):
     return getattr(module, 'config')
 
 
-def is_ignored_file(path: Path, root_path=None):
-    """
-    True if the file or any of its parents (up to root_path) start with _ or .
+def is_ignored_file(path: Path, root_path: Path = None) -> bool:
+    """Returns whether a file should be ignored by ursus.
+    Args:
+        path (Path): Path to the file
+        root_path (Path, optional): Root path. The name of parent directories above root_path are not considered.
+
+    Returns:
+        bool: True if the file or any of its parents (up to root_path) start with _ or .
     """
     return (
         path.stem.startswith(('_', '.'))
@@ -40,7 +52,15 @@ def is_ignored_file(path: Path, root_path=None):
     )
 
 
-def is_image(path: Path):
+def is_image(path: Path) -> bool:
+    """Whether the given path points to an image
+
+    Args:
+        path (Path): The path to the file
+
+    Returns:
+        bool: Whether this file is an image
+    """
     assert path.is_absolute(), 'is_image must be called with an absolute path'
 
     # Notably missing: .heif, .heic
@@ -48,20 +68,42 @@ def is_image(path: Path):
     return path.is_file() and path.suffix.lower() in image_suffixes
 
 
-def is_pdf(path: Path):
+def is_pdf(path: Path) -> bool:
+    """Whether the given path points to a PDF
+
+    Args:
+        path (Path): The path to the file
+
+    Returns:
+        bool: Whether this file is a PDF
+    """
     assert path.is_absolute(), 'is_pdf must be called with an absolute path'
     return path.is_file() and path.suffix.lower() == '.pdf'
 
 
 def is_svg(path: Path):
+    """Whether the given path points to an SVG image
+
+    Args:
+        path (Path): The path to the file
+
+    Returns:
+        bool: Whether this file is an SVG image
+    """
     assert path.is_absolute(), 'is_svg must be called with an absolute path'
     return path.is_file() and path.suffix.lower() == '.svg'
 
 
-def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None):
+def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None) -> list[Path]:
     """
-    Returns a list of valid, visible files under a given path. If whitelist is set, only files in this list are
-    returned. The returned paths are relative to `path`.
+    Returns a list of valid, visible files under a given path.
+
+    Args:
+        path (Path): The path under which to find files
+        whitelist (set, optional): Only include files that are part of this whitelist
+        suffix (str, optional): Only include files with this suffix
+    Returns:
+        list[Path]: A list of files in this path
     """
     if whitelist:
         files = []
@@ -80,6 +122,12 @@ def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None):
 
 
 def copy_file(input_path: Path, output_path: Path):
+    """Copies a file
+
+    Args:
+        input_path (Path): The absolute path of the file to copy
+        output_path (Path): The absolute path of the file destination
+    """
     assert input_path.is_absolute(), f"input_path {str(input_path)} is relative. It must be absolute."
     assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
 
@@ -88,6 +136,13 @@ def copy_file(input_path: Path, output_path: Path):
 
 
 def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
+    """Creates a thumbnail of an image. Strips EXIF metadata.
+
+    Args:
+        pil_image (Image): A Pillow Image object containing the image to resize
+        max_size (TYPE): Max width and height of the preview image
+        output_path (Path): Path to the resulting preview
+    """
     assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
 
     pil_image.thumbnail(max_size, Image.ANTIALIAS)
@@ -104,8 +159,12 @@ def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
 
 
 def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path):
-    """
-    Creates an image preview of a PDF file
+    """Creates an image preview of a PDF file
+
+    Args:
+        pdf_path (Path): Path to the PDF file to preview
+        max_size (TYPE): Max width and height of the preview image
+        output_path (Path): Path to the resulting preview
     """
     assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
 
@@ -116,9 +175,16 @@ def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path):
     make_image_thumbnail(thumbnail, max_size, output_path)
 
 
-def get_image_transforms(original_path: Path, transforms_config: dict):
+def get_image_transforms(original_path: Path, transforms_config: dict) -> Iterator[dict]:
     """
     Yields a list of image transforms that apply to a file.
+
+    Args:
+        original_path (Path): Path of the original file/image to transform
+        transforms_config (dict): List of transforms to apply
+
+    Yields:
+        Iterator[dict]: A list of image transforms that apply to this file.
     """
     suffix_to_mimetype = {
         '.apng': 'image/apng',
