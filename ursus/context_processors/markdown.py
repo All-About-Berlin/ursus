@@ -216,11 +216,11 @@ class CustomFootnotesExtension(FootnoteExtension):
         if not list(self.footnotes.keys()):
             return None
 
-        container = ElementTree.Element("div")
+        container = ElementTree.Element("details")
         container.set("class", "footnote")
         container.set("id", "footnotes")
-        h2 = ElementTree.SubElement(container, "h2")
-        h2.text = "Footnotes"
+        summary = ElementTree.SubElement(container, "summary")
+        summary.text = "Sources and footnotes"
         ol = ElementTree.SubElement(container, "ol")
 
         surrogate_parent = ElementTree.Element("div")
