@@ -45,6 +45,27 @@ class TypographyExtension(Extension):
         md.treeprocessors.register(inline_processor, 'typography', 2)
 
 
+class CurrencyExtension(Extension):
+    """
+    Wraps currency in a ±
+    """
+    def extendMarkdown(self, md):
+        inline_processor = InlineProcessor(md)
+        currencyPattern = SubstituteTextPattern(
+            r'((\d+(,\d{3})*(\.\d{2})?))€',
+            ('<span class="currency">', 1, '</span>€'), md
+        )
+        inline_processor.inlinePatterns.register(currencyPattern, 'currency', 65)
+
+        currencyPattern = SubstituteTextPattern(
+            r'(\{\{[^\}]+\|[^\}]+\}\})€',
+            ('<span class="currency">', 1, '</span>€'), md
+        )
+        inline_processor.inlinePatterns.register(currencyPattern, 'jinjacurrency', 65)
+
+        md.treeprocessors.register(inline_processor, 'currency', 2)
+
+
 class JinjaStatementsProcessor(Treeprocessor):
     """
     Escapes Jinja statements like {% include "..." %}
@@ -276,6 +297,7 @@ class MarkdownProcessor(EntryContextProcessor):
             JinjaStatementsExtension(),
             SuperscriptExtension(),
             TypographyExtension(),
+            CurrencyExtension(),
             ResponsiveImagesExtension(
                 output_path=config['content_path'],
                 image_transforms=config.get('image_transforms'),
