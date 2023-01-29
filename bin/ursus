@@ -9,51 +9,62 @@ import copy
 import time
 
 
-parser = argparse.ArgumentParser(
-    prog='ursus',
-    description='Static site generator',
-    epilog='Made with ❤️ in Berlin'
-)
-parser.add_argument(
-    '-c', '--config',
-    help="Path to a Python config file or module. The `config` variable will be imported from that file."
-)
-parser.add_argument(
-    '-w', '--watch', action='store_true',
-    help="Regenerate files when <content_path> and <templates_path> change."
-)
-parser.add_argument(
-    '-f', '--fast', action='store_true',
-    help="Only regenerate templates for entries that changed, even if related pages might also change."
-)
-args = parser.parse_args()
+def run(config: dict, watch_for_changes: bool = False):
+    """Runs ursus and builds a static website
 
-config = copy.deepcopy(default_config)
-if args.config:
-    user_config = import_config(args.config)
-    config.update(user_config)
-elif Path('./ursus_config.py').exists():
-    user_config = import_config('ursus_config.py')
-    config.update(user_config)
+    Args:
+        config (dict): The ursus configuration
+        watch_for_changes (bool, optional): Keep running, and rebuild when content or templates change
+    """
+    generator_name = config['generator']
+    generator = import_class(generator_name)(config)
+    generator.generate()
 
-coloredlogs.install(**config['logging'])
+    if watch_for_changes:
+        observer = Observer()
 
-if args.watch:
-    observer = Observer()
+        for path in generator.get_watched_paths():
+            observer.schedule(generator.get_observer_event_handler(), path, recursive=True)
+        observer.start()
+        try:
+            while True:
+                time.sleep(1)
+        finally:
+            observer.stop()
+            observer.join()
 
-if args.fast:
-    config['fast_rebuilds'] = True
-generator_name = config['generator']
-generator = import_class(generator_name)(config)
-generator.generate()
 
-if args.watch:
-    for path in generator.get_watched_paths():
-        observer.schedule(generator.get_observer_event_handler(), path, recursive=True)
-    observer.start()
-    try:
-        while True:
-            time.sleep(1)
-    finally:
-        observer.stop()
-        observer.join()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        prog='ursus',
+        description='Static site generator',
+        epilog='Made with ❤️ in Berlin'
+    )
+    parser.add_argument(
+        '-c', '--config',
+        help="Path to a Python config file or module. The `config` variable will be imported from that file."
+    )
+    parser.add_argument(
+        '-w', '--watch', action='store_true',
+        help="Regenerate files when <content_path> and <templates_path> change."
+    )
+    parser.add_argument(
+        '-f', '--fast', action='store_true',
+        help="Fast rebuilds. Prefer faster page rebuilds to completeness. Related pages might not be reloaded."
+    )
+    args = parser.parse_args()
+
+    config = copy.deepcopy(default_config)
+    if args.config:
+        user_config = import_config(args.config)
+        config.update(user_config)
+    elif Path('./ursus_config.py').exists():
+        user_config = import_config('ursus_config.py')
+        config.update(user_config)
+
+    if args.fast:
+        config['fast_rebuilds'] = True
+
+    coloredlogs.install(**config['logging'])
+
+    run(config, args.watch)
