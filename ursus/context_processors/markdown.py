@@ -33,6 +33,9 @@ class TypographyExtension(Extension):
         ellipsisPattern = SubstituteTextPattern(r'\.\.\.', ('&hellip;',), md)
         inline_processor.inlinePatterns.register(ellipsisPattern, 'typo-ellipsis', 10)
 
+        ellipsisPattern = SubstituteTextPattern(r' - ', ('&nbsp;–&nbsp;',), md)
+        inline_processor.inlinePatterns.register(ellipsisPattern, 'typo-emdash', 10)
+
         squaredPattern = SubstituteTextPattern(r'\^2\^', ('²',), md)
         inline_processor.inlinePatterns.register(squaredPattern, 'squared', 65)
 
