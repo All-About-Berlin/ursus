@@ -14,6 +14,7 @@ setup(
     install_requires=[
         'coloredlogs==15.0.1',
         'Jinja2==3.1.2',
+        'lunr==0.6.2',
         'Markdown==3.4.1',
         'MarkupSafe==2.1.1',
         'mdx_wikilink_plus==1.4.1',

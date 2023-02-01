@@ -28,6 +28,7 @@ config = {
         'ursus.renderers.static.StaticAssetRenderer',
         'ursus.renderers.image.ImageTransformRenderer',
         'ursus.renderers.jinja.JinjaRenderer',
+        'ursus.renderers.lunr.LunrIndexRenderer',
     ],
 
     # Transforms applied to your content images
@@ -36,6 +37,21 @@ config = {
             'max_size': (5000, 5000),
         },
     },
+
+    # Parametres for lunr search index
+    'lunr_indexes': {
+        'indexed_fields': ('body', ),  # Index these fields only
+        'indexes': [
+            {
+                'uri_pattern': '*.md',  # Index entries with URIs that match this glob pattern
+                'returned_fields': ('body', 'url', ),  # Return these fields only in the document list
+                'boost': 1,  # Documents matching this pattern should be boosted n times over others
+            },
+        ]
+    },
+
+    # Where the output index will be saved, relative to output_path
+    'lunr_index_output_path': Path('search-index.json'),
 
     # The URL of this website's root, without a trailing slash. For example, https://allaboutberlin.com
     'site_url': '',
