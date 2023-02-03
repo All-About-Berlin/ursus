@@ -22,7 +22,7 @@ class StaticAssetRenderer(Renderer):
         for asset_path in self.get_assets_to_copy():
             abs_output_path = self.output_path / asset_path
 
-            if changed_files is not None and self.templates_path / asset_path in changed_files:
+            if changed_files is None or self.templates_path / asset_path in changed_files:
                 logger.info('Copying asset %s', str(asset_path))
                 copy_file(self.templates_path / asset_path, abs_output_path)
             else:
