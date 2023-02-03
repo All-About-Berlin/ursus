@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='ursus',
@@ -8,7 +8,7 @@ setup(
     author='Nicolas Bouliane',
     author_email='contact@nicolasbouliane.com',
     license='MIT',
-    packages=['ursus'],
+    packages=find_packages(),
     scripts=['bin/ursus'],
     python_requires='>=3.10',
     install_requires=[
