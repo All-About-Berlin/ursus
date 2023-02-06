@@ -17,7 +17,6 @@ setup(
         'lunr==0.6.2',
         'Markdown==3.4.1',
         'MarkupSafe==2.1.1',
-        'mdx_wikilink_plus==1.4.1',
         'ordered-set==4.1.0',
         'PyMuPDF==1.21.1',
         'Pillow==9.4.0',  # Pillow-simd is much faster, but requires binaries to be installed separately.

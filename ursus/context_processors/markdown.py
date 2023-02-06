@@ -1,14 +1,14 @@
+from . import EntryContextProcessor
 from datetime import datetime
-from pathlib import Path
 from markdown.extensions import Extension
-from markdown.extensions.smarty import SubstituteTextPattern
 from markdown.extensions.footnotes import FootnoteExtension, FN_BACKLINK_TEXT, NBSP_PLACEHOLDER
+from markdown.extensions.smarty import SubstituteTextPattern
+from markdown.extensions.wikilinks import WikiLinkExtension, build_url
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
-from mdx_wikilink_plus.mdx_wikilink_plus import WikiLinkPlusExtension
+from pathlib import Path
 from ursus.utils import make_figure_element, make_picture_element
 from xml.etree import ElementTree
-from . import EntryContextProcessor
 import logging
 import markdown
 import re
@@ -47,16 +47,19 @@ class TypographyExtension(Extension):
 
 class CurrencyExtension(Extension):
     """
-    Wraps currency in a ±
+    Wraps currency in a <span class="currency"> tag
     """
     def extendMarkdown(self, md):
         inline_processor = InlineProcessor(md)
+
+        # 1,234.56€
         currencyPattern = SubstituteTextPattern(
             r'((\d+(,\d{3})*(\.\d{2})?))€',
             ('<span class="currency">', 1, '</span>€'), md
         )
         inline_processor.inlinePatterns.register(currencyPattern, 'currency', 65)
 
+        # {{ jinja_var }}€
         currencyPattern = SubstituteTextPattern(
             r'(\{\{[^\}]+\|[^\}]+\}\})€',
             ('<span class="currency">', 1, '</span>€'), md
@@ -303,12 +306,12 @@ class MarkdownProcessor(EntryContextProcessor):
                 image_transforms=config.get('image_transforms'),
                 site_url=self.site_url
             ),
-            WikiLinkPlusExtension(dict(
+            WikiLinkExtension(
                 base_url=config.get('wikilinks_base_url', '') + '/',
-                url_whitespace='%20',
-                html_class=None,
-                image_class=None,
-            )),
+                end_url=config.get('wikilinks_url_suffix', ''),
+                build_url=config.get('wikilinks_url_builder', build_url),
+                html_class=config.get('wikilinks_html_class', None),
+            ),
         ])
 
     def _parse_metadata(self, raw_metadata):
