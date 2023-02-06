@@ -83,7 +83,8 @@ class JinjaStatementsProcessor(Treeprocessor):
                 if index == 0:
                     root.text = el.text.strip()
                 else:
-                    root[index - 1].tail = el.text.strip()
+                    root[index - 1].tail += el.text.strip()
+
                 root.remove(el)
 
 
@@ -106,6 +107,7 @@ class ResponsiveImageProcessor(Treeprocessor):
         for index, element in enumerate(parent):
             if element == old:
                 parent[index] = new
+                new.tail = old.tail
                 return
 
     def _upgrade_img(self, img, parents):
@@ -322,10 +324,10 @@ class MarkdownProcessor(EntryContextProcessor):
             if len(value) == 1:
                 value = value[0]
 
-            if(key.startswith('date_')):
+            if key.startswith('date_'):
                 value = datetime.strptime(value, '%Y-%m-%d')
 
-            if(key.startswith('related_')):
+            if key.startswith('related_'):
                 values = [v.strip() for v in value.split(',')]
                 value = values if len(values) > 1 else values[0]
 
