@@ -18,6 +18,9 @@ class EntryContextProcessor(ContextProcessor):
             entry = context['entries'].get(entry_uri, {})
             context['entries'][entry_uri] = self.process_entry(entry_uri, entry)
 
+            assert context['entries'][entry_uri] is not None, \
+                "{type(self).__name__}.process_entry is returning None instead of the entry context."
+
         return context
 
     def process_entry(self, entry_uri: str, entry_context: dict) -> dict:
