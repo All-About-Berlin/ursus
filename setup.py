@@ -13,6 +13,7 @@ setup(
     python_requires='>=3.10',
     install_requires=[
         'coloredlogs==15.0.1',
+        'GitPython==3.1.30',
         'Jinja2==3.1.2',
         'lunr==0.6.2',
         'Markdown==3.4.1',
