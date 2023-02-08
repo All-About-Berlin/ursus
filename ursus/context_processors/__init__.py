@@ -2,12 +2,12 @@ from ursus.utils import get_files_in_path
 
 
 class ContextProcessor:
-    def __init__(self, config):
+    def __init__(self, config: dict):
         self.content_path = config['content_path']
         self.templates_path = config['templates_path']
         self.output_path = config['output_path']
 
-    def process(self, context: dict, changed_files: set):
+    def process(self, context: dict, changed_files: set = None) -> dict:
         return context
 
 

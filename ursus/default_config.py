@@ -21,6 +21,7 @@ config = {
         'ursus.context_processors.markdown.MarkdownProcessor',
         'ursus.context_processors.get_entries.GetEntriesProcessor',
         'ursus.context_processors.related.RelatedEntriesProcessor',
+        # 'ursus.context_processors.git_date.GitDateProcessor',
     ],
 
     # The renderers that take your templates and content, and populate the output dir
