@@ -7,6 +7,7 @@ from markdown.extensions.wikilinks import WikiLinkExtension, build_url
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from pathlib import Path
+from ursus.config import config
 from ursus.utils import make_figure_element, make_picture_element
 from xml.etree import ElementTree
 import logging
@@ -94,10 +95,7 @@ class ResponsiveImageProcessor(Treeprocessor):
         'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
     )
 
-    def __init__(self, md, image_transforms, output_path: Path, site_url: str):
-        self.output_path = output_path
-        self.image_transforms = image_transforms
-        self.site_url = site_url
+    def __init__(self, md):
         super().__init__(md)
 
     def _swap_element(self, parent, old, new):
@@ -114,8 +112,8 @@ class ResponsiveImageProcessor(Treeprocessor):
         # Create <picture> with <source> for the different image types and sizes
         # Only apply to local images
         img_src = img.attrib.get('src')
-        if img_src.startswith('/') or img_src.startswith(self.site_url + '/'):
-            image_path = Path(img_src.removeprefix(self.site_url).removeprefix('/'))
+        if img_src.startswith('/') or img_src.startswith(config.site_url + '/'):
+            image_path = Path(img_src.removeprefix(config.site_url).removeprefix('/'))
 
             parent = parents[0]
             grandparent = parents[1]
@@ -161,7 +159,7 @@ class ResponsiveImageProcessor(Treeprocessor):
             elif parent.tag not in self.allowed_parents:
                 image_maker = make_picture_element
 
-            image = image_maker(image_path, self.output_path, self.image_transforms, img_attrs, a_attrs, self.site_url)
+            image = image_maker(image_path, config.output_path, img_attrs, a_attrs)
 
             self._swap_element(containing_element, element_to_swap, image)
 
@@ -189,24 +187,11 @@ class ResponsiveImagesExtension(Extension):
     - Wraps block images in a <figure> tag, and replaces the title with a <figcaption>
 
     """
-    def __init__(self, output_path: Path, image_transforms: dict, site_url: str):
-        self.output_path = output_path
-        self.image_transforms = image_transforms or {}
-        self.site_url = site_url or ''
-
     def extendMarkdown(self, md):
         md.registerExtension(self)
         self.md = md
         self.reset()
-        md.treeprocessors.register(
-            ResponsiveImageProcessor(
-                md,
-                output_path=self.output_path,
-                image_transforms=self.image_transforms,
-                site_url=self.site_url,
-            ),
-            'figure', 0
-        )
+        md.treeprocessors.register(ResponsiveImageProcessor(md), 'figure', 0)
 
     def reset(self):
         pass
@@ -288,10 +273,8 @@ class CustomFootnotesExtension(FootnoteExtension):
 
 
 class MarkdownProcessor(EntryContextProcessor):
-    def __init__(self, config):
-        super().__init__(config)
-        self.site_url = config.get('site_url', '')
-        self.html_url_extension = config['html_url_extension']
+    def __init__(self):
+        super().__init__()
 
         self.markdown = markdown.Markdown(extensions=[
             'fenced_code',
@@ -303,16 +286,12 @@ class MarkdownProcessor(EntryContextProcessor):
             SuperscriptExtension(),
             TypographyExtension(),
             CurrencyExtension(),
-            ResponsiveImagesExtension(
-                output_path=config['content_path'],
-                image_transforms=config.get('image_transforms'),
-                site_url=self.site_url
-            ),
+            ResponsiveImagesExtension(),
             WikiLinkExtension(
-                base_url=config.get('wikilinks_base_url', '') + '/',
-                end_url=config.get('wikilinks_url_suffix', ''),
-                build_url=config.get('wikilinks_url_builder', build_url),
-                html_class=config.get('wikilinks_html_class', None),
+                base_url=config.wikilinks_base_url + '/',
+                end_url=config.wikilinks_url_suffix,
+                build_url=config.wikilinks_url_builder or build_url,
+                html_class=config.wikilinks_html_class,
             ),
         ])
 
@@ -334,16 +313,16 @@ class MarkdownProcessor(EntryContextProcessor):
             metadata[key] = value
         return metadata
 
-    def process_entry(self, entry_uri: str, entry_context: dict):
+    def process_entry(self, entry_uri: str, entry_context: dict) -> dict:
         if entry_uri.endswith('.md'):
-            with (self.content_path / entry_uri).open(encoding='utf-8') as f:
+            with (config.content_path / entry_uri).open(encoding='utf-8') as f:
                 html = self.markdown.reset().convert(f.read())
 
             entry_context.update({
                 **self._parse_metadata(self.markdown.Meta),
                 'body': html,
                 'table_of_contents': self.markdown.toc_tokens,
-                'url': f"{self.site_url}/{str(Path(entry_uri).with_suffix(self.html_url_extension))}",
+                'url': f"{config.site_url}/{str(Path(entry_uri).with_suffix(config.html_url_extension))}",
             })
 
         return entry_context

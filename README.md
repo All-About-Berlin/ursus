@@ -103,7 +103,7 @@ The `MarkdownProcessor` generates a context object that looks like this:
         'images/example.png': {...},
     }
 
-    # This variable comes from the "globals" section of your config. It's an
+    # This variable comes from the "context_globals" section of your config. It's an
     # example. You can set your own.
     'twitter_profile_url': 'https://twitter.com/aboutberlin',
 }

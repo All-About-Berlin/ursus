@@ -1,4 +1,5 @@
 from pathlib import Path
+from ursus.config import config
 from watchdog.events import FileSystemEventHandler
 import logging
 import threading
@@ -44,15 +45,11 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
 
 
 class Generator:
-    def __init__(self, config):
-        self.output_path = config['output_path']
-        self.content_path = config['content_path']
-
     def generate(self, changed_files=None):
         pass
 
     def get_watched_paths(self):
-        return [self.content_path, ]
+        return [config.content_path, ]
 
     def get_observer_event_handler(self):
         return GeneratorObserverEventHandler(generator=self)

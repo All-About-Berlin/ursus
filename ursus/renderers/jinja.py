@@ -3,6 +3,7 @@ from jinja2.ext import Extension, do
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
+from ursus.config import config
 from ursus.utils import get_files_in_path, make_picture_element
 from xml.etree import ElementTree
 from . import Renderer
@@ -79,9 +80,7 @@ class ResponsiveImageExtension(Extension):
         img_attrs = {'class': image_class} if image_class else {}
         output = make_picture_element(
             original_path=Path(image_path),
-            output_path=context['config']['output_path'],
-            transforms_config=context['config']['image_transforms'],
-            site_url=context['config']['site_url'],
+            output_path=config.output_path,
             img_attrs=img_attrs,
         )
         return Markup(ElementTree.tostring(output, encoding='unicode'))
@@ -104,16 +103,16 @@ class JinjaRenderer(Renderer):
     """
     Renders all .jinja templates in the templates directory, unless their name starts with '_'.
     """
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self):
+        super().__init__()
         self.template_environment = Environment(
-            loader=FileSystemLoader(self.templates_path),
+            loader=FileSystemLoader(config.templates_path),
             extensions=[do, JsLoaderExtension, ResponsiveImageExtension],
             autoescape=select_autoescape(),
             undefined=StrictUndefined
         )
         self.template_environment.filters['render'] = render_filter
-        self.template_environment.filters.update(config.get('jinja_filters', {}))
+        self.template_environment.filters.update(config.jinja_filters)
 
     def render_template(self, template_path: Path, context: dict, output_path: Path):
         """Returns an entry into a template, and saves it under output_path
@@ -123,7 +122,7 @@ class JinjaRenderer(Renderer):
             output_path (str): Path of the generated file, relative to the output_path.
         """
         logger.info('Rendering %s', str(output_path))
-        output_path = self.output_path / output_path
+        output_path = config.output_path / output_path
         output_path.parent.mkdir(parents=True, exist_ok=True)
         template = self.template_environment.get_template(str(template_path))
         template.stream(**context).dump(str(output_path))
@@ -157,8 +156,8 @@ class JinjaRenderer(Renderer):
         self.render_template(template_path, specific_context, output_path)
         return output_path
 
-    def render(self, context, changed_files=None, fast=False) -> set:
-        template_paths = get_files_in_path(self.templates_path, suffix='.jinja')
+    def render(self, context, changed_files=None) -> set:
+        template_paths = get_files_in_path(config.templates_path, suffix='.jinja')
 
         render_queue = OrderedSet()
 
@@ -168,10 +167,10 @@ class JinjaRenderer(Renderer):
             if not file.exists():
                 continue
 
-            if file.is_relative_to(self.content_path):
-                changed_entry_uris.add(str(file.relative_to(self.content_path)))
-            elif file.is_relative_to(self.templates_path):
-                changed_templates.add(file.relative_to(self.templates_path))
+            if file.is_relative_to(config.content_path):
+                changed_entry_uris.add(str(file.relative_to(config.content_path)))
+            elif file.is_relative_to(config.templates_path):
+                changed_templates.add(file.relative_to(config.templates_path))
 
         # Process edited entries
         for entry_uri in changed_entry_uris:
@@ -193,14 +192,14 @@ class JinjaRenderer(Renderer):
             if is_entry_template(template_path):
                 for entry_uri in context['entries']:
                     if template_can_render_entry(template_path, entry_uri):
-                        if fast:  # Update mtime to avoid deletion
-                            (self.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
+                        if config.fast_rebuilds:  # Update mtime to avoid deletion
+                            (config.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
                         else:
                             render_queue.add(('entry', template_path, entry_uri))
             else:
                 output_path = template_path.with_suffix('')  # Remove .jinja
-                if fast:
-                    (self.output_path / output_path).touch()  # Update mtime to avoid deletion
+                if config.fast_rebuilds:
+                    (config.output_path / output_path).touch()  # Update mtime to avoid deletion
                 else:
                     render_queue.add(('template', template_path, output_path))
 

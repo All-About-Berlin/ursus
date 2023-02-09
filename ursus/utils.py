@@ -2,6 +2,7 @@ from importlib import import_module
 from pathlib import Path
 from PIL import Image
 from typing import Iterator
+from ursus.config import config
 from xml.etree import ElementTree
 import fitz
 import shutil
@@ -14,7 +15,7 @@ def import_class(import_path):
     return getattr(module, class_name)
 
 
-def import_config(module_or_path: str) -> dict:
+def load_config(module_or_path: str) -> dict:
     """
     Imports the `config` variable from a Python file or a Python module
 
@@ -175,13 +176,12 @@ def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path):
     make_image_thumbnail(thumbnail, max_size, output_path)
 
 
-def get_image_transforms(original_path: Path, transforms_config: dict) -> Iterator[dict]:
+def get_image_transforms(original_path: Path) -> Iterator[dict]:
     """
     Yields a list of image transforms that apply to a file.
 
     Args:
         original_path (Path): Path of the original file/image to transform
-        transforms_config (dict): List of transforms to apply
 
     Yields:
         Iterator[dict]: A list of image transforms that apply to this file.
@@ -198,7 +198,7 @@ def get_image_transforms(original_path: Path, transforms_config: dict) -> Iterat
         '.webp': 'image/webp',
     }
 
-    for key, transform in transforms_config.items():
+    for key, transform in config.image_transforms.items():
         includes = transform.get('include', ['*'])
         includes = [includes] if isinstance(includes, str) else includes
 
@@ -237,7 +237,7 @@ def get_image_transforms(original_path: Path, transforms_config: dict) -> Iterat
                 }
 
 
-def make_picture_element(original_path: Path, output_path: Path, transforms_config: dict, img_attrs={}, site_url='',):
+def make_picture_element(original_path: Path, output_path: Path, img_attrs={}):
     """
     Creates a responsive HTML <picture> element
     """
@@ -249,12 +249,12 @@ def make_picture_element(original_path: Path, output_path: Path, transforms_conf
 
     # Build a list of srcsets grouped by mimetype
     sources_by_mimetype = {}
-    for transform in get_image_transforms(original_path, transforms_config):
+    for transform in get_image_transforms(original_path):
         width = transform['max_size'][0]
         mimetype = transform['output_mimetype']
 
         if mimetype.startswith('image/'):
-            srcset_part = f"{site_url}/{str(transform['output_path'])} {width}w"
+            srcset_part = f"{config.site_url}/{str(transform['output_path'])} {width}w"
             sources_by_mimetype.setdefault(mimetype, [])
             sources_by_mimetype[mimetype].append(srcset_part)
 
@@ -279,19 +279,19 @@ def make_picture_element(original_path: Path, output_path: Path, transforms_conf
             img.attrib['width'] = str(width)
             img.attrib['height'] = str(height)
     img.attrib['loading'] = 'lazy'
-    img.attrib['src'] = f"{site_url}/{str(default_src)}"
+    img.attrib['src'] = f"{config.site_url}/{str(default_src)}"
 
     picture.append(img)
 
     return picture
 
 
-def make_figure_element(original_path: Path, output_path: Path, transforms_config: dict, img_attrs={}, a_attrs=None, site_url=''):
+def make_figure_element(original_path: Path, output_path: Path, img_attrs={}, a_attrs=None):
     """
     Creates a responsive HTML <figure> element with the image title as <figcaption>. Returns a simple <picture> if there
     is no title.
     """
-    image = make_picture_element(original_path, output_path, transforms_config, img_attrs, site_url)
+    image = make_picture_element(original_path, output_path, img_attrs)
     if a_attrs and a_attrs.get('href'):
         a_attrs['target'] = '_blank'
         wrapped_image = ElementTree.Element('a', a_attrs)
