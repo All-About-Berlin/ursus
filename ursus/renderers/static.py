@@ -19,12 +19,14 @@ class StaticAssetRenderer(Renderer):
             if f.suffix not in self.ignored_suffixes
         ]
 
-    def render(self, context: dict, changed_files: set = None):
+    def render(self, context: dict, changed_files: set = None) -> set:
+        files_to_keep = set()
         for asset_path in self.get_assets_to_copy():
             abs_output_path = config.output_path / asset_path
 
             if changed_files is None or config.templates_path / asset_path in changed_files:
                 logger.info('Copying asset %s', str(asset_path))
                 copy_file(config.templates_path / asset_path, abs_output_path)
-            else:
-                abs_output_path.touch()  # Update mtime to avoid deletion
+            files_to_keep.add(asset_path)
+
+        return files_to_keep

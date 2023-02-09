@@ -122,10 +122,10 @@ class JinjaRenderer(Renderer):
             output_path (str): Path of the generated file, relative to the output_path.
         """
         logger.info('Rendering %s', str(output_path))
-        output_path = config.output_path / output_path
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        abs_output_path = config.output_path / output_path
+        abs_output_path.parent.mkdir(parents=True, exist_ok=True)
         template = self.template_environment.get_template(str(template_path))
-        template.stream(**context).dump(str(output_path))
+        template.stream(**context).dump(str(abs_output_path))
         return output_path
 
     def get_entry_output_path(self, template_path: Path, entry_uri: str) -> Path:
@@ -153,13 +153,13 @@ class JinjaRenderer(Renderer):
             'entry': context['entries'][entry_uri]
         }
         output_path = self.get_entry_output_path(template_path, entry_uri)
-        self.render_template(template_path, specific_context, output_path)
-        return output_path
+        return self.render_template(template_path, specific_context, output_path)
 
-    def render(self, context, changed_files=None) -> set:
+    def render(self, context: dict, changed_files: set = None) -> set:
         template_paths = get_files_in_path(config.templates_path, suffix='.jinja')
 
         render_queue = OrderedSet()
+        files_to_keep = set()
 
         changed_entry_uris = set()
         changed_templates = set()
@@ -205,6 +205,8 @@ class JinjaRenderer(Renderer):
 
         for render_type, template_path, value in render_queue:
             if render_type == 'entry':
-                self.render_entry(template_path, context, value)
+                files_to_keep.add(self.render_entry(template_path, context, value))
             elif render_type == 'template':
-                self.render_template(template_path, context, value)
+                files_to_keep.add(self.render_template(template_path, context, value))
+
+        return files_to_keep

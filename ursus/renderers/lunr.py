@@ -57,3 +57,5 @@ class LunrIndexRenderer(Renderer):
                 'index': index.serialize(),
                 'documents': returned_documents,
             }, index_file)
+
+        return set([config.lunr_index_output_path])
