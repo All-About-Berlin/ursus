@@ -3,7 +3,6 @@ from pathlib import Path
 from ursus.config import config
 from ursus.context_processors import ContextProcessor
 import git
-import time
 
 
 class GitDateProcessor(ContextProcessor):
@@ -12,17 +11,23 @@ class GitDateProcessor(ContextProcessor):
     """
     def __init__(self):
         super().__init__()
-        self.repo = git.Repo(config.content_path, search_parent_directories=True)
-        self.repo_root = Path(self.repo.working_dir)
+        if not config.fast_rebuilds:
+            self.repo = git.Repo(config.content_path, search_parent_directories=True)
+            self.repo_root = Path(self.repo.working_dir)
 
     def commit_path_to_entry_uri(self, commit_path: str):
         abs_commit_path = self.repo_root / commit_path
         try:
             return str(abs_commit_path.relative_to(config.content_path))
-        except:
+        except ValueError:
             return None
 
     def process(self, context: dict, changed_files: set = None) -> dict:
+        if config.fast_rebuilds:
+            for entry in context['entries'].values():
+                entry.setdefault('date_updated', datetime.now())
+            return context
+
         for commit in self.repo.iter_commits("master"):
             commit_date = datetime.fromtimestamp(commit.authored_date)
             for file in commit.stats.files.keys():
