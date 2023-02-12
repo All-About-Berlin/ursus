@@ -2,7 +2,6 @@ from ursus.config import config
 from ursus.utils import import_class
 from . import Generator
 import logging
-import time
 
 
 logger = logging.getLogger(__name__)
