@@ -5,6 +5,7 @@ from markdown.extensions.footnotes import FootnoteExtension, FN_BACKLINK_TEXT, N
 from markdown.extensions.smarty import SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension, build_url
 from markdown.inlinepatterns import SimpleTagPattern
+from markdown.preprocessors import Preprocessor
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from pathlib import Path
 from ursus.config import config
@@ -46,6 +47,26 @@ class TypographyExtension(Extension):
         md.treeprocessors.register(inline_processor, 'typography', 2)
 
 
+class JinjaPreprocessor(Preprocessor):
+    JINJA_RE = re.compile('({{([^}]+)}})|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
+
+    def run(self, lines):
+        text = "\n".join(lines)
+
+        def replace_match(match):
+            return self.md.htmlStash.store(match[0])
+
+        return re.sub(self.JINJA_RE, replace_match, text).split("\n")
+
+
+class JinjaExtension(Extension):
+    """
+    Escape {% %} and {{ }} statements
+    """
+    def extendMarkdown(self, md):
+        md.preprocessors.register(JinjaPreprocessor(md), 'fenced_code_block', 29)
+
+
 class CurrencyExtension(Extension):
     """
     Wraps currency in a <span class="currency"> tag
@@ -68,25 +89,6 @@ class CurrencyExtension(Extension):
         inline_processor.inlinePatterns.register(currencyPattern, 'jinjacurrency', 65)
 
         md.treeprocessors.register(inline_processor, 'currency', 2)
-
-
-class JinjaStatementsProcessor(Treeprocessor):
-    """
-    Escapes Jinja statements like {% include "..." %}
-    """
-    include_statement_re = re.compile('{\%[ ]*include [^\%]*\%}')
-
-    def run(self, root):
-        # Remove the wrapping paragraph tag around {% include %} statements that
-        # are on their own line.
-        for index, el in enumerate(root):
-            if el.tag == 'p' and el.text and self.include_statement_re.match(el.text.strip()):
-                if index == 0:
-                    root.text = el.text.strip()
-                else:
-                    root[index - 1].tail += el.text.strip()
-
-                root.remove(el)
 
 
 class ResponsiveImageProcessor(Treeprocessor):
@@ -197,17 +199,6 @@ class ResponsiveImagesExtension(Extension):
         pass
 
 
-class JinjaStatementsExtension(Extension):
-    def extendMarkdown(self, md):
-        md.registerExtension(self)
-        self.md = md
-        self.reset()
-        md.treeprocessors.register(JinjaStatementsProcessor(md), 'includes', 0)
-
-    def reset(self):
-        pass
-
-
 class SuperscriptExtension(Extension):
     """
     ^text^ is converted to <sup>text</sup>
@@ -282,7 +273,7 @@ class MarkdownProcessor(EntryContextProcessor):
             'tables',
             'toc',
             CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
-            JinjaStatementsExtension(),
+            JinjaExtension(),
             SuperscriptExtension(),
             TypographyExtension(),
             CurrencyExtension(),

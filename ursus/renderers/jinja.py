@@ -1,4 +1,6 @@
+from . import Renderer
 from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, StrictUndefined
+from jinja2.exceptions import TemplateSyntaxError
 from jinja2.ext import Extension, do
 from markupsafe import Markup
 from ordered_set import OrderedSet
@@ -6,7 +8,6 @@ from pathlib import Path
 from ursus.config import config
 from ursus.utils import get_files_in_path, make_picture_element
 from xml.etree import ElementTree
-from . import Renderer
 import logging
 
 
@@ -125,7 +126,11 @@ class JinjaRenderer(Renderer):
         abs_output_path = config.output_path / output_path
         abs_output_path.parent.mkdir(parents=True, exist_ok=True)
         template = self.template_environment.get_template(str(template_path))
-        template.stream(**context).dump(str(abs_output_path))
+        try:
+            template.stream(**context).dump(str(abs_output_path))
+        except TemplateSyntaxError:
+            print(context.get('entry', {}).get('body'))
+            raise
         return output_path
 
     def get_entry_output_path(self, template_path: Path, entry_uri: str) -> Path:
