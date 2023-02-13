@@ -59,6 +59,6 @@ class StaticSiteGenerator(Generator):
             for file in config.output_path.rglob('*'):
                 if file.is_file() and file.relative_to(config.output_path) not in files_to_keep:
                     logger.warning(f"Deleting stale output file {str(file.relative_to(config.output_path))}")
-                    # file.unlink()
+                    file.unlink()
 
         logger.info("Done.")
