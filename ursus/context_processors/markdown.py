@@ -47,8 +47,24 @@ class TypographyExtension(Extension):
         md.treeprocessors.register(inline_processor, 'typography', 2)
 
 
+class JinjaCurrencyPreprocessor(Preprocessor):
+    """
+    {{CONSTANT}}€ -> <span class="currency">{{CONSTANT}}</span>
+    """
+    JINJA_RE = re.compile('({{([^}]+)}})€', re.MULTILINE | re.DOTALL)
+
+    def run(self, lines):
+        text = "\n".join(lines)
+
+        def replace_match(match):
+            placeholder = self.md.htmlStash.store(f'<span class="currency">{match[1]}</span>€')
+            return placeholder
+
+        return re.sub(self.JINJA_RE, replace_match, text).split("\n")
+
+
 class JinjaPreprocessor(Preprocessor):
-    JINJA_RE = re.compile('({{([^}]+)}})|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
+    JINJA_RE = re.compile('({{([^}]+)}})€?|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
 
     def run(self, lines):
         text = "\n".join(lines)
@@ -64,7 +80,8 @@ class JinjaExtension(Extension):
     Escape {% %} and {{ }} statements
     """
     def extendMarkdown(self, md):
-        md.preprocessors.register(JinjaPreprocessor(md), 'fenced_code_block', 29)
+        md.preprocessors.register(JinjaCurrencyPreprocessor(md), 'jinja-cur', 26)
+        md.preprocessors.register(JinjaPreprocessor(md), 'jinja', 25)
 
 
 class CurrencyExtension(Extension):
@@ -80,13 +97,6 @@ class CurrencyExtension(Extension):
             ('<span class="currency">', 1, '</span>€'), md
         )
         inline_processor.inlinePatterns.register(currencyPattern, 'currency', 65)
-
-        # {{ jinja_var }}€
-        currencyPattern = SubstituteTextPattern(
-            r'(\{\{[^\}]+\|[^\}]+\}\})€',
-            ('<span class="currency">', 1, '</span>€'), md
-        )
-        inline_processor.inlinePatterns.register(currencyPattern, 'jinjacurrency', 65)
 
         md.treeprocessors.register(inline_processor, 'currency', 2)
 
