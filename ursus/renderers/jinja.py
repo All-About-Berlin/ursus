@@ -169,7 +169,7 @@ class JinjaRenderer(Renderer):
         changed_entry_uris = set()
         changed_templates = set()
         for file in (changed_files or set()):
-            if not file.exists():
+            if not (file.exists() and file.is_file()):
                 continue
 
             if file.is_relative_to(config.content_path) and not is_ignored_file(file, config.content_path):
