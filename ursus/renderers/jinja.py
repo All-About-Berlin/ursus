@@ -6,7 +6,7 @@ from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
 from ursus.config import config
-from ursus.utils import get_files_in_path, make_picture_element
+from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
 from xml.etree import ElementTree
 import logging
 
@@ -169,7 +169,7 @@ class JinjaRenderer(Renderer):
         changed_entry_uris = set()
         changed_templates = set()
         for file in (changed_files or set()):
-            if not file.exists():
+            if not file.exists() or is_ignored_file(file):
                 continue
 
             if file.is_relative_to(config.content_path):
@@ -197,14 +197,14 @@ class JinjaRenderer(Renderer):
             if is_entry_template(template_path):
                 for entry_uri in context['entries']:
                     if template_can_render_entry(template_path, entry_uri):
-                        if config.fast_rebuilds:  # Update mtime to avoid deletion
+                        if config.fast_rebuilds:
                             (config.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
                         else:
                             render_queue.add(('entry', template_path, entry_uri))
             else:
                 output_path = template_path.with_suffix('')  # Remove .jinja
                 if config.fast_rebuilds:
-                    (config.output_path / output_path).touch()  # Update mtime to avoid deletion
+                    (config.output_path / output_path).touch()
                 else:
                     render_queue.add(('template', template_path, output_path))
 
