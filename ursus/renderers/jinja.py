@@ -169,13 +169,15 @@ class JinjaRenderer(Renderer):
         changed_entry_uris = set()
         changed_templates = set()
         for file in (changed_files or set()):
-            if not file.exists() or is_ignored_file(file):
+            if not file.exists():
                 continue
 
-            if file.is_relative_to(config.content_path):
+            if file.is_relative_to(config.content_path) and not is_ignored_file(file, config.content_path):
                 changed_entry_uris.add(str(file.relative_to(config.content_path)))
-            elif file.is_relative_to(config.templates_path):
+            elif file.is_relative_to(config.templates_path) and not is_ignored_file(file, config.templates_path):
                 changed_templates.add(file.relative_to(config.templates_path))
+            else:
+                continue
 
         # Process edited entries
         for entry_uri in changed_entry_uris:
