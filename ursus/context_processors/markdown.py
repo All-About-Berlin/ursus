@@ -5,6 +5,7 @@ from markdown.extensions.footnotes import FootnoteExtension, FN_BACKLINK_TEXT, N
 from markdown.extensions.smarty import SubstituteTextPattern
 from markdown.extensions.wikilinks import WikiLinkExtension, build_url
 from markdown.inlinepatterns import SimpleTagPattern
+from markdown.postprocessors import RawHtmlPostprocessor
 from markdown.preprocessors import Preprocessor
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
 from pathlib import Path
@@ -48,7 +49,10 @@ class TypographyExtension(Extension):
 
 
 class JinjaPreprocessor(Preprocessor):
-    JINJA_RE = re.compile('({{([^}]+)}})€?|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
+    """
+    Ignore Jinja {{ ... }} and {% ... %} tags.
+    """
+    JINJA_RE = re.compile('({{([^}]+)}})|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
 
     def run(self, lines):
         text = "\n".join(lines)
@@ -59,17 +63,33 @@ class JinjaPreprocessor(Preprocessor):
         return re.sub(self.JINJA_RE, replace_match, text).split("\n")
 
 
+class JinjaHtmlPostProcessor(RawHtmlPostprocessor):
+    """
+    Patch RawHtmlPostprocessor to recognize {% ... %} tags as block-level
+    elements, and prevent them from being wrapped in a <p> tag.
+    """
+    JINJA_BLOCK_RE = re.compile('^{%([^}]+)%}$', re.MULTILINE | re.DOTALL)
+
+    def isblocklevel(self, html):
+        m = self.JINJA_BLOCK_RE.match(html)
+        if m:
+            return True
+        return super().isblocklevel(html)
+
+
 class JinjaExtension(Extension):
     """
-    Escape {% %} and {{ }} statements
+    Escape Jinja {% ... %} and {{ ... }} statements in Markdown files.
     """
     def extendMarkdown(self, md):
+        md.postprocessors.deregister('raw_html')
         md.preprocessors.register(JinjaPreprocessor(md), 'jinja', 25)
+        md.postprocessors.register(JinjaHtmlPostProcessor(md), 'raw_html', 30)
 
 
 class JinjaCurrencyPreprocessor(Preprocessor):
     """
-    Wraps jinja template variables in a <span class="currency"> tag
+    Wraps jinja template variables followed with "€" in a <span class="currency"> tag
     """
     JINJA_RE = re.compile('({{([^}]+)}})€', re.MULTILINE | re.DOTALL)
 
