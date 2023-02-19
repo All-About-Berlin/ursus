@@ -1,26 +1,28 @@
 # Ursus
 
-Static site generator used by [All About Berlin](https://allaboutberlin.com). It turns Markdown files and Jinja templates into a static website.
+Static site generator used by [All About Berlin](https://allaboutberlin.com). It turns Markdown files and [Jinja](https://jinja.palletsprojects.com/) templates into a static website.
 
 This project is in active use and development.
 
 ## Features
 
-Ursus allows **relationships between objects**, so that a blog post can have related glossary entries.
+Ursus allows **relationships between objects**, not just categories and tags.
 
-It allows you to **include widgets in your content**. This is how I embed calculators and other widgets on All About Berlin.
+It supports **including templates in your content** with the Jinja `{% include %}` tag. This is how I embed calculators in the guides on All About Berlin.
 
-It uses Python Markdown to process markdown. You can configure which extensions to use, or create your own. Ursus supplies a few custom extensions.
+It supports **variables in your content** with the jinja `{{ your_variable }}` tag. This is how I keep values updated across all the content on All About Berlin.
 
-It uses Jinja to render templates.
+It uses [Python Markdown](https://python-markdown.github.io/extensions/) to process markdown. You can create your own Python extensions, and use the ones supplied with Ursus.
 
-It converts images to different sizes and formats, and generates previews for PDFs. The sizes are configurable.
+It uses [Jinja](https://jinja.palletsprojects.com/) to render templates, but you can use your own template renderer instead. You can create your own Jinja extensions, and use the ones supplied with Ursus.
+
+It converts images to different sizes and formats, and generates previews for PDFs. The image sizes and formats are configurable.
 
 ## Basic concepts
 
 ### Content and Entries
 
-**Content** is what fills your website: text, images, videos, PDFs. A single piece of content is called an **Entry**. The location of the Content is set by the `content_path` config parameter. By default, it's under `./content`, but you can change it in your config.
+**Content** is what fills your website: text, images, videos, PDFs. A single piece of content is called an **Entry**. The location of the Content is set by the `content_path` config parameter. By default, it's under `./content`. You can change that in your config.
 
 Content is usually *rendered* to create a working website. Some content (like Markdown files) is rendered with Templates, and other (like images) is converted to a different file format.
 
@@ -43,11 +45,11 @@ The location of the Output is set by the `output_path` config parameter. By defa
 
 ## How Ursus works
 
-ContextProcessors transform the context. Then Renderers use the context to know which pages to create, and what content to put in the templates.
+ContextProcessors transform the context, which is a dict with information about each of your Entries. Renderers use the context to know which pages to create, and what content to put in the templates.
 
 ### Generators
 
-A **Generator** takes your Content and your Templates and produces an Output. It's a recipe to turn your content into a final result. The default **StaticSiteGenerator** generates a static website. You could write your own Generator to output an eBook, a PDF, or anything else.
+A **Generator** takes your Content and your Templates and produces an Output. It's a recipe to turn your content into a final result. The default **StaticSiteGenerator** generates a static website. You can write your own Generator to output an eBook, a PDF, or anything else.
 
 #### StaticSiteGenerator
 
@@ -101,7 +103,7 @@ The `MarkdownProcessor` generates a context object that looks like this:
         'index.md': {...},
         'contact.md': {...},
         'images/example.png': {...},
-    }
+    },
 
     # This variable comes from the "context_globals" section of your config. It's an
     # example. You can set your own.
