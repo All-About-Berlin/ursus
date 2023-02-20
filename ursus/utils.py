@@ -273,8 +273,11 @@ def make_picture_element(original_path: Path, output_path: Path, img_attrs={}):
     # Add an <img> with the default image to the <picture>
     img = ElementTree.Element('img', attrib=img_attrs)
     assert default_src is not None, f"default_src is None for {original_path}"
-    if default_src.suffix != '.svg':
-        with Image.open(output_path / default_src) as pil_image:
+
+    # The output image might not exist yet, so we use the source's dimensions
+    abs_original_path = config.content_path / original_path
+    if abs_original_path.suffix not in ('.svg', '.pdf'):
+        with Image.open(abs_original_path) as pil_image:
             width, height = pil_image.size
             img.attrib['width'] = str(width)
             img.attrib['height'] = str(height)
