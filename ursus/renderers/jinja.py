@@ -5,6 +5,8 @@ from jinja2.ext import Extension, do
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
+from rjsmin import jsmin
+from rcssmin import cssmin
 from ursus.config import config
 from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
 from xml.etree import ElementTree
@@ -18,10 +20,12 @@ class JsLoaderExtension(Extension):
     """
     Jinja extension. Adds the {% js %} and {% alljs %} tags.
 
-    All javascript code between {% js %} tags is combined and queued for future output.
+    All javascript code between {% js %} tags is combined and queued for future
+    output. It's minified if config.minify_js is True.
 
-    {% alljs %} outputs the queued javascript code. The code is included in order of addition. If the same code is
-    queued multiple times, it's only output once.
+    {% alljs %} outputs the queued javascript code. The code is included in
+    order of addition. If the same code is queued multiple times, it's only
+    output once.
     """
     tags = {"js", "alljs"}
 
@@ -43,12 +47,42 @@ class JsLoaderExtension(Extension):
 
     def _render_js(self, caller):
         output = "".join(self.environment.js_fragments)
+        if config.minify_js:
+            output = jsmin(output)
         self.environment.js_fragments.clear()
         return Markup(output)
 
     def _queue_js(self, caller):
         self.environment.js_fragments.add(caller())
         return ''
+
+
+class CssLoaderExtension(Extension):
+    """
+    Jinja extension. Adds the {% css %} tag.
+
+    All CSS code in {% css %} tags is minified if config.minify_css is True.
+    """
+    tags = {"css"}
+
+    def __init__(self, environment):
+        super().__init__(environment)
+        environment.extend(js_fragments=OrderedSet())
+
+    def parse(self, parser):
+        token = next(parser.stream)
+
+        if token.test('name:css'):
+            body = parser.parse_statements(["name:endcss"], drop_needle=True)
+            return nodes.CallBlock(
+                self.call_method("_render_css"), [], [], body
+            ).set_lineno(token.lineno)
+
+    def _render_css(self, caller):
+        output = caller()
+        if config.minify_css:
+            output = cssmin(output)
+        return Markup(output)
 
 
 class ResponsiveImageExtension(Extension):
@@ -108,7 +142,7 @@ class JinjaRenderer(Renderer):
         super().__init__()
         self.template_environment = Environment(
             loader=FileSystemLoader(config.templates_path),
-            extensions=[do, JsLoaderExtension, ResponsiveImageExtension],
+            extensions=[do, JsLoaderExtension, CssLoaderExtension, ResponsiveImageExtension],
             autoescape=select_autoescape(),
             undefined=StrictUndefined
         )
