@@ -3,6 +3,7 @@ from datetime import datetime
 from markdown.extensions import Extension
 from markdown.extensions.footnotes import FootnoteExtension, FN_BACKLINK_TEXT, NBSP_PLACEHOLDER
 from markdown.extensions.smarty import SubstituteTextPattern
+from markdown.extensions.toc import TocExtension, slugify
 from markdown.extensions.wikilinks import WikiLinkExtension, build_url
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.postprocessors import RawHtmlPostprocessor
@@ -293,6 +294,10 @@ class CustomFootnotesExtension(FootnoteExtension):
         return container
 
 
+def patched_slugify(value, separator, keep_unicode=False):
+    return slugify(value.lstrip(' 0123456789'), separator, keep_unicode)
+
+
 class MarkdownProcessor(EntryContextProcessor):
     def __init__(self):
         super().__init__()
@@ -301,7 +306,7 @@ class MarkdownProcessor(EntryContextProcessor):
             'fenced_code',
             'meta',
             'tables',
-            'toc',
+            TocExtension(slugify=patched_slugify),
             CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
             JinjaExtension(),
             SuperscriptExtension(),
