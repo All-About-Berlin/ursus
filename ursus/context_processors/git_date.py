@@ -34,6 +34,6 @@ class GitDateProcessor(ContextProcessor):
                 entry_uri = self.commit_path_to_entry_uri(file)
                 if entry_uri and entry_uri in context['entries']:
                     entry = context['entries'][entry_uri]
-                    if entry.get('date_updated') and commit_date < entry['date_updated']:
+                    if not entry.get('date_updated') or commit_date > entry['date_updated']:
                         entry['date_updated'] = commit_date
         return context
