@@ -23,17 +23,16 @@ class GitDateProcessor(ContextProcessor):
             return None
 
     def process(self, context: dict, changed_files: set = None) -> dict:
-        if config.fast_rebuilds:
-            for entry in context['entries'].values():
-                entry.setdefault('date_updated', datetime.now())
-            return context
+        if not config.fast_rebuilds:
+            for commit in self.repo.iter_commits("master"):
+                commit_date = datetime.fromtimestamp(commit.authored_date)
+                for file in commit.stats.files.keys():
+                    entry_uri = self.commit_path_to_entry_uri(file)
+                    if entry_uri and entry_uri in context['entries']:
+                        entry = context['entries'][entry_uri]
+                        if not entry.get('date_updated') or commit_date > entry['date_updated']:
+                            entry['date_updated'] = commit_date
 
-        for commit in self.repo.iter_commits("master"):
-            commit_date = datetime.fromtimestamp(commit.authored_date)
-            for file in commit.stats.files.keys():
-                entry_uri = self.commit_path_to_entry_uri(file)
-                if entry_uri and entry_uri in context['entries']:
-                    entry = context['entries'][entry_uri]
-                    if not entry.get('date_updated') or commit_date > entry['date_updated']:
-                        entry['date_updated'] = commit_date
+        for entry in context['entries'].values():
+            entry.setdefault('date_updated', datetime.now())
         return context
