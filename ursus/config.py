@@ -25,7 +25,7 @@ class UrsusConfig():
 
     # The base URL prepended to all markdown [[wikilinks]], without a trailing slash.
     # For example, https://allaboutberlin.com/glossary
-    wikilinks_base_url: str = '/',
+    wikilinks_base_url: str = '/'
     wikilinks_url_suffix: str = ''
     wikilinks_url_builder: callable = None
     wikilinks_html_class: str = None
