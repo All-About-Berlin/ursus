@@ -45,13 +45,16 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
 
 
 class Generator:
-    def generate(self, changed_files=None):
-        pass
+    def generate(self, changed_files: set = None):
+        raise NotImplementedError
+
+    def lint(self):
+        raise NotImplementedError
 
     def get_watched_paths(self):
         return [config.content_path, ]
 
-    def get_observer_event_handler(self):
+    def get_observer_event_handler(self) -> FileSystemEventHandler:
         return GeneratorObserverEventHandler(generator=self)
 
     def on_file_changes(self, changed_files: set):

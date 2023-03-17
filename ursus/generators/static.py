@@ -1,5 +1,5 @@
 from ursus.config import config
-from ursus.utils import import_class
+from ursus.utils import import_class, get_files_in_path
 from . import Generator
 import logging
 
@@ -62,3 +62,8 @@ class StaticSiteGenerator(Generator):
                     file.unlink()
 
         logger.info("Done.")
+
+    def lint(self):
+        for file_path in get_files_in_path(config.content_path):
+            for linter in config.linters:
+                errors = linter.lint(file)
