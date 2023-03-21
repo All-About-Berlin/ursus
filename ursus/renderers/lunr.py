@@ -28,7 +28,7 @@ class LunrIndexRenderer(Renderer):
         indexed_documents = []
         returned_documents = {}
 
-        for index in config.lunr_indexes['indexes']:
+        for index in config.lunr_indexes.get('indexes', []):
             for entry_uri, entry in context['entries'].items():
                 if Path(entry_uri).match(index['uri_pattern']):
                     indexed_documents.append((
@@ -47,7 +47,7 @@ class LunrIndexRenderer(Renderer):
 
         index = lunr(
             ref='uri',
-            fields=config.lunr_indexes['indexed_fields'],
+            fields=config.lunr_indexes.get('indexed_fields', []),
             documents=indexed_documents
         )
 
