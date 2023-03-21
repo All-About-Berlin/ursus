@@ -1,9 +1,13 @@
 from setuptools import setup, find_packages
+from pathlib import Path
+long_description = (Path(__file__).parent / "README.md").read_text()
 
 setup(
-    name='ursus',
-    version='0.1',
+    name='ursus_ssg',
+    version='1.0',
     description='Static site generator',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='http://github.com/nicbou/ursus',
     author='Nicolas Bouliane',
     author_email='contact@nicolasbouliane.com',
