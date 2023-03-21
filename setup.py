@@ -4,7 +4,7 @@ long_description = (Path(__file__).parent / "README.md").read_text()
 
 setup(
     name='ursus_ssg',
-    version='1.0',
+    version='1.0.1',
     description='Static site generator',
     long_description=long_description,
     long_description_content_type='text/markdown',
