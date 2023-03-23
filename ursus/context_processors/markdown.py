@@ -21,6 +21,51 @@ import re
 logger = logging.getLogger(__name__)
 
 
+class TaskListProcessor(Treeprocessor):
+    box_checked = '[x] '
+    box_unchecked = '[ ] '
+
+    def run(self, root):
+        for li in root.iter(tag='li'):
+            text = (li.text or "")
+
+            if text.lower().startswith((self.box_checked, self.box_unchecked)):
+                is_checked = text.lower().startswith(self.box_checked)
+
+                checkbox = ElementTree.Element("input", {'type': 'checkbox'})
+                if is_checked:
+                    checkbox.attrib['checked'] = 'checked'
+                if self.md.getConfig('checkbox_class'):
+                    checkbox.attrib['class'] = self.md.getConfig('checkbox_class')
+
+                checkbox.tail = li.text.removeprefix(self.box_checked if is_checked else self.box_unchecked)
+                li.text = ''
+                li.insert(0, checkbox)
+                if self.md.getConfig('list_item_class'):
+                    css_classes = set(li.attrib['class'].split())
+                    css_classes.update(self.md.getConfig('list_item_class').split())
+                    li.attrib['class'] = " ".join(css_classes)
+
+        return root
+
+class TaskListExtension(Extension):
+    """
+    Adds github-flavored markdown todo lists:
+
+    * [ ] Unchecked item
+    * [x] Checked item
+    """
+    def __init__(self, **kwargs):
+        self.config = {
+            "list_item_class": ['', 'CSS class to add to the <li> element'],
+            "checkbox_class": ['', 'CSS class to add to the checkbox <input>'],
+        }
+        super().__init__(**kwargs)
+
+    def extendMarkdown(self, md):
+        md.treeprocessors.register(TaskListProcessor(self), "gfm-tasklist", 100)
+
+
 class TypographyExtension(Extension):
     """
     Minor typographic improvements
@@ -127,9 +172,6 @@ class ResponsiveImageProcessor(Treeprocessor):
         'a', 'p', 'pre', 'ul', 'ol', 'dl', 'div', 'blockquote', 'noscript', 'section', 'nav', 'article',
         'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
     )
-
-    def __init__(self, md):
-        super().__init__(md)
 
     def _swap_element(self, parent, old, new):
         """
@@ -319,6 +361,7 @@ class MarkdownProcessor(EntryContextProcessor):
                 build_url=config.wikilinks_url_builder or build_url,
                 html_class=config.wikilinks_html_class,
             ),
+            TaskListExtension(),
         ])
 
     def _parse_metadata(self, raw_metadata):
