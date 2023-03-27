@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 from pathlib import Path
-from ursus.utils import import_class, load_config, get_files_in_path
+from ursus.utils import import_class, import_module_or_path, get_files_in_path
 from ursus.config import config
 from watchdog.observers import Observer
 import argparse
 import coloredlogs
+import logging
 import time
 
 
@@ -36,6 +37,7 @@ def lint():
     linters = [import_class(linter_path)() for linter_path in config.linters]
 
     for file_path in sorted(get_files_in_path(config.content_path)):
+        logging.info(f"\033[1mLinting {str(file_path)}\033[0m")
         for linter in linters:
             linter.lint(file_path, fix_errors=False)
 
@@ -68,9 +70,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.config:
-        load_config(args.config)
+        import_module_or_path(args.config)
     elif Path('./ursus_config.py').exists():
-        load_config('ursus_config.py')
+        import_module_or_path('ursus_config.py')
 
     if args.fast:
         config.fast_rebuilds = True

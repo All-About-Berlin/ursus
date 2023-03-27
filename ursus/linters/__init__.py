@@ -23,7 +23,10 @@ class Linter():
             logging.ERROR: '\033[37m\033[41m',
             logging.CRITICAL: '\033[37m\033[41m',
         }[level]
-        logger.log(level, f"    {color}:{line_no}\033[0m {message}")
+        if line_no:
+            logger.log(level, f"    {color}:{line_no}\033[0m {message}")
+        else:
+            logger.log(level, f"    {message}")
 
     def log_substitution(self, file_path: int, line_no: int, old: str, new: str):
         logger.info(f"      \033[0;31m- {old}\033[0m")
@@ -36,7 +39,6 @@ class RegexLinter(Linter):
 
     def lint(self, file_path: Path, fix_errors: bool = False):
         if not self.file_suffixes or file_path.suffix in self.file_suffixes:
-            logger.info(f"\033[1mLinting {str(file_path)}\033[0m")
             with (config.content_path / file_path).open() as file:
                 old_lines = file.readlines()
 

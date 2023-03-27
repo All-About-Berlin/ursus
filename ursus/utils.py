@@ -15,24 +15,18 @@ def import_class(import_path):
     return getattr(module, class_name)
 
 
-def load_config(module_or_path: str) -> dict:
+def import_module_or_path(module_or_path: str) -> dict:
     """
-    Imports the `config` variable from a Python file or a Python module
+    Imports a module (path.to.module.class or path/to/module.py)
 
     Args:
-        module_or_path (str): path.to.config.module, or path/to/config.py
-
-    Returns:
-        dict: The ursus config at this location
+        module_or_path (str): path.to.module, or path/to/module.py
     """
     file_path = Path(module_or_path)
     if file_path.exists():
         sys.path.append(str(file_path.parent))
-        module = import_module(file_path.with_suffix('').name)
-    else:
-        module = import_module(module_or_path)
-
-    return getattr(module, 'config')
+        return import_module(file_path.with_suffix('').name)
+    return import_module(module_or_path)
 
 
 def is_ignored_file(path: Path, root_path: Path = None) -> bool:
