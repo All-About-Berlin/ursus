@@ -40,15 +40,9 @@ class RegexLinter(Linter):
     def lint(self, file_path: Path, fix_errors: bool = False):
         if not self.file_suffixes or file_path.suffix in self.file_suffixes:
             with (config.content_path / file_path).open() as file:
-                old_lines = file.readlines()
-
-            new_lines = []
-            for line_no, line in enumerate(old_lines):
-                sub_func = partial(self.handle_match, file_path, line_no, fix_errors)
-                new_lines.append(self.regex.sub(sub_func, line))
-
-            with (config.content_path / file_path).open('w') as file:
-                file.writelines(new_lines)
+                for line_no, line in enumerate(file.readlines()):
+                    sub_func = partial(self.handle_match, file_path, line_no, fix_errors)
+                    self.regex.sub(sub_func, line)
 
     def handle_match(self, file_path: int, line_no: int, fix_errors: bool, match: re.Match):
         raise NotImplementedError
