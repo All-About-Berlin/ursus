@@ -62,8 +62,3 @@ class StaticSiteGenerator(Generator):
                     file.unlink()
 
         logger.info("Done.")
-
-    def lint(self):
-        for file_path in get_files_in_path(config.content_path):
-            for linter in config.linters:
-                errors = linter.lint(file)
