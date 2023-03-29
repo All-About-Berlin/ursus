@@ -21,8 +21,6 @@ class MarkdownLinksLinter(RegexLinter):
 
     regex = re.compile(first_half + second_half)
 
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.response_cache = {}
@@ -34,8 +32,54 @@ class MarkdownLinksLinter(RegexLinter):
         return url.replace('\\(', '(').replace('\\)', ')')
 
     def validate_link_text(self, text: str, is_image: bool):
+        return
+        yield
+
+    def validate_link_url(self, url: str, is_image: bool):
+        return
+        yield
+
+    def validate_link_title(self, title: str, is_image: bool):
+        return
+        yield
+
+    def handle_match(self, file: int, line: int, fix_errors: bool, match: re.Match):
+        text = match['text'].strip()
+        url = None
+        title = None
+        is_image = match['first_half'].startswith('!')
+
+        if match['url_group']:
+            parts = match['url_group'].split(" ", maxsplit=1)
+            url = parts[0]
+            if len(parts) == 2:
+                title = parts[1]
+
+        for error, level in chain(
+            self.validate_link_text(text, is_image),
+            self.validate_link_title(title, is_image),
+            self.validate_link_url(url, is_image),
+        ):
+            self.log_error(file, line, f"{error}: {match.group(0)}", level)
+
+
+class MarkdownLinkTextsLinter(MarkdownLinksLinter):
+    def validate_link_text(self, text: str, is_image: bool):
         if not text:
             yield "Image has no alt text", logging.WARNING
+
+
+class MarkdownLinkTitlesLinter(MarkdownLinksLinter):
+    def validate_link_title(self, title: str, is_image: bool):
+        if title is not None:
+            if not (title.startswith('"') and title.endswith('"')):
+                yield "Title is not quoted", logging.ERROR
+            elif title == title.strip('"'):
+                yield "Title is empty", logging.WARNING
+
+
+class MarkdownExternalLinksLinter(MarkdownLinksLinter):
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
 
     def validate_link_url(self, url: str, is_image: bool):
         if not url:
@@ -64,34 +108,3 @@ class MarkdownLinksLinter(RegexLinter):
                         yield f"URL returns HTTP {status_code}: {cleaned_url}", severity
                     elif response.history and response.history[-1].status_code == 301:
                         yield f"URL redirects to {response.url}", logging.INFO
-            elif url.startswith('/'):
-                if is_image and not (config.content_path / url.lstrip('/')).exists():
-                    yield "Image not found", logging.ERROR
-                else:
-                    pass
-
-    def validate_link_title(self, title: str, is_image: bool):
-        if title is not None:
-            if not (title.startswith('"') and title.endswith('"')):
-                yield "Title is not quoted", logging.ERROR
-            elif title == title.strip('"'):
-                yield "Title is empty", logging.WARNING
-
-    def handle_match(self, file: int, line: int, fix_errors: bool, match: re.Match):
-        text = match['text'].strip()
-        url = None
-        title = None
-        is_image = match['first_half'].startswith('!')
-
-        if match['url_group']:
-            parts = match['url_group'].split(" ", maxsplit=1)
-            url = parts[0]
-            if len(parts) == 2:
-                title = parts[1]
-
-        for error, level in chain(
-            self.validate_link_text(text, is_image),
-            self.validate_link_title(title, is_image),
-            self.validate_link_url(url, is_image),
-        ):
-            self.log_error(file, line, f"{error}: {match.group(0)}", level)

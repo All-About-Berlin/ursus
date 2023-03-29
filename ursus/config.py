@@ -81,7 +81,9 @@ class UrsusConfig():
 
     # Linters look for errors in your content
     linters: tuple = (
-        'ursus.linters.markdown.MarkdownLinksLinter',
+        'ursus.linters.markdown.MarkdownLinkTextsLinter',
+        'ursus.linters.markdown.MarkdownLinkTitlesLinter',
+        'ursus.linters.markdown.MarkdownExternalLinksLinter',
     )
 
     # Filter functions available in Jinja templates. The key is the filter name, and the value is a function
