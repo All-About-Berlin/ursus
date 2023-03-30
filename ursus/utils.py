@@ -5,8 +5,18 @@ from typing import Iterator
 from ursus.config import config
 from xml.etree import ElementTree
 import fitz
+import logging
 import shutil
 import sys
+
+
+log_colors = {
+    logging.DEBUG: '',
+    logging.INFO: '\033[37m\033[0;100m',
+    logging.WARNING: '\033[1;90m\033[43m',
+    logging.ERROR: '\033[37m\033[41m',
+    logging.CRITICAL: '\033[37m\033[41m',
+}
 
 
 def import_class(import_path):

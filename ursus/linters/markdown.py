@@ -25,7 +25,7 @@ class MarkdownLinksLinter(RegexLinter):
 
     regex = re.compile(first_half + second_half)
 
-    def handle_match(self, file_path: Path, line: int, fix_errors: bool, match: re.Match):
+    def handle_match(self, file_path: Path, match: re.Match):
         text = match['text'].strip()
         url = None
         title = None
@@ -42,7 +42,7 @@ class MarkdownLinksLinter(RegexLinter):
             self.validate_link_title(title, is_image, file_path),
             self.validate_link_url(url, is_image, file_path),
         ):
-            self.log_error(file_path, line, f"{error}: {match.group(0)}", level)
+            yield f"{error}: {match.group(0)}", level
 
     def validate_link_text(self, text: str, is_image: bool, file_path: Path):
         return
@@ -100,10 +100,10 @@ class MarkdownExternalLinksLinter(MarkdownLinksLinter):
                     yield f"URL {type(exc).__name__}: {cleaned_url}", logging.ERROR
                 else:
                     if status_code in (404, 410):
-                        yield f"URL returns HTTP {status_code}: {cleaned_url}", logging.ERROR
+                        yield f"URL returns HTTP {status_code}", logging.ERROR
                     elif status_code >= 400:
-                        severity = logging.WARNING if status_code in (403, 503) else logging.ERROR
-                        yield f"URL returns HTTP {status_code}: {cleaned_url}", severity
+                        level = logging.WARNING if status_code in (403, 503) else logging.ERROR
+                        yield f"URL returns HTTP {status_code}", level
                     elif response.history and response.history[-1].status_code == 301:
                         yield f"URL redirects to {response.url}", logging.INFO
 

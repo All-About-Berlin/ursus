@@ -48,9 +48,6 @@ class Generator:
     def generate(self, changed_files: set = None):
         raise NotImplementedError
 
-    def lint(self):
-        raise NotImplementedError
-
     def get_watched_paths(self):
         return [config.content_path, ]
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from pathlib import Path
-from ursus.utils import import_class, import_module_or_path, get_files_in_path
+from ursus.utils import import_class, import_module_or_path, get_files_in_path, log_colors
 from ursus.config import config
 from watchdog.observers import Observer
 import argparse
@@ -36,10 +36,16 @@ def lint():
     """Lints the content for errors"""
     linters = [import_class(linter_path)() for linter_path in config.linters]
 
+    logger = logging.getLogger(__name__)
+
     for file_path in sorted(get_files_in_path(config.content_path)):
         logging.info(f"\033[1mLinting {str(file_path)}\033[0m")
         for linter in linters:
-            linter.lint(file_path, fix_errors=False)
+            for line_no, message, level in linter.lint(file_path):
+                if line_no:
+                    logger.log(level, f"{log_colors[level]}:{line_no}\033[0m {message}")
+                else:
+                    logger.log(level, f"{message}")
 
 
 if __name__ == '__main__':
