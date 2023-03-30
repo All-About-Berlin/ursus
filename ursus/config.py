@@ -83,6 +83,7 @@ class UrsusConfig():
     linters: tuple = (
         'ursus.linters.markdown.MarkdownLinkTextsLinter',
         'ursus.linters.markdown.MarkdownLinkTitlesLinter',
+        'ursus.linters.markdown.MarkdownInternalLinksLinter',
         'ursus.linters.markdown.MarkdownExternalLinksLinter',
     )
 
