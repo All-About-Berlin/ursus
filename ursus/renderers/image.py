@@ -45,12 +45,8 @@ class ImageTransformRenderer(Renderer):
                             logger.info('Generating %s preview as %s', str(input_path), str(output_path))
                             make_pdf_thumbnail(config.content_path / input_path, max_size, abs_output_path)
                     elif is_svg(abs_input_path):
-                        if abs_output_path.suffix.lower() == '.svg':
-                            logger.info('Copying %s to %s', str(input_path), str(output_path))
-                            copy_file(abs_input_path, abs_output_path)
-                        else:
-                            logger.warning(f"Can't convert {str(input_path)} to {abs_output_path.suffix}. Ignoring.")
-                            continue
+                        logger.info('Copying %s to %s', str(input_path), str(output_path))
+                        copy_file(abs_input_path, abs_output_path)
                     else:
                         logger.info('Converting %s to %s', str(input_path), str(output_path))
                         with Image.open(abs_input_path) as pil_image:

@@ -5,6 +5,7 @@ from typing import Iterator
 from ursus.config import config
 from xml.etree import ElementTree
 import fitz
+import imagesize
 import logging
 import shutil
 import sys
@@ -97,6 +98,28 @@ def is_svg(path: Path):
     """
     assert path.is_absolute(), 'is_svg must be called with an absolute path'
     return path.is_file() and path.suffix.lower() == '.svg'
+
+
+def is_raster_image(path: Path):
+    return is_image(path) and not is_svg(path)
+
+
+def get_image_size(path: Path):
+    """
+    Args:
+        path (Path): The absolute Path to an image
+    Returns:
+        tuple: The image width and height as a tuple
+    """
+    try:
+        width, height = imagesize.get(path)
+        if width == height == -1:
+            logging.debug(f"Can't get image size, trying again with Pillow: {path}")
+            with Image.open(path) as pil_image:
+                width, height = pil_image.size
+        return width, height
+    except Exception as e:
+        raise Exception(f"Invalid image size: {path}") from e
 
 
 def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None) -> list[Path]:
@@ -226,7 +249,7 @@ def get_image_transforms(original_path: Path) -> Iterator[dict]:
                 if suffix == original_path.suffix.lower():
                     output_image_path = original_path
                 else:
-                    if original_path.suffix.lower() == '.svg':
+                    if is_svg(config.content_path / original_path):
                         # .svg images are not be converted
                         continue
 
@@ -280,11 +303,10 @@ def make_picture_element(original_path: Path, output_path: Path, img_attrs={}):
 
     # The output image might not exist yet, so we use the source's dimensions
     abs_original_path = config.content_path / original_path
-    if abs_original_path.suffix not in ('.svg', '.pdf'):
-        with Image.open(abs_original_path) as pil_image:
-            width, height = pil_image.size
-            img.attrib['width'] = str(width)
-            img.attrib['height'] = str(height)
+    if is_raster_image(abs_original_path):
+        width, height = get_image_size(abs_original_path)
+        img.attrib['width'] = str(width)
+        img.attrib['height'] = str(height)
     img.attrib['loading'] = 'lazy'
     img.attrib['src'] = f"{config.site_url}/{str(default_src)}"
 

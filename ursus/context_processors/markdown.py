@@ -48,6 +48,7 @@ class TaskListProcessor(Treeprocessor):
 
         return root
 
+
 class TaskListExtension(Extension):
     """
     Adds github-flavored markdown todo lists:
