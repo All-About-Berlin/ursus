@@ -189,7 +189,7 @@ class ResponsiveImageProcessor(Treeprocessor):
         # Only apply to local images
         img_src = img.attrib.get('src')
         if img_src.startswith('/') or img_src.startswith(config.site_url + '/'):
-            image_path = Path(img_src.removeprefix(config.site_url).removeprefix('/'))
+            image_uri = img_src.removeprefix(config.site_url).removeprefix('/')
 
             parent = parents[0]
             grandparent = parents[1]
@@ -235,7 +235,7 @@ class ResponsiveImageProcessor(Treeprocessor):
             elif parent.tag not in self.allowed_parents:
                 image_maker = make_picture_element
 
-            image = image_maker(image_path, config.output_path, img_attrs, a_attrs)
+            image = image_maker(self.md.context, image_uri, img_attrs, a_attrs)
 
             self._swap_element(containing_element, element_to_swap, image)
 
@@ -386,16 +386,15 @@ class MarkdownProcessor(EntryContextProcessor):
             metadata[key] = value
         return metadata
 
-    def process_entry(self, entry_uri: str, entry_context: dict) -> dict:
+    def process_entry(self, context: dict, entry_uri: str):
         if entry_uri.endswith('.md'):
             with (config.content_path / entry_uri).open(encoding='utf-8') as f:
+                self.markdown.context = context
                 html = self.markdown.reset().convert(f.read())
 
-            entry_context.update({
+            context['entries'][entry_uri].update({
                 **self._parse_metadata(self.markdown.Meta),
                 'body': html,
                 'table_of_contents': self.markdown.toc_tokens,
                 'url': f"{config.site_url}/{str(Path(entry_uri).with_suffix(config.html_url_extension))}",
             })
-
-        return entry_context

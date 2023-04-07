@@ -208,7 +208,7 @@ def get_image_transforms(original_path: Path) -> Iterator[dict]:
     Yields a list of image transforms that apply to a file.
 
     Args:
-        original_path (Path): Path of the original file/image to transform
+        original_path (Path): Path of the original file/image to transform, relative to config.content_path
 
     Yields:
         Iterator[dict]: A list of image transforms that apply to this file.
@@ -224,6 +224,8 @@ def get_image_transforms(original_path: Path) -> Iterator[dict]:
         '.svg': 'image/svg+xml',
         '.webp': 'image/webp',
     }
+
+    assert not original_path.is_absolute(), "original_path must be a relative path"
 
     for key, transform in config.image_transforms.items():
         includes = transform.get('include', ['*'])
@@ -264,7 +266,7 @@ def get_image_transforms(original_path: Path) -> Iterator[dict]:
                 }
 
 
-def make_picture_element(original_path: Path, output_path: Path, img_attrs={}):
+def make_picture_element(context: dict, entry_uri: str, img_attrs={}):
     """
     Creates a responsive HTML <picture> element
     """
@@ -276,7 +278,7 @@ def make_picture_element(original_path: Path, output_path: Path, img_attrs={}):
 
     # Build a list of srcsets grouped by mimetype
     sources_by_mimetype = {}
-    for transform in get_image_transforms(original_path):
+    for transform in context['entries'][entry_uri]['transforms']:
         width = transform['max_size'][0]
         mimetype = transform['output_mimetype']
 
@@ -299,14 +301,11 @@ def make_picture_element(original_path: Path, output_path: Path, img_attrs={}):
 
     # Add an <img> with the default image to the <picture>
     img = ElementTree.Element('img', attrib=img_attrs)
-    assert default_src is not None, f"default_src is None for {original_path}"
-
-    # The output image might not exist yet, so we use the source's dimensions
-    abs_original_path = config.content_path / original_path
-    if is_raster_image(abs_original_path):
-        width, height = get_image_size(abs_original_path)
-        img.attrib['width'] = str(width)
-        img.attrib['height'] = str(height)
+    assert default_src is not None, f"default_src is None for {entry_uri}"
+    if 'width' in context['entries'][entry_uri]:
+        img.attrib['width'] = str(context['entries'][entry_uri]['width'])
+    if 'height' in context['entries'][entry_uri]:
+        img.attrib['height'] = str(context['entries'][entry_uri]['height'])
     img.attrib['loading'] = 'lazy'
     img.attrib['src'] = f"{config.site_url}/{str(default_src)}"
 
@@ -315,12 +314,12 @@ def make_picture_element(original_path: Path, output_path: Path, img_attrs={}):
     return picture
 
 
-def make_figure_element(original_path: Path, output_path: Path, img_attrs={}, a_attrs=None):
+def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=None):
     """
     Creates a responsive HTML <figure> element with the image title as <figcaption>. Returns a simple <picture> if there
     is no title.
     """
-    image = make_picture_element(original_path, output_path, img_attrs)
+    image = make_picture_element(context, entry_uri, img_attrs)
     if a_attrs and a_attrs.get('href'):
         a_attrs['target'] = '_blank'
         wrapped_image = ElementTree.Element('a', a_attrs)

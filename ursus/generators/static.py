@@ -1,5 +1,5 @@
 from ursus.config import config
-from ursus.utils import import_class, get_files_in_path
+from ursus.utils import import_class
 from . import Generator
 import logging
 

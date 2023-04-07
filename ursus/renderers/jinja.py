@@ -111,13 +111,9 @@ class ResponsiveImageExtension(Extension):
         return nodes.Output([nodes.MarkSafe(call)]).set_lineno(token.lineno)
 
     @pass_context
-    def _render_image(self, context, image_path, image_class):
+    def _render_image(self, context, image_uri, image_class):
         img_attrs = {'class': image_class} if image_class else {}
-        output = make_picture_element(
-            original_path=Path(image_path),
-            output_path=config.output_path,
-            img_attrs=img_attrs,
-        )
+        output = make_picture_element(context, image_uri, img_attrs)
         return Markup(ElementTree.tostring(output, encoding='unicode'))
 
 
@@ -189,7 +185,8 @@ class JinjaRenderer(Renderer):
         """
         specific_context = {
             **context,
-            'entry': context['entries'][entry_uri]
+            'entry': context['entries'][entry_uri],
+            'entry_uri': entry_uri,
         }
         output_path = self.get_entry_output_path(template_path, entry_uri)
         return self.render_template(template_path, specific_context, output_path)

@@ -64,6 +64,7 @@ class UrsusConfig():
     # The processors that update the context with extra data
     context_processors: tuple = (
         'ursus.context_processors.stale.StaleEntriesProcessor',
+        'ursus.context_processors.image.ImageProcessor',
         'ursus.context_processors.markdown.MarkdownProcessor',
         'ursus.context_processors.get_entries.GetEntriesProcessor',
         'ursus.context_processors.related.RelatedEntriesProcessor',
