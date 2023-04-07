@@ -26,7 +26,7 @@ class GitDateProcessor(ContextProcessor):
         if not config.fast_rebuilds:
             for commit in self.repo.iter_commits("master"):
                 commit_date = datetime.fromtimestamp(commit.authored_date)
-                for file in commit.stats.files.keys():
+                for file in self.repo.git.show(commit.hexsha, name_only=True, diff_filter='ACMR').split('\n'):
                     entry_uri = self.commit_path_to_entry_uri(file)
                     if entry_uri and entry_uri in context['entries']:
                         entry = context['entries'][entry_uri]

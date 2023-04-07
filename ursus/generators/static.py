@@ -43,6 +43,7 @@ class StaticSiteGenerator(Generator):
             logger.info("Building context...")
 
         for context_processor in self.context_processors:
+            logger.debug(f"Processing context with {type(context_processor).__name__}")
             self.context = context_processor.process(self.context, changed_files)
 
         """
@@ -50,6 +51,7 @@ class StaticSiteGenerator(Generator):
         """
         files_to_keep = set()
         for renderer in self.renderers:
+            logger.debug(f"Rendering entries with {type(renderer).__name__}")
             files_to_keep.update(renderer.render(self.context, changed_files))
 
         """
