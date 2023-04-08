@@ -9,6 +9,7 @@ from markdown.inlinepatterns import SimpleTagPattern
 from markdown.postprocessors import RawHtmlPostprocessor
 from markdown.preprocessors import Preprocessor
 from markdown.treeprocessors import Treeprocessor, InlineProcessor
+from markdown.extensions.codehilite import CodeHiliteExtension
 from pathlib import Path
 from ursus.config import config
 from ursus.utils import make_figure_element, make_picture_element
@@ -349,6 +350,7 @@ class MarkdownProcessor(EntryContextProcessor):
             'fenced_code',
             'meta',
             'tables',
+            CodeHiliteExtension(guess_lang=False),
             TocExtension(slugify=patched_slugify),
             CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
             JinjaExtension(),
