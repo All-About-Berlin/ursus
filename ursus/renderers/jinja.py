@@ -127,7 +127,7 @@ def is_entry_template(template_path: Path) -> bool:
 
 
 def template_can_render_entry(template_path: Path, entry_uri: str) -> bool:
-    return entry_uri.startswith(str(template_path.parent) + '/')
+    return Path(entry_uri).parent == template_path.parent
 
 
 class JinjaRenderer(Renderer):
@@ -159,7 +159,6 @@ class JinjaRenderer(Renderer):
         try:
             template.stream(**context).dump(str(abs_output_path))
         except TemplateSyntaxError:
-            print(context.get('entry', {}).get('body'))
             raise
         return output_path
 
