@@ -40,11 +40,11 @@ def import_module_or_path(module_or_path: str) -> dict:
     return import_module(module_or_path)
 
 
-def is_ignored_file(path: Path, root_path: Path = None) -> bool:
+def is_ignored_file(path: Path, root_path: Path) -> bool:
     """Returns whether a file should be ignored by ursus.
     Args:
         path (Path): Path to the file
-        root_path (Path, optional): Root path. The name of parent directories above root_path are not considered.
+        root_path (Path): Root path. The name of parent directories above root_path are not considered.
 
     Returns:
         bool: True if the file or any of its parents (up to root_path) start with _ or .
