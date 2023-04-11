@@ -350,6 +350,7 @@ class MarkdownProcessor(EntryContextProcessor):
             'fenced_code',
             'meta',
             'tables',
+            'smarty',
             CodeHiliteExtension(guess_lang=False),
             TocExtension(slugify=patched_slugify),
             CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
