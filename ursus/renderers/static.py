@@ -16,7 +16,7 @@ class StaticAssetRenderer(Renderer):
     def get_assets_to_copy(self, changed_files: set = None):
         return [
             f for f in get_files_in_path(config.templates_path)
-            if f.suffix not in self.ignored_suffixes
+            if f.suffix.lower() not in self.ignored_suffixes
         ]
 
     def render(self, context: dict, changed_files: set = None) -> set:

@@ -159,7 +159,7 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
         else:
             return
 
-        if file_path.suffix == config.html_url_extension:
+        if file_path.suffix.lower() == config.html_url_extension:
             file_path = file_path.with_suffix('.md')
 
         if not file_path.exists():

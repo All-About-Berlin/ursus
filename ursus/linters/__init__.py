@@ -20,7 +20,7 @@ class RegexLinter(Linter):
     regex = re.compile(r'')
 
     def lint(self, file_path: Path):
-        if self.file_suffixes and file_path.suffix not in self.file_suffixes:
+        if self.file_suffixes and file_path.suffix.lower() not in self.file_suffixes:
             return
 
         with (config.content_path / file_path).open() as file:

@@ -86,6 +86,7 @@ class UrsusConfig():
         'ursus.linters.markdown.MarkdownLinkTitlesLinter',
         'ursus.linters.markdown.MarkdownInternalLinksLinter',
         'ursus.linters.markdown.MarkdownExternalLinksLinter',
+        'ursus.linters.images.UnusedImagesLinter',
     )
 
     # Filter functions available in Jinja templates. The key is the filter name, and the value is a function
