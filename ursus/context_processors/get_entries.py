@@ -7,7 +7,7 @@ class GetEntriesProcessor(ContextProcessor):
     Adds the get_entries() method to the context root
     """
     def process(self, context: dict, changed_files: set = None) -> dict:
-        def get_entries(namespace, filter=None, sort_by=None, reverse=False):
+        def get_entries(namespace, filter_by=None, sort_by=None, reverse=False):
             entries = context['entries']
             if namespace:
                 entries = {
@@ -15,10 +15,10 @@ class GetEntriesProcessor(ContextProcessor):
                     if uri.startswith(namespace + '/')
                 }
 
-            if filter:
+            if filter_by:
                 entries = {
                     uri: value for uri, value in entries.items()
-                    if filter(uri, value)
+                    if filter_by(uri, value)
                 }
 
             entries = entries.values()

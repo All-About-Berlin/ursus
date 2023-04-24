@@ -161,7 +161,7 @@ It makes a few changes to the default markdown output:
 The `GetEntriesProcessor` adds a `get_entries` method to the context. It's used to get a list of entries of a certain type, and sort it.
 
 ```jinja
-{% set posts = get_entries('posts', filter=filter_function, sort_by='date_created', reverse=True) %}
+{% set posts = get_entries('posts', filter_by=filter_function, sort_by='date_created', reverse=True) %}
 ```
 
 ### Renderers
