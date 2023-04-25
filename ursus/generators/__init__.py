@@ -38,22 +38,7 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
 
         self.is_rebuilding = True
 
-        def add_path_to_changed_files(path: str):
-            path = Path(path)
-            root_path = (
-                config.content_path if path.is_relative_to(config.content_path)
-                else config.templates_path
-            )
-            if root_path:
-                return not is_ignored_file(path, root_path)
-            return True
-
-        changed_files = set()
-        for event in self.queued_events:
-            if add_path_to_changed_files(event.src_path):
-                logger.info(f"File {event.event_type}: {event.src_path}")
-                changed_files.add(Path(event.src_path))
-
+        changed_files = set(Path(event.src_path) for event in self.queued_events)
         changed_files.update([Path(e.dest_path) for e in self.queued_events if e.event_type == 'moved'])
         self.queued_events.clear()
         if len(changed_files):

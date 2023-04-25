@@ -2,6 +2,7 @@ from . import Renderer
 from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, StrictUndefined
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.ext import Extension, do
+from jinja2.meta import find_referenced_templates
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
@@ -145,6 +146,16 @@ class JinjaRenderer(Renderer):
         self.template_environment.filters['render'] = render_filter
         self.template_environment.filters.update(config.jinja_filters)
 
+    def get_child_templates(self, template_path: Path):
+        dependencies = set()
+        with (config.templates_path / template_path).open() as template_file:
+            ast = self.template_environment.parse(template_file.read())
+        child_template_paths = [Path(t.removeprefix('/')) for t in find_referenced_templates(ast)]
+        for child_template_path in child_template_paths:
+            dependencies.add(child_template_path)
+            dependencies.update(self.get_child_templates(child_template_path))
+        return dependencies
+
     def render_template(self, template_path: Path, context: dict, output_path: Path):
         """Returns an entry into a template, and saves it under output_path
         Args:
@@ -204,10 +215,21 @@ class JinjaRenderer(Renderer):
 
             if file.is_relative_to(config.content_path) and not is_ignored_file(file, config.content_path):
                 changed_entry_uris.add(str(file.relative_to(config.content_path)))
-            elif file.is_relative_to(config.templates_path) and not is_ignored_file(file, config.templates_path):
+            elif file.is_relative_to(config.templates_path):
                 changed_templates.add(file.relative_to(config.templates_path))
             else:
                 continue
+
+        if changed_files is not None and config.fast_rebuilds:
+            # Also rerender templates that depend on the changed templates (_style.css > _layout.html > index.html)
+            changed_parent_templates = set()
+            for template_path in template_paths:
+                dependencies = self.get_child_templates(template_path)
+                for changed_template in changed_templates:
+                    if changed_template in dependencies:
+                        logger.info(f"{template_path} is affected by {changed_template} change")
+                        changed_parent_templates.add(template_path)
+            changed_templates.update(changed_parent_templates)
 
         # Process edited entries
         for entry_uri in changed_entry_uris:
@@ -217,7 +239,9 @@ class JinjaRenderer(Renderer):
 
         # Process edited templates
         for template_path in changed_templates:
-            if is_entry_template(template_path):
+            if is_ignored_file(config.templates_path / template_path, config.templates_path):
+                continue
+            elif is_entry_template(template_path):
                 for entry_uri in context['entries']:
                     if template_can_render_entry(template_path, entry_uri):
                         render_queue.add(('entry', template_path, entry_uri))
