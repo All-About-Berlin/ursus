@@ -5,6 +5,7 @@ from ursus.utils import import_module_or_path
 from ursus.config import config
 import argparse
 import coloredlogs
+import logging
 
 
 if __name__ == '__main__':
@@ -43,6 +44,17 @@ if __name__ == '__main__':
         config.fast_rebuilds = True
 
     coloredlogs.install(**config.logging)
+
+    if args.config:
+        logging.info(f"Loaded config from {args.config}")
+    elif Path('./ursus_config.py').exists():
+        logging.info("Loaded config from ./ursus_config.py")
+    else:
+        logging.warning("No config supplied. Using default config.")
+
+    logging.info(f"Content path: {str(config.content_path)}")
+    logging.info(f"Templates path: {str(config.templates_path)}")
+    logging.info(f"Output path: {str(config.output_path)}")
 
     if args.action == 'build':
         build(args.watch)
