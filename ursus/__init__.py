@@ -32,13 +32,11 @@ def lint():
     """Lints the content for errors"""
     linters = [import_class(linter_path)() for linter_path in config.linters]
 
-    logger = logging.getLogger(__name__)
-
     for file_path in sorted(get_files_in_path(config.content_path)):
         logging.info(f"\033[1mLinting {str(file_path)}\033[0m")
         for linter in linters:
             for line_no, message, level in linter.lint(file_path):
                 if line_no:
-                    logger.log(level, f"{log_colors[level]}:{line_no}\033[0m {message}")
+                    logging.log(level, f"{log_colors[level]}:{line_no}\033[0m {message}")
                 else:
-                    logger.log(level, f"{message}")
+                    logging.log(level, f"{message}")

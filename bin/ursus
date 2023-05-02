@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from pathlib import Path
 from ursus import build, lint
-from ursus.utils import import_module_or_path
 from ursus.config import config
+from ursus.server import serve_async
+from ursus.utils import import_module_or_path
 import argparse
 import coloredlogs
 import logging
@@ -33,6 +34,10 @@ if __name__ == '__main__':
         '-f', '--fast', action='store_true',
         help="Fast rebuilds. Prefer faster page rebuilds to completeness. Related pages might not be reloaded."
     )
+    parser.add_argument(
+        '-s', '--serve', dest='port', nargs='?', const=80, default=None,
+        help="Start a static file server, and serve the generated website on the given port. The default port is 80."
+    )
     args = parser.parse_args()
 
     if args.config:
@@ -55,6 +60,9 @@ if __name__ == '__main__':
     logging.info(f"Content path: {str(config.content_path)}")
     logging.info(f"Templates path: {str(config.templates_path)}")
     logging.info(f"Output path: {str(config.output_path)}")
+
+    if args.port:
+        serve_async(args.port)
 
     if args.action == 'build':
         build(args.watch)
