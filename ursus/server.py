@@ -37,6 +37,6 @@ def serve(port: int = 80):
 
 
 def serve_async(port: int = 80):
-    thread = Thread(target=serve, args=(port, ))
+    thread = Thread(target=serve, args=(port, ), daemon=True)
     thread.start()
     return thread
