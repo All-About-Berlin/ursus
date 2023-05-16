@@ -28,11 +28,11 @@ def build(watch_for_changes: bool = False):
             observer.join()
 
 
-def lint():
+def lint(files_to_lint=None):
     """Lints the content for errors"""
     linters = [import_class(linter_path)() for linter_path in config.linters]
 
-    for file_path in sorted(get_files_in_path(config.content_path)):
+    for file_path in sorted(get_files_in_path(config.content_path, whitelist=files_to_lint)):
         logging.info(f"\033[1mLinting {str(file_path)}\033[0m")
         for linter in linters:
             for line_no, message, level in linter.lint(file_path):

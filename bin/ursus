@@ -38,6 +38,10 @@ if __name__ == '__main__':
         '-s', '--serve', dest='port', nargs='?', const=80, default=None,
         help="Start a static file server, and serve the generated website on the given port. The default port is 80."
     )
+    parser.add_argument(
+        'files', type=Path, nargs='*',
+        help="Only lint the given file(s)"
+    )
     args = parser.parse_args()
 
     if args.config:
@@ -67,4 +71,4 @@ if __name__ == '__main__':
     if args.action == 'build':
         build(args.watch)
     elif args.action == 'lint':
-        lint()
+        lint(files_to_lint=args.files or None)
