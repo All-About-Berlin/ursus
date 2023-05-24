@@ -1,6 +1,5 @@
 from pathlib import Path
 from ursus.config import config
-from ursus.utils import is_ignored_file
 from watchdog.events import FileSystemEventHandler
 import logging
 import threading
@@ -42,7 +41,10 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
         changed_files.update([Path(e.dest_path) for e in self.queued_events if e.event_type == 'moved'])
         self.queued_events.clear()
         if len(changed_files):
-            self.generator.on_file_changes(changed_files)
+            try:
+                self.generator.on_file_changes(changed_files)
+            except:
+                logging.exception("Could not generate site")
         self.is_rebuilding = False
 
 

@@ -12,10 +12,14 @@ def build(watch_for_changes: bool = False):
         watch_for_changes (bool, optional): Keep running, and rebuild when content or templates change
     """
     generator = import_class(config.generator)()
-    generator.generate()
 
     if watch_for_changes:
         observer = Observer()
+
+        try:
+            generator.generate()
+        except:
+            logging.exception("Could not generate site")
 
         for path in generator.get_watched_paths():
             observer.schedule(generator.get_observer_event_handler(), path, recursive=True)
@@ -26,6 +30,8 @@ def build(watch_for_changes: bool = False):
         finally:
             observer.stop()
             observer.join()
+    else:
+        generator.generate()
 
 
 def lint(files_to_lint=None):
