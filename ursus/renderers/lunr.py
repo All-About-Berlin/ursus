@@ -22,8 +22,11 @@ class LunrIndexRenderer(Renderer):
         super().__init__()
 
     def render(self, context: dict, changed_files: set = None) -> set:
+        if config.fast_rebuilds:
+            return set()
+
         index_output_path = config.output_path / config.lunr_index_output_path
-        logger.info(f"Generating search index at {index_output_path}")
+        logger.info(f"Generating search index at {config.lunr_index_output_path}")
 
         indexed_documents = []
         returned_documents = {}
