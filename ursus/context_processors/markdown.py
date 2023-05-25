@@ -43,7 +43,7 @@ class TaskListProcessor(Treeprocessor):
                 li.text = ''
                 li.insert(0, checkbox)
                 if self.md.getConfig('list_item_class'):
-                    css_classes = set(li.attrib['class'].split())
+                    css_classes = set(li.attrib.get('class', '').split())
                     css_classes.update(self.md.getConfig('list_item_class').split())
                     li.attrib['class'] = " ".join(css_classes)
 
@@ -365,7 +365,10 @@ class MarkdownProcessor(EntryContextProcessor):
                 build_url=config.wikilinks_url_builder or build_url,
                 html_class=config.wikilinks_html_class,
             ),
-            TaskListExtension(),
+            TaskListExtension(
+                list_item_class=config.checkbox_list_item_class,
+                checkbox_class=config.checkbox_list_item_input_class,
+            ),
         ])
 
     def _parse_metadata(self, raw_metadata):

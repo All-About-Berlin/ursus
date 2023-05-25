@@ -30,6 +30,11 @@ class UrsusConfig():
     wikilinks_url_builder: callable = None
     wikilinks_html_class: str = None
 
+    # The CSS class of Markdown list items with a checkbox ("- [ ] list item")
+    # Sets the class of the <li> and the <input type="checkbox">
+    checkbox_list_item_class: str = None
+    checkbox_list_item_input_class: str = None
+
     # Minify Javascript and CSS
     minify_js: bool = False
     minify_css: bool = False
