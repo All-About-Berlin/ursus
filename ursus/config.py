@@ -83,6 +83,7 @@ class UrsusConfig():
         'ursus.renderers.image.ImageTransformRenderer',
         'ursus.renderers.jinja.JinjaRenderer',
         'ursus.renderers.lunr.LunrIndexRenderer',
+        'ursus.renderers.sass.SassRenderer',
     )
 
     # Linters look for errors in your content
