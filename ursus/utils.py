@@ -145,7 +145,11 @@ def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None) -> 
 
     return [
         f.relative_to(path) for f in files
-        if f.is_file() and not is_ignored_file(f, path)
+        if (
+            f.is_file()
+            and not is_ignored_file(f, path)
+            and suffix in (None, f.suffix)
+        )
     ]
 
 
