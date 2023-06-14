@@ -274,6 +274,53 @@ class ResponsiveImagesExtension(Extension):
         pass
 
 
+class WrappedTableProcessor(Treeprocessor):
+    """
+    Wrap tables in a <div> to allow scrollable tables on mobile.
+    """
+    def wrap_table(self, table, parent):
+        wrapper = ElementTree.Element('div', attrib={
+            'class': self.md.getConfig('table_wrapper_class')
+        })
+        wrapper.append(table)
+
+        for index, element in enumerate(parent):
+            if element == table:
+                parent[index] = wrapper
+                wrapper.tail = table.tail
+                return
+
+    def run(self, root):
+        parent_map = {}
+        for parent in root.iter():
+            for child in parent:
+                parent_map[child] = parent
+
+        for table in root.iter('table'):
+            child = table
+            parents = []
+            while parent := parent_map.get(child):
+                parents.append(parent)
+                child = parent
+
+            self.wrap_table(table, parents[0])
+
+
+class WrappedTableExtension(Extension):
+    """
+    Tables are wrapped in a <div>
+    """
+    def __init__(self, **kwargs):
+        self.config = {
+            "table_wrapper_class": ['', 'CSS class to add to the <div> element that wraps the table'],
+        }
+        super().__init__(**kwargs)
+
+    def extendMarkdown(self, md):
+        if self.getConfig('table_wrapper_class'):
+            md.treeprocessors.register(WrappedTableProcessor(self), 'wrappedtable', 0)
+
+
 class SuperscriptExtension(Extension):
     """
     ^text^ is converted to <sup>text</sup>
@@ -369,6 +416,9 @@ class MarkdownProcessor(EntryContextProcessor):
                 list_item_class=config.checkbox_list_item_class,
                 checkbox_class=config.checkbox_list_item_input_class,
             ),
+            WrappedTableExtension(
+                table_wrapper_class=config.table_wrapper_class,
+            )
         ])
 
     def _parse_metadata(self, raw_metadata):

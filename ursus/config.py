@@ -35,6 +35,9 @@ class UrsusConfig():
     checkbox_list_item_class: str = None
     checkbox_list_item_input_class: str = None
 
+    # If set, all Markdown tables are wrapped with a div that has this class.
+    table_wrapper_class: str = None
+
     # Minify Javascript and CSS
     minify_js: bool = False
     minify_css: bool = False
