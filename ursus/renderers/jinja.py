@@ -12,6 +12,7 @@ from ursus.config import config
 from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
 from xml.etree import ElementTree
 import logging
+import sass
 
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,7 @@ class CssLoaderExtension(Extension):
     All CSS code in {% css %} tags is minified if config.minify_css is True.
     """
     tags = {"css"}
+    token_name = 'css'
 
     def __init__(self, environment):
         super().__init__(environment)
@@ -73,17 +75,43 @@ class CssLoaderExtension(Extension):
     def parse(self, parser):
         token = next(parser.stream)
 
-        if token.test('name:css'):
-            body = parser.parse_statements(["name:endcss"], drop_needle=True)
+        if token.test(f'name:{self.token_name}'):
+            body = parser.parse_statements([f'name:end{self.token_name}'], drop_needle=True)
             return nodes.CallBlock(
-                self.call_method("_render_css"), [], [], body
+                self.call_method("_render_content"), [], [], body
             ).set_lineno(token.lineno)
 
-    def _render_css(self, caller):
+    def _render_content(self, caller):
         output = caller()
         if config.minify_css:
             output = cssmin(output)
         return Markup(output)
+
+
+class ScssLoaderExtension(CssLoaderExtension):
+    """
+    Jinja extension. Adds the {% scss %} tag.
+
+    All Sass code in {% scss %} tags is converted to CSS.
+    It's also minified if config.minify_css is True.
+    """
+    tags = {"scss"}
+    token_name = 'scss'
+
+    def __init__(self, *args, **kwargs):
+        self.scss_cache = {}
+
+    def _render_content(self, caller):
+        scss_code = caller()
+        if scss_code not in self.scss_cache:
+            self.scss_cache[scss_code] = Markup(
+                sass.compile(
+                    string=scss_code,
+                    output_style='compressed' if config.minify_css else 'nested',
+                    include_paths=[str(config.templates_path)],
+                )
+            )
+        return self.scss_cache[scss_code]
 
 
 class ResponsiveImageExtension(Extension):
@@ -139,7 +167,7 @@ class JinjaRenderer(Renderer):
         super().__init__()
         self.template_environment = Environment(
             loader=FileSystemLoader(config.templates_path),
-            extensions=[do, JsLoaderExtension, CssLoaderExtension, ResponsiveImageExtension],
+            extensions=[do, JsLoaderExtension, CssLoaderExtension, ScssLoaderExtension, ResponsiveImageExtension],
             autoescape=select_autoescape(),
             undefined=StrictUndefined
         )

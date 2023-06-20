@@ -22,7 +22,8 @@ class SassRenderer(Renderer):
                 css_file.write(
                     sass.compile(
                         filename=str(config.templates_path / scss_path),
-                        output_style='compressed' if config.minify_css else 'nested'
+                        output_style='compressed' if config.minify_css else 'nested',
+                        include_paths=[str(config.templates_path)],
                     )
                 )
             files_to_keep.add(output_path)
