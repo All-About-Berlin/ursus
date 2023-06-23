@@ -3,6 +3,7 @@ from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_au
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.ext import Extension, do
 from jinja2.meta import find_referenced_templates
+from jinja2_simple_tags import StandaloneTag
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
@@ -114,36 +115,27 @@ class ScssLoaderExtension(CssLoaderExtension):
         return self.scss_cache[scss_code]
 
 
-class ResponsiveImageExtension(Extension):
-    """Jinja extension. Adds {% image 'relative/path/to/original.jpg' %} tag.
+class ResponsiveImageExtension(StandaloneTag):
+    """Jinja extension. Adds {% image %} tag.
+
+    Usage: {% image 'relative/path/to/original.jpg' img_class='a_css_class' sizes='(min-width: 600px) 160px, 320px' %}
 
     This tag is replaced by a responsive <picture> element. The correct image transforms for the given source image are
     used.
     """
     tags = {"image"}
+    safe_output = True
 
-    def __init__(self, environment):
-        super().__init__(environment)
-        environment.extend(js_fragments=OrderedSet())
+    def render(self, image_entry_uri, img_class=None, img_alt=None, img_sizes=None):
+        img_attrs = {}
 
-    def parse(self, parser):
-        token = next(parser.stream)
+        if img_class:
+            img_attrs['class'] = img_class
+        if img_alt:
+            img_attrs['alt'] = img_alt
 
-        args = [parser.parse_expression()]
-
-        if parser.stream.skip_if("comma"):
-            args.append(parser.parse_expression())
-        else:
-            args.append(nodes.Const(None))
-
-        call = self.call_method('_render_image', args)
-        return nodes.Output([nodes.MarkSafe(call)]).set_lineno(token.lineno)
-
-    @pass_context
-    def _render_image(self, context, image_uri, image_class):
-        img_attrs = {'class': image_class} if image_class else {}
-        output = make_picture_element(context, image_uri, img_attrs)
-        return Markup(ElementTree.tostring(output, encoding='unicode'))
+        output = make_picture_element(self.context, image_entry_uri, img_attrs, sizes=img_sizes)
+        return ElementTree.tostring(output, encoding='unicode')
 
 
 @pass_context

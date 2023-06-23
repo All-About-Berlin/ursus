@@ -270,7 +270,7 @@ def get_image_transforms(original_path: Path) -> Iterator[dict]:
                 }
 
 
-def make_picture_element(context: dict, entry_uri: str, img_attrs={}):
+def make_picture_element(context: dict, entry_uri: str, img_attrs={}, sizes=None):
     """
     Creates a responsive HTML <picture> element
     """
@@ -301,6 +301,8 @@ def make_picture_element(context: dict, entry_uri: str, img_attrs={}):
             'type': mimetype,
             'srcset': ", ".join(srcset_elements)
         })
+        if sizes:
+            source.attrib['sizes'] = sizes
         picture.append(source)
 
     # Add an <img> with the default image to the <picture>
@@ -318,12 +320,12 @@ def make_picture_element(context: dict, entry_uri: str, img_attrs={}):
     return picture
 
 
-def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=None):
+def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=None, sizes=None):
     """
     Creates a responsive HTML <figure> element with the image title as <figcaption>. Returns a simple <picture> if there
     is no title.
     """
-    image = make_picture_element(context, entry_uri, img_attrs)
+    image = make_picture_element(context, entry_uri, img_attrs, sizes=None)
     if a_attrs and a_attrs.get('href'):
         a_attrs['target'] = '_blank'
         wrapped_image = ElementTree.Element('a', a_attrs)

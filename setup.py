@@ -20,6 +20,7 @@ setup(
         'GitPython==3.1.30',
         'imagesize==1.4.1',
         'Jinja2==3.1.2',
+        'jinja2-simple-tags==0.5.0',
         'libsass==0.22.0',
         'lunr==0.6.2',
         'Markdown==3.4.1',
