@@ -113,15 +113,15 @@ class ResponsiveImageExtension(StandaloneTag):
     tags = {"image"}
     safe_output = True
 
-    def render(self, image_entry_uri, img_class=None, img_alt=None, img_sizes=None):
+    def render(self, image_entry_uri, css_class=None, alt=None, sizes=None):
         img_attrs = {}
 
-        if img_class:
-            img_attrs['class'] = img_class
-        if img_alt:
-            img_attrs['alt'] = img_alt
+        if css_class:
+            img_attrs['class'] = css_class
+        if alt:
+            img_attrs['alt'] = alt
 
-        output = make_picture_element(self.context, image_entry_uri, img_attrs, sizes=img_sizes)
+        output = make_picture_element(self.context, image_entry_uri, img_attrs, sizes)
         return ElementTree.tostring(output, encoding='unicode')
 
 
