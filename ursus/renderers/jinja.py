@@ -3,7 +3,7 @@ from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_au
 from jinja2.exceptions import TemplateSyntaxError
 from jinja2.ext import Extension, do
 from jinja2.meta import find_referenced_templates
-from jinja2_simple_tags import StandaloneTag
+from jinja2_simple_tags import StandaloneTag, ContainerTag
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
@@ -60,36 +60,23 @@ class JsLoaderExtension(Extension):
         return ''
 
 
-class CssLoaderExtension(Extension):
+class CssLoaderExtension(ContainerTag):
     """
     Jinja extension. Adds the {% css %} tag.
 
     All CSS code in {% css %} tags is minified if config.minify_css is True.
     """
     tags = {"css"}
-    token_name = 'css'
+    safe_output = True
 
-    def __init__(self, environment):
-        super().__init__(environment)
-        environment.extend(js_fragments=OrderedSet())
-
-    def parse(self, parser):
-        token = next(parser.stream)
-
-        if token.test(f'name:{self.token_name}'):
-            body = parser.parse_statements([f'name:end{self.token_name}'], drop_needle=True)
-            return nodes.CallBlock(
-                self.call_method("_render_content"), [], [], body
-            ).set_lineno(token.lineno)
-
-    def _render_content(self, caller):
+    def render(self, caller):
         output = caller()
         if config.minify_css:
             output = cssmin(output)
         return Markup(output)
 
 
-class ScssLoaderExtension(CssLoaderExtension):
+class ScssLoaderExtension(ContainerTag):
     """
     Jinja extension. Adds the {% scss %} tag.
 
@@ -97,12 +84,12 @@ class ScssLoaderExtension(CssLoaderExtension):
     It's also minified if config.minify_css is True.
     """
     tags = {"scss"}
-    token_name = 'scss'
+    safe_output = True
 
     def __init__(self, *args, **kwargs):
         self.scss_cache = {}
 
-    def _render_content(self, caller):
+    def render(self, caller):
         scss_code = caller()
         if scss_code not in self.scss_cache:
             self.scss_cache[scss_code] = Markup(
