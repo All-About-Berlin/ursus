@@ -47,6 +47,9 @@ class UrsusConfig():
     # If false, the pages that definitely changed are still rebuilt before others.
     fast_rebuilds: bool = False
 
+    # Sets the <img sizes=""> attribute for your content images
+    image_default_sizes: str = None
+
     # Transforms applied to your content images
     image_transforms: dict = field(default_factory=default_image_transforms)
 

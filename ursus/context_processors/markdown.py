@@ -236,7 +236,7 @@ class ResponsiveImageProcessor(Treeprocessor):
             elif parent.tag not in self.allowed_parents:
                 image_maker = make_picture_element
 
-            image = image_maker(self.md.context, image_uri, img_attrs, a_attrs)
+            image = image_maker(self.md.context, image_uri, img_attrs, a_attrs, sizes=config.image_default_sizes)
 
             self._swap_element(containing_element, element_to_swap, image)
 

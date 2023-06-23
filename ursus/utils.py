@@ -325,7 +325,7 @@ def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=Non
     Creates a responsive HTML <figure> element with the image title as <figcaption>. Returns a simple <picture> if there
     is no title.
     """
-    image = make_picture_element(context, entry_uri, img_attrs, sizes=None)
+    image = make_picture_element(context, entry_uri, img_attrs, sizes=sizes)
     if a_attrs and a_attrs.get('href'):
         a_attrs['target'] = '_blank'
         wrapped_image = ElementTree.Element('a', a_attrs)
