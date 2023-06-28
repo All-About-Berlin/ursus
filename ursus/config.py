@@ -18,7 +18,7 @@ class UrsusConfig():
     output_path: Path = Path('output').resolve()
 
     # The URL of this website's root, without a trailing slash. For example, https://allaboutberlin.com
-    site_url: str = '/'
+    site_url: str = ''
 
     # The URL extension of HTML pages. Change this if your server changes or removes the file extension.
     html_url_extension: str = '.html'
