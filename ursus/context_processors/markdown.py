@@ -393,33 +393,36 @@ class MarkdownProcessor(EntryContextProcessor):
     def __init__(self):
         super().__init__()
 
-        self.markdown = markdown.Markdown(extensions=[
-            'fenced_code',
-            'meta',
-            'tables',
-            'smarty',
-            CodeHiliteExtension(guess_lang=False),
-            TocExtension(slugify=patched_slugify),
-            CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
-            JinjaExtension(),
-            SuperscriptExtension(),
-            TypographyExtension(),
-            CurrencyExtension(),
-            ResponsiveImagesExtension(),
-            WikiLinkExtension(
-                base_url=config.wikilinks_base_url + '/',
-                end_url=config.wikilinks_url_suffix,
-                build_url=config.wikilinks_url_builder or build_url,
-                html_class=config.wikilinks_html_class,
-            ),
-            TaskListExtension(
-                list_item_class=config.checkbox_list_item_class,
-                checkbox_class=config.checkbox_list_item_input_class,
-            ),
-            WrappedTableExtension(
-                table_wrapper_class=config.table_wrapper_class,
-            )
-        ])
+        self.markdown = markdown.Markdown(
+            output_format='html',
+            extensions=[
+                'fenced_code',
+                'meta',
+                'tables',
+                'smarty',
+                CodeHiliteExtension(guess_lang=False),
+                TocExtension(slugify=patched_slugify),
+                CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
+                JinjaExtension(),
+                SuperscriptExtension(),
+                TypographyExtension(),
+                CurrencyExtension(),
+                ResponsiveImagesExtension(),
+                WikiLinkExtension(
+                    base_url=config.wikilinks_base_url + '/',
+                    end_url=config.wikilinks_url_suffix,
+                    build_url=config.wikilinks_url_builder or build_url,
+                    html_class=config.wikilinks_html_class,
+                ),
+                TaskListExtension(
+                    list_item_class=config.checkbox_list_item_class,
+                    checkbox_class=config.checkbox_list_item_input_class,
+                ),
+                WrappedTableExtension(
+                    table_wrapper_class=config.table_wrapper_class,
+                )
+            ]
+        )
 
     def _parse_metadata(self, raw_metadata):
         metadata = {}

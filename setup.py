@@ -14,7 +14,7 @@ setup(
     license='MIT',
     packages=find_packages(),
     scripts=['bin/ursus'],
-    python_requires='>=3.10',
+    python_requires='>=3.11',
     install_requires=[
         'coloredlogs==15.0.1',
         'GitPython==3.1.30',
@@ -23,7 +23,9 @@ setup(
         'jinja2-simple-tags==0.5.0',
         'libsass==0.22.0',
         'lunr==0.6.2',
-        'Markdown==3.4.1',
+        # 'Markdown==3.4.3',
+        # Use main branch when github.com/Python-Markdown/markdown/pull/1354/ is merged
+        'Markdown @ git+https://github.com/nicbou/markdown.git@nicbou-patch-1',
         'MarkupSafe==2.1.1',
         'ordered-set==4.1.0',
         'PyMuPDF==1.21.1',

@@ -4,6 +4,7 @@ from jinja2.exceptions import TemplateSyntaxError
 from jinja2.ext import Extension, do
 from jinja2.meta import find_referenced_templates
 from jinja2_simple_tags import StandaloneTag, ContainerTag
+from markdown.serializers import to_html_string
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
@@ -11,7 +12,6 @@ from rjsmin import jsmin
 from rcssmin import cssmin
 from ursus.config import config
 from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
-from xml.etree import ElementTree
 import logging
 import sass
 
@@ -49,7 +49,7 @@ class JsLoaderExtension(Extension):
             ).set_lineno(token.lineno)
 
     def _render_js(self, caller):
-        output = "".join(self.environment.js_fragments)
+        output = "\n".join(self.environment.js_fragments)
         if config.minify_js:
             output = jsmin(output)
         self.environment.js_fragments.clear()
@@ -121,8 +121,8 @@ class ResponsiveImageExtension(StandaloneTag):
         if alt:
             img_attrs['alt'] = alt
 
-        output = make_picture_element(self.context, image_entry_uri, img_attrs, sizes)
-        return ElementTree.tostring(output, encoding='unicode')
+        # Render the same way as Python Markdown does, for consistency
+        return to_html_string(make_picture_element(self.context, image_entry_uri, img_attrs, sizes))
 
 
 @pass_context

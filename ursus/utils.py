@@ -297,16 +297,15 @@ def make_picture_element(context: dict, entry_uri: str, img_attrs={}, sizes=None
     # Create a <picture> with <source type="" srcset=""> for each mimetype
     picture = ElementTree.Element('picture')
     for mimetype, srcset_elements in sources_by_mimetype.items():
-        source = ElementTree.Element('source', attrib={
+        source = ElementTree.SubElement(picture, 'source', attrib={
             'type': mimetype,
             'srcset': ", ".join(srcset_elements)
         })
         if sizes:
             source.attrib['sizes'] = sizes
-        picture.append(source)
 
     # Add an <img> with the default image to the <picture>
-    img = ElementTree.Element('img', attrib=img_attrs)
+    img = ElementTree.SubElement(picture, 'img', attrib=img_attrs)
     assert default_src is not None, f"default_src is None for {entry_uri}"
     if 'width' in context['entries'][entry_uri]:
         img.attrib['width'] = str(context['entries'][entry_uri]['width'])
@@ -314,8 +313,6 @@ def make_picture_element(context: dict, entry_uri: str, img_attrs={}, sizes=None
         img.attrib['height'] = str(context['entries'][entry_uri]['height'])
     img.attrib['loading'] = 'lazy'
     img.attrib['src'] = f"{config.site_url}/{str(default_src)}"
-
-    picture.append(img)
 
     return picture
 
@@ -338,8 +335,8 @@ def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=Non
 
     figure = ElementTree.Element('figure')
     figure.append(wrapped_image)
-    figcaption = ElementTree.Element('figcaption')
+
+    figcaption = ElementTree.SubElement(figure, 'figcaption')
     figcaption.text = img_attrs['title']
-    figure.append(figcaption)
 
     return figure
