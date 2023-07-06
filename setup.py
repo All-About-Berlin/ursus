@@ -31,6 +31,7 @@ setup(
         'PyMuPDF==1.21.1',
         'Pillow==9.4.0',  # Pillow-simd is much faster, but requires binaries to be installed separately.
         'watchdog==2.2.1',
+        'requests==2.31.0',
         'rjsmin==1.2.1',
         'rcssmin==1.1.1',
     ],
