@@ -20,7 +20,7 @@ def first_existing_item_getter(keys: list[str]):
 
 def get_entries(
     entries: dict,
-    namespace: str = None,
+    namespaces: str | list[str] = None,
     filter_by: Callable = None,
     sort_by: Callable | str | list[str] = None,
     reverse: bool = False
@@ -29,17 +29,18 @@ def get_entries(
 
     Args:
         entries (dict): The dictionary of entries. The key is the entry URI.
-        namespace (str, optional): Only returns entries in the given namespace (for example "posts" or "blog/posts"). In other
+        namespace (str, list[str], optional): Only returns entries in the given namespace(s) (for example "posts" or "blog/posts"). In other
             words, only return entries in a given directory (like <content_path>/posts or <content_path>/blog/posts).
         filter_by (Callable, optional): Filter the items by the given filtering function.
         sort_by (Callable | str | list[str], optional): Sort items by the given dict key, list of dict keys, or value
             returned by the given function
         reverse (bool, optional): Reverse the sorting order
     """
-    if namespace:
+    if namespaces:
+        namespace_list = [namespaces, ] if type(namespaces) == str else namespaces
         entries = {
             uri: value for uri, value in entries.items()
-            if uri.startswith(namespace + '/')
+            if uri.startswith(tuple(ns + '/' for ns in namespace_list))
         }
 
     if filter_by:
