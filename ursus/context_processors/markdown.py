@@ -352,7 +352,7 @@ class CustomFootnotesExtension(FootnoteExtension):
 
         surrogate_parent = ElementTree.Element("div")
 
-        backlink_title = self.getConfig("BACKLINK_TITLE")
+        backlink_title = self.getConfig("BACKLINK_TITLE").replace("%d", "{}")
 
         for index, id in enumerate(self.footnotes.keys(), start=1):
             li = ElementTree.SubElement(ol, "li")
