@@ -1,6 +1,8 @@
 # Ursus
 
-Ursus is the static site generator used by [All About Berlin](https://allaboutberlin.com). It turns Markdown files and [Jinja](https://jinja.palletsprojects.com/) templates into a static website.
+Ursus is the static site generator used by [All About Berlin](https://allaboutberlin.com) and my [personal website](https://nicolasbouliane.com). It turns Markdown files and [Jinja](https://jinja.palletsprojects.com/) templates into a static website.
+
+It also renders images in different sizes, renders SCSS, minifies JS and generates Lunr.js search indexes.
 
 This project is in active use and development.
 
@@ -16,17 +18,21 @@ pip install ursus-ssg
 
 ### Getting started
 
-By default, Ursus looks for content in `./content`, and templates in `./templates`. It generates a website under `./output`.
+Call `ursus` to generate a static website. Call `ursus --help` to see the command line options it supports.
 
-Call `ursus` to build the project. Call `ursus --help` to see the command line options it supports.
+By default, Ursus looks for 3 directories, relative to the current directory:
 
-Here is a simple piece of content. Save it under `./content/posts/first-post.md`.
+- It looks for content in `./content`
+- It looks for page templates in `./templates`
+- It generates a static website in `./output`
+
+For example, create a markdown file and save it as `./content/posts/first-post.md`.
 
 ```markdown
 ---
-Title: Hello world!
-Description: This is an example page
-Date_created: 2022-10-10
+title: Hello world!
+description: This is an example page
+date_created: 2022-10-10
 ---
 
 ## Hello beautiful world
@@ -34,7 +40,7 @@ Date_created: 2022-10-10
 *This* is a template. Pretty cool eh?
 ```
 
-Here is a simple template. Save it under `./templates/posts/entry.html.jinja`. 
+Then, create a page template and save it as `./templates/posts/entry.html.jinja`. 
 
 ```
 <!DOCTYPE html>
@@ -45,18 +51,33 @@ Here is a simple template. Save it under `./templates/posts/entry.html.jinja`.
 </head>
 <body>
     {{ entry.body }}
+
+    Created on {{ entry.date_created }}
 </body>
 </html>
 ```
 
-Call `ursus` to generate this website. It will create `./output/posts/first-post.html`.
+Your project should now look like this:
+
+```
+my-website/ <- You are here
+├─ content/
+│  └─ posts/
+│     └─ first-post.md
+└─ templates/
+   └─ posts/
+      └─ entry.html.jinja
+```
+
+Call `ursus` to generate a statuc website. It will create `./output/posts/first-post.html`.
 
 ### Configuring Ursus
 
-You can configure Ursus by creating a `ursus_config.py` file at the root of your project. When you call `ursus`, it will load this configuration.
+To configure Ursus, create a configuration file.
 
 ```python
 # Example Ursus config file
+# Find all configuration options in `ursus/config.py`.
 from ursus.config import config
 
 config.content_path = Path(__file__).parent / 'blog'
@@ -69,208 +90,331 @@ config.minify_js = True
 config.minify_css = True
 ```
 
-You can find all configuration options in `ursus/config.py`.
+If you call your configuration file `ursus_config.py`, Ursus loads it automatically.
 
-You can give your config a different name, and load it with the `-c` argument:
-
-```bash
-ursus -c path/to/config.py
+```
+my-website/
+├─ ursus_config.py
+├─ content/
+└─ templates/
 ```
 
-## Basic concepts
+You can also load a configuration file with the `-w` argument.
 
-### Content and Entries
+```bash
+ursus -c /path/to/config.py
+```
 
-**Content** is what fills your website: text, images, videos, PDFs. A single piece of content is called an **Entry**. The location of the Content is set by `config.content_path`. By default, it's under `./content`.
+### Watching for changes
 
-Content is usually *rendered* to create a working website. Some content (like Markdown files) is rendered with Templates, and other (like images) is converted to a different file format.
+Ursus can rebuild your website when the content or templates change.
 
-### Templates
+```bash
+# Rebuild when content or templates change
+ursus -w
+ursus --watch
+```
 
-**Templates** are used to render your Content. They are the theme of your website. The same templates can be applied to different Entries, or even reused for a different website. They are kept in a separate directory.
+It can only rebuild the pages that changed. This is much faster, but it does not work perfectly.
 
-For example, a template can be the HTML that makes up the page around your content: the header, sidebar, and footer.
+```bash
+# Only rebuild the pages that changed
+ursus -wf
+ursus --watch --fast
+```
 
-The location of the Templates is set by `config.templates_path`. By default, it's under `./templates`. You can have a different `templates_path` for each Generator.
+### Serving the website
 
-For example:
+Ursus can serve the website it generates. This is useful for testing.
 
-- HTML templates that wrap a nice theme around your Content.
-- Images and other static assets that are part of the website's theme
+```bash
+# Serve the static website on port 80
+ursus -s
+ursus --serve 80
+```
 
-### Output
-
-This is the final static website generated by Ursus.
-
-The location of the Output is set by `config.output_path`. By default, it's under `./output`.
+This is not meant for production. Use nginx, Caddy or some other static file server for that.
 
 ## How Ursus works
 
-ContextProcessors transform the context, which is a dict with information about each of your Entries. Renderers use the context to know which pages to create, and what content to put in the templates.
+1. **Context processors** generate the context used to render templates. The context is just a big dictionary.
+2. **Renderers** use the context and the templates to render the parts of the final website: pages, thumbnails, static assets, etc.
 
-In the example above, your context would look like this:
+### Content
 
-```
+**Content** is what fills your website: text, images, videos, PDFs. Content is usually *rendered* to create a working website. Some content (like Markdown files) is rendered with Templates, and other (like images) is converted to a different file format.
+
+Ursus looks for content in `./content`, unless you change `config.content_path`.
+
+### Entries
+
+A single piece of content is called an **Entry**. This can be a single image, a single markdown file, etc.
+
+Each Entry has a **URI**. This is the Entry's unique identifier. The URI is the Entry's path relative to the content directory. For example, the URI of `./content/posts/first-post.md` is `posts/first-post.md`.
+
+### Context
+
+The **Context** contains the information needed to render your website. It's just a big dictionary, and you can put anything in it.
+
+`context['entries']` contains is a dictionary of all your entries. The key is the Entry URI.
+
+**Context processors** each add specific data to the context. For example, `MarkdownProcessor` adds your `.md` content to `context.entries`.
+
+```python
+# Example context
 {
     'entries': {
         'posts/first-post.md': {
             'title': 'Hello world!',
             'description': 'This is an example page',
-            'body': '<h2>Hello beautiful world</h2><p>...'
-        }
+            'date_created': datetime(2022, 10, 10),
+            'body': '<h2>Hello beautiful world</h2><p>...',
+        },
+        'posts/second-post.md': {
+            # ...
+        },
     },
-    'get_entries': function
-    'globals': {},
+    # Context processors can add more things to the context
+    'blog_title': 'Example blog',
+    'site_url': 'https://example.com/blog',
 }
 ```
 
-### Generators
+### Templates
 
-A **Generator** takes your Content and your Templates and produces an Output. It's a recipe to turn your content into a final result. The default **StaticSiteGenerator** generates a static website. You can write your own Generator to output an eBook, a PDF, or anything else.
+**Templates** are used to render your Content. They are the theme of your website. Jinja templates, Javascript, CSS and theme images belong in the templates directory.
 
-#### StaticSiteGenerator
+Ursus looks for templates in `./templates`, unless you change `config.templates_path`.
 
-Generates a static website.
+### Renderers
 
-### Context processors
+**Renderers** use the Context and the Templates to generate parts of your static website. For example, `JinjaRenderer` renders Jinja templates, `ImageTransformRenderer` converts and resizes your images, and `StaticAssetRenderer` copies your static assets.
 
-The context is a big object that is used to render templates.
+### Output
 
-A **ContextProcessor** fills this context object, or transforms its existing contents.
+This is the final static website generated by Ursus. Ursus generates a static website in `./output`, unless you change `config.output_path`.
 
-For example, the **MarkdownProcessor** generates the entry context out of a markdown file.
+The content of the output directory is ready to be served by any static file server.
 
-Only Entries with matching ContextProcessors are rendered. Entry or directory names that start with `.` or `_` are not rendered. You can use this to create drafts.
+## How context processors work
 
-#### MarkdownProcessor
+Context processors transform the context, which is a dict with information about each of your Entries.
 
-The `MarkdownProcessor` creates context for all `.md` files in `content_path`.
+Context processors ignore file and directory names that start with `.` or `_`. For example, `./content/_drafts/hello.md` and `./content/posts/_post-draft.md` are ignored.
+
+### MarkdownProcessor
+
+The `MarkdownProcessor` creates context for all `.md` files in `content_path`. The markdown content is in the `body` attribute.
+
+```python
+{
+    'entries': {
+        'posts/first-post.md': {
+            'title': 'Hello world!',
+            'description': 'This is an example page',
+            'date_created': datetime(2022, 10, 10),
+            'body': '<h2>Hello beautiful world</h2><p>...',
+        },
+        # ...
+    },
+}
+```
 
 It makes a few changes to the default markdown output:
 
-- Lazyload images (`loading=lazy`)
-- Convert images to `<figure>` tags when appropriate
-- Jinja tags (`{{ ... }}` and `{% ... %}`) are rendered as-is. You can use the, to `{% include %}` template parts and `{{ variables }}` in your content.
-- Set the `srcset` to load responsive images from the `image_transforms` config.
 - Put the front matter in the context
-    - `Related_*` keys are replaced by a list of related entry dicts
-    - `Date_` keys are converted to `datetime` objects
+    - `related_*` keys are replaced by a list of related entry dicts
+    - `date_` keys are converted to `datetime` objects
+    - Other attributes are added to the entry object.
+- Use responsive images based on `config.image_transforms` settings.
+- `<img>` are converted to `<figure>` or `<picture>` tags when appropriate.
+- Images are lazy-loaded with the `loading=lazy` attribute.
+- Jinja tags (`{{ ... }}` and `{% ... %}`) are rendered as-is. You can use `{% include %}` and `{{ variables }}` in your content.
 
-#### GetEntriesProcessor
+### GetEntriesProcessor
 
 The `GetEntriesProcessor` adds a `get_entries` method to the context. It's used to get a list of entries of a certain type, and sort it.
 
 ```jinja
 {% set posts = get_entries('posts', filter_by=filter_function, sort_by='date_created', reverse=True) %}
+
+{% for post in posts %}
+...
 ```
 
-### Renderers
+### GitDateProcessor
 
-**Renderer**s create content that make up the Output. In other words, they turn your content files into pages, correctly-sized images, RSS feeds, etc.
+Adds the `date_updated` attribute to all Entries. It uses the file's last commit date.
 
-#### ImageTransformRenderer
+```python
+{
+    'entries': {
+        'posts/first-post.md': {
+            'date_updated': datetime(2022, 10, 10),
+            # ...
+        },
+        # ...
+    },
+}
+```
 
-Renders images in `content_path` with a few changes:
+### ImageProcessor
 
-- Images are compressed and optimized.
-- Images are resized according to the `image_transforms`. The images are shrunk if needed, but never stretched.
+Adds images and PDFs Entries to the context. Dimensions and image transforms are added to each Entry. Use in combination with `config.image_transforms`.
+
+```python
+{
+    'entries': {
+        'images/hello.jpg': {
+            'width': 320,
+            'height': 240,
+            'image_transforms': [
+                {
+                    'is_default': True,
+                    'input_mimetype': 'image/jpeg',
+                    'output_mimetype': 'image/webp',
+                    # ...
+                },
+                # ...
+            ]
+        },
+        # ...
+    },
+}
+```
+
+## How renderers work
+
+Renderers use context and templates to generate parts of the static website.
+
+A **Generator** takes your Content and your Templates and produces an Output. It's a recipe to turn your content into a final result. The default **StaticSiteGenerator** generates a static website. You can write your own Generator to output an eBook, a PDF, or anything else.
+
+### ImageTransformRenderer
+
+Renders images in your content directory.
+
+- Images are converted and resized according to `config.image_transforms`.
 - Files that can't be transformed (PDF to PDF) are copied as-is to the output directory.
 - Images that can't be resized (SVG to anything) are copied as-is to the output directory.
 - Image EXIF data is removed.
 
-This renderer does nothing unless `image_transforms` is set:
+This renderer does nothing unless `config.image_transforms` is set:
+
 ```python
+from ursus.config import config
+
 config.image_transforms = {
-    # ...
-    'image_transforms': {
-        # Default transform used as <img> src
-        # Saved as ./output/path/to/image.jpg
-        '': {
-            'max_size': (3200, 4800),
-        },
-        # Saved as ./output/path/to/image.jpg and .webp
-        'thumbnails': {
-            'exclude': ('*.pdf', '*.svg'),  # glob patterns
-            'max_size': (400, 400),
-            'output_types': ('original', 'webp'),
-        },
-        # Only previews PDF files in specific locations
-        # Saved as ./output/path/to/image.webp and .png
-        'pdfPreviews': {
-            'include': ('documents/*.pdf', 'forms/*.pdf'),  # glob patterns
-            'max_size': (300, 500),
-            'output_types': ('webp', 'png'),
-        }
+    # ./content/images/test.jpg
+    # ---> ./output/images/test.jpg
+    # ./content/images/test.pdf
+    # ---> ./output/images/test.pdf
+    '': {
+        'include': ('images/*', 'documents/*'),
+        'output_types': ('original'),
     },
-    # ...
+    # ./content/images/test.jpg
+    # ---> ./output/images/content2x/test.jpg
+    # ---> ./output/images/content2x/test.webp
+    'content2x': {
+        'include': ('images/*', 'illustrations/*'),
+        'exclude': ('*.pdf', '*.svg'),
+        'max_size': (800, 1200),
+        'output_types': ('webp', 'original'),
+    },
+    # ./content/documents/test.pdf
+    # ---> ./output/documents/pdfPreviews/test.png
+    # ---> ./output/documents/pdfPreviews/test.webp
+    'pdfPreviews': {
+        'include': 'documents/*',
+        'max_size': (300, 500),
+        'output_types': ('webp', 'png'),
+    },
 }
 ```
 
-#### JinjaRenderer
+### JinjaRenderer
 
-Renders Content into Jinja templates using the context made by ContextProcessors.
+Renders `*.jinja` files in the templates directory.
 
-A Template called `./output/hello-world.html.jinja` will be rendered as `./output/hello-world.html`. The template has access to anything you put in the context, including the `entries` dict, and the `get_entries` method.
-
-A Template called `./output/posts/entry.html.jinja` will render all Entries under `./content/posts/*.md` and save them under `./output/posts/*.html`. The template has access to an `entry` variable.
-
-Only Templates with the `.jinja` extension are rendered. Files or directory names that start with `.` or `_` are not rendered.
-
-Files named `entry.*.jinja` are rendered once for each Entry with the same path. For example, `./templates/posts/entry.html.jinja` will render `./content/posts/hello-world.md`, `./content/posts/foo.md` and `./content/posts/bar.md`. The output path is the entry name with the extension replaced. If `./templates/posts/entry.html.jinja` renders `./templates/posts/hello-world.md`, the output file is `./output/posts/hello-world.html`.
-
-All template files with the `.jinja` extension will be rendered. For example, `./templates/posts/index.html.jinja` will be rendered as `./output/posts/index.html`. Files starting with `_` are ignored.
-
-The output path is the template name without the `.jinja` extension. For example, `index.html.jinja` will be rendered as `index.html`.
-
-#### StaticAssetRenderer
-
-Simply copies static assets (CSS, JS, images, etc.) under `./templates` to the same subdirectory in `./output`. Files starting with `.` are ignored. Files and directories starting with `_` are ignored.
-
-It uses hard links instead of copying files. It's faster and it saves space.
-
-## Getting started
-
-1. **Create a directory** for your project. This is a sensible structure, because it works automatically with the default configuration:
-    ```
-    example_site/
-    ├── ursus_config.py  # By default, Ursus will use this config file
-    ├── templates/  # By default, Ursus will use this templates directory
-    │   ├── index.html.jinja
-    │   ├── css/
-    │   │   └──style.css
-    │   ├── js/
-    │   │   └──scripts.js
-    │   ├── fonts/
-    │   │   ├── open-sans.svg
-    │   │   ├── open-sans.ttf
-    │   │   └── open-sans.woff
-    │   └── posts/
-    │       ├── index.html.jinja
-    │       └── entry.html.jinja
-    └── content/  # By default, Ursus will use this content directory
-        ├── posts/
-        │   ├── first-post.md
-        │   ├── foo.md
-        │   └── bar.md
-        └── images/
-            └── example.png
-    ```
-2. **Create a config file for your website.** You can copy `ursus/default_config.py`. If you call your config `ursus_config.py` and place it in your project root, it will be loaded automatically. Otherwise you must call ursus with the `-c` argument. If no config is set, Ursus will use the defaults set in `ursus/default_config.py`.
-3. **Call the `ursus` command.**
-
-#### Building from Sublime Text
-
-You can configure Sublime Text to run Ursus when you press Cmd + B:
-
-```json
-// Sublime user settings or project config
-{
-    // ...
-    "build_systems": [{
-        "cmd": ["ursus", "-c", "$project_path/path/to/ursus_config.py"],
-        "name": "Ursus",
-    }],
-    // ...
-}
+The output file has the same name and relative path as the template, but the `.jinja` extension is removed.
 
 ```
+my-website/
+├─ templates/
+│  ├─ contact.html.jinja
+│  ├─ sitemap.xml.jinja
+│  └─ posts/
+│     └─ index.html.jinja
+└─ output/
+   ├─ contact.html
+   ├─ sitemap.xml
+   └─ posts/
+      └─ index.html
+```
+
+Files named `entry.*.jinja` will render every entry with the same relative path.
+
+```
+my-website/
+├─ content/
+│  └─ posts/
+│     ├─ first-post.md
+│     ├─ second-post.md
+│     └─ _draft.md
+├─ templates/
+│  └─ posts/
+│     └─ entry.html.jinja
+└─ output/
+   └─ posts/
+      ├─ first-post.html
+      └─ second-post.html
+```
+
+Files or directory names that start with `.` or `_` are not rendered.
+
+```
+my-website/
+├─ content/
+│  └─ posts/
+│     ├─ hello-world.md
+│     ├─ .hidden.md
+│     └─ _drafts
+│        └─ not-rendered.md
+├─ templates/
+│  └─ posts/
+│     └─ entry.html.jinja
+└─ output/
+   └─ posts/
+      └─ hello-world.html
+```
+
+### StaticAssetRenderer
+
+Copies all files under `./templates` except `.jinja` files to the same subdirectory in `./output`. Files starting with `.` are ignored. Files and directories starting with `_` are ignored.
+
+```
+my-website/
+├─ templates/
+│  ├─ _ignored.jpg
+│  ├─ styles.css
+│  ├─ images/
+│  │  └─ hello.png
+│  └─ js/
+│     └─ test.js
+└─ output/
+   ├─ styles.css
+   ├─ images/
+   │  └─ hello.png
+   └─ js/
+      └─ test.js
+```
+
+It uses hard links instead of copying files, so it does not use extra disk space.
+
+## How generators work
+
+Generators bring it all together. A generator takes all of your files, and generates some final product. There is only `StaticSiteGenerator`, which generates a static website. Custom generators could generate a book or a slideshow from the same content and templates.
+
+## How linters work
+
+Ursus supports linter. They verify the content when `ursus lint` is called. You can find examples in `ursus/linters`.
