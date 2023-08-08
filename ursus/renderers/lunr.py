@@ -21,6 +21,25 @@ class LunrIndexRenderer(Renderer):
     def __init__(self):
         super().__init__()
 
+    def get_index_for_entry(self, index_config: dict, entry_uri: str, entry: dict):
+        if Path(entry_uri).match(index_config['uri_pattern']):
+            # Data used to build the Lunr.js index (indexed fields, document boost)
+            indexed_document = (
+                {
+                    **{field: entry.get(field, '') for field in config.lunr_indexes['indexed_fields']},
+                },
+                {
+                    'boost': index_config.get('boost', 1)
+                }
+            )
+
+            # Metadata about the documents, used to render the search box (title, URL, etc)
+            returned_document = {
+                field: entry.get(field) for field in index_config['returned_fields']
+            }
+
+            yield indexed_document, returned_document
+
     def render(self, context: dict, changed_files: set = None) -> set:
         if config.fast_rebuilds:
             return set()
@@ -31,25 +50,20 @@ class LunrIndexRenderer(Renderer):
         indexed_documents = []
         returned_documents = {}
 
-        for index in config.lunr_indexes.get('indexes', []):
+        document_ref = 0
+        for index_config in config.lunr_indexes.get('indexes', []):
             for entry_uri, entry in context['entries'].items():
-                if Path(entry_uri).match(index['uri_pattern']):
-                    indexed_documents.append((
-                        {
-                            'uri': entry_uri,
-                            **{field: entry.get(field, '') for field in config.lunr_indexes['indexed_fields']},
-                        },
-                        {
-                            'boost': index.get('boost', 1)
-                        }
-                    ))
-
-                    returned_documents[entry_uri] = {
-                        field: entry.get(field) for field in index['returned_fields']
-                    }
+                for indexed_document, returned_document in self.get_index_for_entry(index_config, entry_uri, entry):
+                    # indexed_document contains the fields that are included in the Lunr index
+                    # returned_document contains information about the entry (title, URL)
+                    # The ref attribute connects a Lunr search result to a returned_document
+                    indexed_document[0]['ref'] = document_ref
+                    indexed_documents.append(indexed_document)
+                    returned_documents[document_ref] = returned_document
+                    document_ref += 1
 
         index = lunr(
-            ref='uri',
+            ref='ref',
             fields=config.lunr_indexes.get('indexed_fields', []),
             documents=indexed_documents
         )
