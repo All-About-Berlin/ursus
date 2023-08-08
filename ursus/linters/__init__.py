@@ -19,6 +19,8 @@ class LineLinter(Linter):
     """
     Lints a text file line by line.
     """
+    file_suffixes = None
+
     def lint(self, file_path: Path):
         if self.file_suffixes and file_path.suffix.lower() not in self.file_suffixes:
             return
@@ -33,7 +35,6 @@ class LineLinter(Linter):
 
 
 class RegexLinter(LineLinter):
-    file_suffixes = None
     regex = re.compile(r'')
 
     def lint_line(self, file_path: Path, line: str):
