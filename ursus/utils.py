@@ -177,7 +177,7 @@ def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
     """
     assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
 
-    pil_image.thumbnail(max_size, Image.ANTIALIAS)
+    pil_image.thumbnail(max_size, Image.Resampling.LANCZOS)
     save_args = {'optimize': True}
     if output_path.suffix.lower() == '.jpg':
         save_args['progressive'] = True
