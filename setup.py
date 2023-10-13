@@ -4,7 +4,7 @@ long_description = (Path(__file__).parent / "README.md").read_text()
 
 setup(
     name='ursus_ssg',
-    version='1.1.0',
+    version='1.1.1',
     description='Static site generator',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -23,9 +23,7 @@ setup(
         'jinja2-simple-tags==0.5.0',
         'libsass==0.22.0',
         'lunr==0.6.2',
-        # 'Markdown==3.4.3',
-        # Use main branch when github.com/Python-Markdown/markdown/pull/1354/ is merged
-        'Markdown @ git+https://github.com/nicbou/markdown.git@nicbou-patch-1',
+        'Markdown==3.5.0',
         'MarkupSafe==2.1.1',
         'ordered-set==4.1.0',
         'PyMuPDF==1.21.1',
