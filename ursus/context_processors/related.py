@@ -1,5 +1,6 @@
 from collections import UserDict
 from . import ContextProcessor
+import sys
 
 
 class RelatedEntriesProcessor(ContextProcessor):
@@ -15,10 +16,13 @@ class RelatedEntriesProcessor(ContextProcessor):
         def __getitem__(self, key):
             if key.startswith('related_') and key in self.data:
                 related_value = self.data[key]
-                if isinstance(related_value, str):  # Single URI string
-                    return [self.all_entries[related_value]]
-                else:  # List of URI strings
-                    return [self.all_entries[subvalue] for subvalue in related_value]
+                try:
+                    if isinstance(related_value, str):  # Single URI string
+                        return [self.all_entries[related_value]]
+                    else:  # List of URI strings
+                        return [self.all_entries[subvalue] for subvalue in related_value]
+                except KeyError:
+                    raise ValueError(f"{key} contains invalid value {sys.exc_info()[1]}")
             return super().__getitem__(key)
 
     def process(self, context: dict, changed_files: set = None) -> dict:
