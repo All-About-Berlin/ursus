@@ -100,7 +100,7 @@ class JinjaPreprocessor(Preprocessor):
     """
     Ignore Jinja {{ ... }}, {% ... %} tags.
     """
-    JINJA_RE = re.compile('({{([^}]+)}})|({([%#])([^}]+)\4})', re.MULTILINE | re.DOTALL)
+    JINJA_RE = re.compile(r'({{([^}]+)}})|({([%#])([^}]+)\4})', re.MULTILINE | re.DOTALL)
 
     def run(self, lines):
         text = "\n".join(lines)
