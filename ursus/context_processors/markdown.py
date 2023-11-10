@@ -98,9 +98,9 @@ class TypographyExtension(Extension):
 
 class JinjaPreprocessor(Preprocessor):
     """
-    Ignore Jinja {{ ... }}, {% ... %} tags.
+    Ignore Jinja {{ ... }} and {% ... %} tags.
     """
-    JINJA_RE = re.compile(r'({{([^}]+)}})|({([%#])([^}]+)\4})', re.MULTILINE | re.DOTALL)
+    JINJA_RE = re.compile('({{([^}]+)}})|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
 
     def run(self, lines):
         text = "\n".join(lines)
@@ -113,10 +113,10 @@ class JinjaPreprocessor(Preprocessor):
 
 class JinjaHtmlPostProcessor(RawHtmlPostprocessor):
     """
-    Patch RawHtmlPostprocessor to recognize {% ... %} and {# ... #} tags as block-level
+    Patch RawHtmlPostprocessor to recognize {% ... %} tags as block-level
     elements, and prevent them from being wrapped in a <p> tag.
     """
-    JINJA_BLOCK_RE = re.compile('^{([%#])([^}]+)\1}$', re.MULTILINE | re.DOTALL)
+    JINJA_BLOCK_RE = re.compile('^{%([^}]+)%}$', re.MULTILINE | re.DOTALL)
 
     def isblocklevel(self, html):
         m = self.JINJA_BLOCK_RE.match(html)
