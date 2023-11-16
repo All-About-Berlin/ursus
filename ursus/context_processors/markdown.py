@@ -402,7 +402,7 @@ class MarkdownProcessor(EntryContextProcessor):
                 'smarty',
                 CodeHiliteExtension(guess_lang=False),
                 TocExtension(slugify=patched_slugify),
-                CustomFootnotesExtension(BACKLINK_TEXT="⤴"),
+                CustomFootnotesExtension(BACKLINK_TEXT="⤴", SUPERSCRIPT_TEXT=config.footnote_superscript_text),
                 JinjaExtension(),
                 SuperscriptExtension(),
                 TypographyExtension(),
