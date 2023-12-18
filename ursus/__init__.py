@@ -2,6 +2,7 @@ from ursus.utils import import_class, get_files_in_path, log_colors
 from ursus.config import config
 from watchdog.observers import Observer
 import logging
+import sys
 import time
 
 
@@ -38,11 +39,16 @@ def lint(files_to_lint=None):
     """Lints the content for errors"""
     linters = [import_class(linter_path)() for linter_path in config.linters]
 
+    has_errors = False
+
     for file_path in sorted(get_files_in_path(config.content_path, whitelist=files_to_lint)):
-        logging.info(f"\033[1mLinting {str(file_path)}\033[0m")
         for linter in linters:
-            for line_no, message, level in linter.lint(file_path):
+            linter_errors = list(linter.lint(file_path))
+            for line_no, message, level in linter_errors:
+                if level > logging.WARNING:
+                    has_errors = True
                 if line_no is not None:
-                    logging.log(level, f"{log_colors[level]}:{line_no}\033[0m {message}")
+                    logging.log(level, f"{log_colors[level]}{str(file_path)}:{line_no}\033[0m - {message}")
                 else:
-                    logging.log(level, f"{message}")
+                    logging.log(level, f"{str(file_path)} - {message}")
+    sys.exit(1 if has_errors else 0)

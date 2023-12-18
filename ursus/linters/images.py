@@ -26,4 +26,4 @@ class UnusedImagesLinter(Linter):
 
     def lint(self, file_path: Path):
         if is_image(config.content_path / file_path) and str(file_path) not in self.all_entry_links:
-            yield None, f"Unused image: {str(file_path)}", logging.WARNING
+            yield None, "Unused image", logging.WARNING
