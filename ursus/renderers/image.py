@@ -29,7 +29,10 @@ class ImageTransformRenderer(Renderer):
                 max_size = transform['max_size']
 
                 has_changed = changed_files is None or abs_file_path in changed_files
-                if has_changed and not abs_output_path.exists():
+                if has_changed and (
+                    (not abs_output_path.exists())
+                    or abs_file_path.stat().st_mtime > abs_output_path.stat().st_mtime
+                ):
                     if is_pdf(abs_file_path):
                         if abs_output_path.suffix.lower() == '.pdf':
                             logger.info('Copying %s to %s', entry_uri, str(output_path))
