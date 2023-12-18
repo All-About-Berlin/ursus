@@ -19,7 +19,12 @@ class HttpRequestHandler(SimpleHTTPRequestHandler):
                 self.path = str(abs_html_path.relative_to(config.output_path))
             elif abs_index_path.exists():
                 self.path = str(abs_index_path.relative_to(config.output_path))
-        return super().do_GET()
+
+        try:
+            return super().do_GET()
+        except BrokenPipeError:
+            # These errors have no impact
+            pass
 
     def log_message(self, format, *args):
         logging.debug(f"Request to {self.path}")
