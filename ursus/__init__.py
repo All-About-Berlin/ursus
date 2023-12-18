@@ -42,7 +42,7 @@ def lint(files_to_lint=None):
         logging.info(f"\033[1mLinting {str(file_path)}\033[0m")
         for linter in linters:
             for line_no, message, level in linter.lint(file_path):
-                if line_no:
+                if line_no is not None:
                     logging.log(level, f"{log_colors[level]}:{line_no}\033[0m {message}")
                 else:
                     logging.log(level, f"{message}")
