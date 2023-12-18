@@ -27,16 +27,20 @@ if __name__ == '__main__':
         help="Path to a Python config file or module. The `config` variable will be imported from that file."
     )
     parser.add_argument(
-        '-w', '--watch', action='store_true',
-        help="Regenerate files when <content_path> and <templates_path> change."
-    )
-    parser.add_argument(
         '-f', '--fast', action='store_true',
         help="Fast rebuilds. Prefer faster page rebuilds to completeness. Related pages might not be reloaded."
     )
     parser.add_argument(
+        '--level', default='INFO',
+        help="Log level for ursus lint (INFO, WARNING, ERROR). Errors below this level are ignored."
+    )
+    parser.add_argument(
         '-s', '--serve', dest='port', nargs='?', const=80, default=None,
         help="Start a static file server, and serve the generated website on the given port. The default port is 80."
+    )
+    parser.add_argument(
+        '-w', '--watch', action='store_true',
+        help="Regenerate files when <content_path> and <templates_path> change."
     )
     parser.add_argument(
         'files', type=Path, nargs='*',
@@ -61,14 +65,13 @@ if __name__ == '__main__':
     else:
         logging.warning("No config supplied. Using default config.")
 
-    logging.info(f"Content path: {str(config.content_path)}")
-    logging.info(f"Templates path: {str(config.templates_path)}")
-    logging.info(f"Output path: {str(config.output_path)}")
-
     if args.port:
         serve_async(args.port)
 
+    logging.info(f"Content path: {str(config.content_path)}")
     if args.action == 'build':
+        logging.info(f"Templates path: {str(config.templates_path)}")
+        logging.info(f"Output path: {str(config.output_path)}")
         build(args.watch)
     elif args.action == 'lint':
-        lint(files_to_lint=args.files or None)
+        lint(files_to_lint=args.files or None, min_level=getattr(logging, args.level))

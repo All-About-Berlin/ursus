@@ -35,7 +35,7 @@ def build(watch_for_changes: bool = False):
         generator.generate()
 
 
-def lint(files_to_lint=None):
+def lint(files_to_lint=None, min_level=logging.INFO):
     """Lints the content for errors"""
     linters = [import_class(linter_path)() for linter_path in config.linters]
 
@@ -45,10 +45,10 @@ def lint(files_to_lint=None):
         for linter in linters:
             linter_errors = list(linter.lint(file_path))
             for line_no, message, level in linter_errors:
-                if level > logging.WARNING:
+                if level >= min_level:
                     has_errors = True
-                if line_no is not None:
-                    logging.log(level, f"{log_colors[level]}{str(file_path)}:{line_no}\033[0m - {message}")
-                else:
-                    logging.log(level, f"{str(file_path)} - {message}")
+                    if line_no is not None:
+                        logging.log(level, f"{log_colors[level]}{str(file_path)}:{line_no}\033[0m - {message}")
+                    else:
+                        logging.log(level, f"{str(file_path)} - {message}")
     sys.exit(1 if has_errors else 0)
