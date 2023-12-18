@@ -18,33 +18,27 @@ class MarkdownLinksLinter(RegexLinter):
     file_suffixes = ('.md',)
 
     # Matches [], supports escaped brackets, ignores ![] images.
-    first_half = r"(?P<first_half>!?\[(?P<text>([^\]]|\\\])*)(?<!\\)\])"
+    first_half = r"(?P<first_half>!?\[(?P<alt_text>([^\]]|\\\])*)(?<!\\)\])"
 
     # Matches (), supports escaped parentheses
-    second_half = r"(?P<second_half>\((?P<url_group>([^\)]|\\\))*)(?<!\\)\))"
+    second_half = r"(?P<second_half>\((?P<url>([^\) ]|\\\))*)(\s+(?P<caption>\".*\"))?(?<!\\)\))"
 
     regex = re.compile(first_half + second_half)
 
     def handle_match(self, file_path: Path, match: re.Match):
-        text = match['text'].strip()
-        url = None
-        title = None
+        alt_text = match['alt_text'].strip()
         is_image = match['first_half'].startswith('!')
 
-        if match['url_group']:
-            parts = match['url_group'].split(" ", maxsplit=1)
-            url = parts[0]
-            if len(parts) == 2:
-                title = parts[1]
+        caption = match['caption']
 
         for error, level in chain(
-            self.validate_link_text(text, is_image, file_path),
-            self.validate_link_title(title, is_image, file_path),
-            self.validate_link_url(url, is_image, file_path),
+            self.validate_link_alt_text(alt_text, is_image, file_path),
+            self.validate_link_caption(caption, is_image, file_path),
+            self.validate_link_url(match['url'], is_image, file_path),
         ):
             yield f"{error}: {match.group(0)}", level
 
-    def validate_link_text(self, text: str, is_image: bool, file_path: Path):
+    def validate_link_alt_text(self, text: str, is_image: bool, file_path: Path):
         return
         yield
 
@@ -52,24 +46,24 @@ class MarkdownLinksLinter(RegexLinter):
         return
         yield
 
-    def validate_link_title(self, title: str, is_image: bool, file_path: Path):
+    def validate_link_caption(self, caption: str, is_image: bool, file_path: Path):
         return
         yield
 
 
 class MarkdownLinkTextsLinter(MarkdownLinksLinter):
-    def validate_link_text(self, text: str, is_image: bool, file_path: Path):
+    def validate_link_alt_text(self, text: str, is_image: bool, file_path: Path):
         if not text:
             yield "Image has no alt text", logging.WARNING
 
 
 class MarkdownLinkTitlesLinter(MarkdownLinksLinter):
-    def validate_link_title(self, title: str, is_image: bool, file_path: Path):
-        if title is not None:
-            if not (title.startswith('"') and title.endswith('"')):
-                yield "Title is not quoted", logging.ERROR
-            elif title == title.strip('"'):
-                yield "Title is empty", logging.WARNING
+    def validate_link_caption(self, caption: str, is_image: bool, file_path: Path):
+        if caption is not None:
+            if not (caption.startswith('"') and caption.endswith('"')):
+                yield "Image caption is not quoted", logging.ERROR
+            elif caption == caption.strip('"'):
+                yield "Image caption is empty", logging.WARNING
 
 
 class MarkdownExternalLinksLinter(MarkdownLinksLinter):

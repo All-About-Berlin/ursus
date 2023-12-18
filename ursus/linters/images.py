@@ -21,7 +21,7 @@ class UnusedImagesLinter(Linter):
             with (config.content_path / markdown_path).open() as file:
                 for line_no, line in enumerate(file.readlines()):
                     for match in link_regex.finditer(line):
-                        entry_uri = match['url_group'].split(" ", maxsplit=1)[0].removeprefix('/')
+                        entry_uri = match['url'].removeprefix('/')
                         self.all_entry_links.add(entry_uri)
 
     def lint(self, file_path: Path):
