@@ -8,7 +8,7 @@ setup(
     description='Static site generator',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='http://github.com/nicbou/ursus',
+    url='http://github.com/all-about-berlin/ursus',
     author='Nicolas Bouliane',
     author_email='contact@nicolasbouliane.com',
     license='MIT',
