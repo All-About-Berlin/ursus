@@ -89,6 +89,7 @@ class UrsusConfig():
     # The renderers that take your templates and content, and populate the output dir
     renderers: tuple = (
         'ursus.renderers.static.StaticAssetRenderer',
+        'ursus.renderers.static.ArchiveRenderer',
         'ursus.renderers.image.ImageTransformRenderer',
         'ursus.renderers.jinja.JinjaRenderer',
         'ursus.renderers.lunr.LunrIndexRenderer',
