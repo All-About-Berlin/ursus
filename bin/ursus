@@ -2,7 +2,7 @@
 from pathlib import Path
 from ursus import build, lint
 from ursus.config import config
-from ursus.server import serve_async
+from ursus.server import serve, serve_async
 from ursus.utils import import_module_or_path
 import argparse
 import coloredlogs
@@ -66,7 +66,10 @@ if __name__ == '__main__':
         logging.warning("No config supplied. Using default config.")
 
     if args.port:
-        serve_async(args.port)
+        if args.watch:
+            serve_async(args.port)
+        else:
+            serve(args.port)
 
     logging.info(f"Content path: {str(config.content_path)}")
     if args.action == 'build':
