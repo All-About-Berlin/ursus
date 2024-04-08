@@ -23,7 +23,7 @@ class StaticFileRenderer(Renderer):
             if changed_files is None or asset_path in changed_files:
                 logger.info('Copying asset %s', str(rel_output_path))
                 copy_file(asset_path, abs_output_path)
-            files_to_keep.add(asset_path)
+            files_to_keep.add(rel_output_path)
 
         return files_to_keep
 
