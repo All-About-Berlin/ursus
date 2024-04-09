@@ -433,7 +433,7 @@ class MarkdownProcessor(EntryContextProcessor):
                 value = value[0]
 
             if key.startswith('date_'):
-                value = datetime.strptime(value, '%Y-%m-%d')
+                value = datetime.strptime(value, '%Y-%m-%d').astimezone()
 
             if key.startswith('related_'):
                 if type(value) == list:

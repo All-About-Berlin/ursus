@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from ursus.config import config
 from ursus.context_processors import ContextProcessor
@@ -25,13 +25,14 @@ class GitDateProcessor(ContextProcessor):
     def process(self, context: dict, changed_files: set = None) -> dict:
         if not config.fast_rebuilds:
             for commit in self.repo.iter_commits("master"):
-                commit_date = datetime.fromtimestamp(commit.authored_date)
+                commit_date = datetime.fromtimestamp(commit.authored_date, tz=timezone.utc)
                 for file in self.repo.git.show(commit.hexsha, name_only=True, diff_filter='ACMR').split('\n'):
                     entry_uri = self.commit_path_to_entry_uri(file)
                     if entry_uri and entry_uri in context['entries']:
                         entry = context['entries'][entry_uri]
                         if not entry.get('date_updated') or commit_date > entry['date_updated']:
-                            entry['date_updated'] = commit_date
+                            # Make the date timezone-aware, then convert it to the local timezone
+                            entry['date_updated'] = commit_date.astimezone()
 
         for entry in context['entries'].values():
             entry.setdefault('date_updated', datetime.now())
