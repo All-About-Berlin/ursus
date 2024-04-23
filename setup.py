@@ -14,6 +14,15 @@ setup(
     license='MIT',
     packages=find_packages(),
     scripts=['bin/ursus'],
+    entry_points={
+        'markdown.extensions': [
+            'better_footnotes = ursus.context_processors.markdown:FootnotesExtension',
+            'jinja = ursus.context_processors.markdown:JinjaExtension',
+            'responsive_images = ursus.context_processors.markdown:ResponsiveImagesExtension',
+            'superscript = ursus.context_processors.markdown:SuperscriptExtension',
+            'tasklist = ursus.context_processors.markdown:TaskListExtension',
+        ]
+    },
     python_requires='>=3.11',
     install_requires=[
         'coloredlogs==15.0.1',

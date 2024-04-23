@@ -1,5 +1,7 @@
-from pathlib import Path
 from dataclasses import dataclass, field
+from markdown.extensions.wikilinks import build_url
+from markdown.extensions.toc import slugify
+from pathlib import Path
 import logging
 
 
@@ -7,6 +9,42 @@ def default_image_transforms(max_size=5000) -> dict:
     return {
         '': {
             'max_size': (max_size, max_size),
+        },
+    }
+
+
+def default_markdown_extensions() -> dict:
+    return {
+        'codehilite': {
+            'guess_lang': False,
+        },
+        'fenced_code': {},
+        'jinja': {},
+        'meta': {},
+        'responsive_images': {},
+        'smarty': {},
+        'superscript': {},
+        'tables': {},
+        'tasklist': {
+            # The CSS class of Markdown list items with a checkbox ("- [ ] a list item")
+            # Sets the class of the <li> and the <input type="checkbox">
+            'list_item_class': None,
+            'checkbox_class': None,
+        },
+        'toc': {
+            'slugify': slugify,
+        },
+        'wikilinks': {
+            # The base URL prepended to all markdown [[wikilinks]], without a trailing slash.
+            # For example, https://allaboutberlin.com/glossary
+            'base_url': '/',
+            'end_url': '',
+            'build_url': build_url,
+            'html_class': None,
+        },
+        'better_footnotes': {
+            'BACKLINK_TEXT': '⤴',
+            'SUPERSCRIPT_TEXT': '{}',
         },
     }
 
@@ -22,24 +60,6 @@ class UrsusConfig():
 
     # The URL extension of HTML pages. Change this if your server changes or removes the file extension.
     html_url_extension: str = '.html'
-
-    # The base URL prepended to all markdown [[wikilinks]], without a trailing slash.
-    # For example, https://allaboutberlin.com/glossary
-    wikilinks_base_url: str = '/'
-    wikilinks_url_suffix: str = ''
-    wikilinks_url_builder: callable = None
-    wikilinks_html_class: str = None
-
-    # The text of footnote links in the text. Default is the footnote label.
-    footnote_superscript_text: str = '{}'
-
-    # The CSS class of Markdown list items with a checkbox ("- [ ] list item")
-    # Sets the class of the <li> and the <input type="checkbox">
-    checkbox_list_item_class: str = None
-    checkbox_list_item_input_class: str = None
-
-    # If set, all Markdown tables are wrapped with a div that has this class.
-    table_wrapper_class: str = None
 
     # Minify Javascript and CSS
     minify_js: bool = False
@@ -85,6 +105,8 @@ class UrsusConfig():
         # 'ursus.context_processors.git_date.GitDateProcessor',
     )
     context_globals: dict = field(default_factory=dict)
+
+    markdown_extensions: dict = field(default_factory=default_markdown_extensions)
 
     # The renderers that take your templates and content, and populate the output dir
     renderers: tuple = (

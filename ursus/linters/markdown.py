@@ -4,7 +4,6 @@ from pathlib import Path
 from requests.exceptions import ConnectionError
 from urllib.parse import unquote, urlparse
 from ursus.config import config
-from ursus.context_processors.markdown import patched_slugify
 from ursus.linters import RegexLinter
 import logging
 import re
@@ -129,7 +128,7 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
                 for line in file.readlines():
                     if bool(self.header_regex.search(line)):
                         self.title_slugs_cache[file_path].add(
-                            patched_slugify(line.lstrip('#').strip(), '-')
+                            config.markdown_extensions['toc']['slugify'](line.lstrip('#').strip(), '-')
                         )
         return self.title_slugs_cache[file_path]
 
