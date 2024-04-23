@@ -5,12 +5,33 @@ from pathlib import Path
 import logging
 
 
+def default_context_processors() -> list:
+    return [
+        'ursus.context_processors.stale.StaleEntriesProcessor',
+        'ursus.context_processors.image.ImageProcessor',
+        'ursus.context_processors.markdown.MarkdownProcessor',
+        'ursus.context_processors.get_entries.GetEntriesProcessor',
+        'ursus.context_processors.related.RelatedEntriesProcessor',
+        # 'ursus.context_processors.git_date.GitDateProcessor',
+    ]
+
+
 def default_image_transforms(max_size=5000) -> dict:
     return {
         '': {
             'max_size': (max_size, max_size),
         },
     }
+
+
+def default_linters() -> list:
+    return [
+        'ursus.linters.markdown.MarkdownLinkTextsLinter',
+        'ursus.linters.markdown.MarkdownLinkTitlesLinter',
+        'ursus.linters.markdown.MarkdownInternalLinksLinter',
+        'ursus.linters.markdown.MarkdownExternalLinksLinter',
+        'ursus.linters.images.UnusedImagesLinter',
+    ]
 
 
 def default_markdown_extensions() -> dict:
@@ -47,6 +68,17 @@ def default_markdown_extensions() -> dict:
             'SUPERSCRIPT_TEXT': '{}',
         },
     }
+
+
+def default_renderers() -> list:
+    return [
+        'ursus.renderers.static.StaticAssetRenderer',
+        'ursus.renderers.static.ArchiveRenderer',
+        'ursus.renderers.image.ImageTransformRenderer',
+        'ursus.renderers.jinja.JinjaRenderer',
+        'ursus.renderers.lunr.LunrIndexRenderer',
+        'ursus.renderers.sass.SassRenderer',
+    ]
 
 
 @dataclass
@@ -96,36 +128,16 @@ class UrsusConfig():
     generator: str = 'ursus.generators.static.StaticSiteGenerator'
 
     # The processors that update the context with extra data
-    context_processors: tuple = (
-        'ursus.context_processors.stale.StaleEntriesProcessor',
-        'ursus.context_processors.image.ImageProcessor',
-        'ursus.context_processors.markdown.MarkdownProcessor',
-        'ursus.context_processors.get_entries.GetEntriesProcessor',
-        'ursus.context_processors.related.RelatedEntriesProcessor',
-        # 'ursus.context_processors.git_date.GitDateProcessor',
-    )
+    context_processors: list = field(default_factory=default_context_processors)
     context_globals: dict = field(default_factory=dict)
 
     markdown_extensions: dict = field(default_factory=default_markdown_extensions)
 
     # The renderers that take your templates and content, and populate the output dir
-    renderers: tuple = (
-        'ursus.renderers.static.StaticAssetRenderer',
-        'ursus.renderers.static.ArchiveRenderer',
-        'ursus.renderers.image.ImageTransformRenderer',
-        'ursus.renderers.jinja.JinjaRenderer',
-        'ursus.renderers.lunr.LunrIndexRenderer',
-        'ursus.renderers.sass.SassRenderer',
-    )
+    renderers: list = field(default_factory=default_renderers)
 
     # Linters look for errors in your content
-    linters: tuple = (
-        'ursus.linters.markdown.MarkdownLinkTextsLinter',
-        'ursus.linters.markdown.MarkdownLinkTitlesLinter',
-        'ursus.linters.markdown.MarkdownInternalLinksLinter',
-        'ursus.linters.markdown.MarkdownExternalLinksLinter',
-        'ursus.linters.images.UnusedImagesLinter',
-    )
+    linters: list = field(default_factory=default_linters)
 
     # Filter functions available in Jinja templates. The key is the filter name, and the value is a function
     jinja_filters = {}
@@ -135,6 +147,9 @@ class UrsusConfig():
         'fmt': '%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s',
         'level': logging.INFO,
     }
+
+    def add_markdown_extension(self, name, config={}):
+        self.markdown_extensions[name] = config
 
 
 config = UrsusConfig()
