@@ -69,7 +69,7 @@ my-website/ <- You are here
       └─ entry.html.jinja
 ```
 
-Call `ursus` to generate a statuc website. It will create `./output/posts/first-post.html`.
+Call `ursus` to generate a static website. It will create `./output/posts/first-post.html`.
 
 ### Configuring Ursus
 
