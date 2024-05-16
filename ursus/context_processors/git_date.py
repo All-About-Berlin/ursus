@@ -35,5 +35,5 @@ class GitDateProcessor(ContextProcessor):
                             entry['date_updated'] = commit_date.astimezone()
 
         for entry in context['entries'].values():
-            entry.setdefault('date_updated', datetime.now())
+            entry.setdefault('date_updated', datetime.now().astimezone())
         return context
