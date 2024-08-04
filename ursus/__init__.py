@@ -41,14 +41,24 @@ def lint(files_to_lint=None, min_level=logging.INFO):
 
     has_errors = False
 
+    if files_to_lint:
+        logging.info(f"Linting {', '.join(map(str, files_to_lint))}")
+
     for file_path in sorted(get_files_in_path(config.content_path, whitelist=files_to_lint)):
         for linter in linters:
             linter_errors = list(linter.lint(file_path))
-            for line_no, message, level in linter_errors:
+            for position, message, level in linter_errors:
+                if position:
+                    line_no, col_start, col_end = position
+                else:
+                    line_no = 0
+                    col_start = 0
+                    col_end = 1
+
                 if level >= min_level:
                     has_errors = True
                     if line_no is not None:
-                        logging.log(level, f"{log_colors[level]}{str(file_path)}:{line_no}\033[0m - {message}")
+                        logging.log(level, f"{log_colors[level]}{str(file_path)}:{line_no}:{col_start}-{col_end}\033[0m - {message}")
                     else:
                         logging.log(level, f"{str(file_path)} - {message}")
     sys.exit(1 if has_errors else 0)

@@ -27,8 +27,8 @@ class LineLinter(Linter):
 
         with (config.content_path / file_path).open() as file:
             for line_no, line in enumerate(file.readlines()):
-                for error, level in self.lint_line(file_path, line):
-                    yield line_no, error, level
+                for col_range, error, level in self.lint_line(file_path, line):
+                    yield (line_no, *col_range), error, level
 
     def lint_line(self, file_path: Path, line: str):
         raise NotImplementedError
@@ -39,7 +39,8 @@ class RegexLinter(LineLinter):
 
     def lint_line(self, file_path: Path, line: str):
         for match in self.regex.finditer(line):
-            yield from self.handle_match(file_path, match)
+            for message, level in self.handle_match(file_path, match):
+                yield match.span(), message, level
 
     def handle_match(self, file_path: Path, match: re.Match):
         raise NotImplementedError

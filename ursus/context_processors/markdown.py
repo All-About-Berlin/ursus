@@ -53,6 +53,7 @@ class TaskListExtension(Extension):
     * [ ] Unchecked item
     * [x] Checked item
     """
+
     def __init__(self, **kwargs):
         self.config = {
             "list_item_class": ['', 'CSS class to add to the <li> element'],
@@ -97,6 +98,7 @@ class JinjaExtension(Extension):
     """
     Escape Jinja {% ... %} and {{ ... }} statements in Markdown files.
     """
+
     def extendMarkdown(self, md):
         md.postprocessors.deregister('raw_html')
         md.preprocessors.register(JinjaPreprocessor(md), 'jinja', 25)
@@ -198,6 +200,7 @@ class ResponsiveImagesExtension(Extension):
     - Wraps block images in a <figure> tag, and replaces the title with a <figcaption>
 
     """
+
     def extendMarkdown(self, md):
         md.registerExtension(self)
         self.md = md
