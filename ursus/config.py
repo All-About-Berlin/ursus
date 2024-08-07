@@ -30,6 +30,7 @@ def default_linters() -> list:
         'ursus.linters.markdown.MarkdownLinkTitlesLinter',
         'ursus.linters.markdown.MarkdownInternalLinksLinter',
         'ursus.linters.markdown.MarkdownExternalLinksLinter',
+        'ursus.linters.markdown.RelatedEntriesLinter',
         'ursus.linters.images.UnusedImagesLinter',
     ]
 

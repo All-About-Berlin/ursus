@@ -4,10 +4,11 @@ from pathlib import Path
 from requests.exceptions import ConnectionError
 from urllib.parse import unquote, urlparse
 from ursus.config import config
-from ursus.linters import RegexLinter
+from ursus.linters import HeadMatterLinter, RegexLinter
 import logging
 import re
 import requests
+from typing import Any
 
 
 class MarkdownLinksLinter(RegexLinter):
@@ -159,3 +160,18 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
             yield "Entry not found", logging.ERROR
         elif title_slug and title_slug not in self.get_title_slugs(file_path):
             yield "URL fragment not found", logging.ERROR
+
+
+class RelatedEntriesLinter(HeadMatterLinter):
+    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]):
+        for key in meta.keys():
+            if key.startswith('related_'):
+                for pos, entry_uri in enumerate(meta[key]):
+                    if not (config.content_path / entry_uri).exists():
+                        line_no, col, end_col = field_positions[key]
+                        line_no += pos
+                        yield (
+                            (line_no, 4, 4 + len(entry_uri)),
+                            f"Entry does not exist: {entry_uri}",
+                            logging.ERROR
+                        )

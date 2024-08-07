@@ -1,18 +1,32 @@
 # Changelog
 
-## [Unreleased]
+## [1.4.0] - 2024-08-07
 
 ### Added
 
-...
-
-### Changed
-
-...
+- `RelatedEntriesLinter`, which verifies that related entries exist. It's enabled by default.
+- `HeadMatterLinter` to create other linters for head matter.
 
 ### Removed
 
-...
+- Head matter no longer supports comma-separated lists:
+
+```markdown
+---
+Related_posts: this, does, not, work
+Related_posts:
+    this
+    still
+    works
+---
+```
+
+## [1.3.0] - 2024-08-04
+
+### Changed
+
+- Linters now return the exact line and column range of linting errors
+- `entry.date_updated` is now timezone-aware
 
 ## [1.2.0] - 2024-04-24
 

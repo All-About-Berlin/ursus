@@ -297,10 +297,7 @@ class MarkdownProcessor(EntryContextProcessor):
                 value = datetime.strptime(value, '%Y-%m-%d').astimezone()
 
             if key.startswith('related_'):
-                if type(value) == list:
-                    values = list(filter(bool, [v.strip() for v in value]))
-                else:
-                    values = [v.strip() for v in value.split(',')]
+                values = list(filter(bool, [v.strip() for v in value]))
                 value = values if len(values) > 1 else values[0]
 
             metadata[key] = value
