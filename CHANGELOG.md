@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.5.0] - 2024-??-??
+
+### Changed
+
+- Log all uncaught exceptions through the default logger.
+- Feed `config.logging` to `logging.basicConfig` instead of `coloredlogs` to allow fancier logging configs like multiple log handlers.
+
+### Removed
+
+- Removed `coloredlogs`.
+
 ## [1.4.0] - 2024-08-07
 
 ### Added

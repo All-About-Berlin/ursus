@@ -5,8 +5,8 @@ from ursus.config import config
 from ursus.server import serve, serve_async
 from ursus.utils import import_module_or_path
 import argparse
-import coloredlogs
 import logging
+import sys
 
 
 if __name__ == '__main__':
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     if args.fast:
         config.fast_rebuilds = True
 
-    coloredlogs.install(**config.logging)
+    logging.basicConfig(**config.logging)
 
     if args.config:
         logging.info(f"Loaded config from {args.config}")
@@ -75,6 +75,11 @@ if __name__ == '__main__':
     if args.action == 'build':
         logging.info(f"Templates path: {str(config.templates_path)}")
         logging.info(f"Output path: {str(config.output_path)}")
-        build(args.watch)
+        try:
+            build(args.watch)
+        except:
+            logging.exception("Could not generate site")
+            sys.exit(1)
+
     elif args.action == 'lint':
         lint(files_to_lint=args.files or None, min_level=getattr(logging, args.level))

@@ -1,6 +1,6 @@
 from . import Renderer
 from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, StrictUndefined
-from jinja2.exceptions import TemplateSyntaxError
+from jinja2.exceptions import TemplateError
 from jinja2.ext import Extension, do
 from jinja2.meta import find_referenced_templates
 from jinja2_simple_tags import StandaloneTag, ContainerTag
@@ -175,10 +175,7 @@ class JinjaRenderer(Renderer):
         abs_output_path = config.output_path / output_path
         abs_output_path.parent.mkdir(parents=True, exist_ok=True)
         template = self.template_environment.get_template(str(template_path))
-        try:
-            template.stream(**context).dump(str(abs_output_path))
-        except TemplateSyntaxError:
-            raise
+        template.stream(**context).dump(str(abs_output_path))
         return output_path
 
     def get_entry_output_path(self, template_path: Path, entry_uri: str) -> Path:

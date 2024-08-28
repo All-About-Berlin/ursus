@@ -25,7 +25,6 @@ setup(
     },
     python_requires='>=3.11',
     install_requires=[
-        'coloredlogs==15.0.1',
         'GitPython==3.1.43',
         'imagesize==1.4.1',
         'Jinja2==3.1.4',

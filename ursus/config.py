@@ -145,7 +145,7 @@ class UrsusConfig():
 
     logging = {
         'datefmt': '%Y-%m-%d %H:%M:%S',
-        'fmt': '%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s',
+        'format': '%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s',
         'level': logging.INFO,
     }
 
