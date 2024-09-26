@@ -137,7 +137,7 @@ This is not meant for production. Use nginx, Caddy or some other static file ser
 
 ## How Ursus works
 
-1. **Context processors** generate the context used to render templates. The context is just a big dictionary.
+1. **Context processors** generate the context used to render templates. The context is just a big dictionary that represent your site's entire content. Usually, each content file is turned into an entry.
 2. **Renderers** use the context and the templates to render the parts of the final website: pages, thumbnails, static assets, etc.
 
 ### Content
