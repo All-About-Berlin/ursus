@@ -2,7 +2,7 @@ from importlib import import_module
 from markdown.extensions.meta import BEGIN_RE, META_RE, META_MORE_RE, END_RE
 from pathlib import Path
 from PIL import Image
-from typing import Any, Iterator, Iterable, Tuple
+from typing import Any, Iterator, Iterable, Tuple, List
 from ursus.config import config
 from xml.etree import ElementTree
 import fitz
@@ -343,7 +343,7 @@ def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=Non
     return figure
 
 
-def parse_markdown_head_matter(lines: Iterable[str]) -> Tuple[dict, dict[str, Tuple]]:
+def parse_markdown_head_matter(lines: Iterable[str]) -> Tuple[dict[str, List[int]], dict[str, Tuple]]:
     """
     Turns markdown head matter into a dictionary. Returns the dictionary, and the position of each dictionary key in
     the file (to allow linters to highlight invalid head matter keys)
@@ -354,6 +354,8 @@ def parse_markdown_head_matter(lines: Iterable[str]) -> Tuple[dict, dict[str, Tu
     if lines and BEGIN_RE.match(lines[0]):
         lines.pop(0)
 
+    # The key is a string. The value is always a list, although it usually has only one item
+    # This mirrors the behaviour of Python-Markdown's meta extension, which Ursus relies on.
     for line_no, line in enumerate(lines):
         m1 = META_RE.match(line)
         if line.strip() == '' or END_RE.match(line):
@@ -375,3 +377,13 @@ def parse_markdown_head_matter(lines: Iterable[str]) -> Tuple[dict, dict[str, Tu
                 lines.insert(0, line)
                 break
     return meta, field_positions
+
+
+def format_markdown_head_matter(metadata: dict[str, List[int]]) -> str:
+    lines = []
+
+    for key, value_list in metadata.items():
+        lines.append(f'{key.lower()}: {value_list[0]}')
+        lines.extend([f'    {value}' for value in value_list[1:]])
+
+    return '\n'.join(['---', *lines, '---'])
