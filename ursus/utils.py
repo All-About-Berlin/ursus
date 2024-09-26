@@ -1,7 +1,8 @@
 from importlib import import_module
+from markdown.extensions.meta import BEGIN_RE, META_RE, META_MORE_RE, END_RE
 from pathlib import Path
 from PIL import Image
-from typing import Iterator
+from typing import Any, Iterator, Iterable, Tuple
 from ursus.config import config
 from xml.etree import ElementTree
 import fitz
@@ -340,3 +341,37 @@ def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=Non
     figcaption.text = img_attrs['title']
 
     return figure
+
+
+def parse_markdown_head_matter(lines: Iterable[str]) -> Tuple[dict, dict[str, Tuple]]:
+    """
+    Turns markdown head matter into a dictionary. Returns the dictionary, and the position of each dictionary key in
+    the file (to allow linters to highlight invalid head matter keys)
+    """
+    meta: dict[str, Any] = {}
+    field_positions: dict[str, tuple] = {}
+
+    if lines and BEGIN_RE.match(lines[0]):
+        lines.pop(0)
+
+    for line_no, line in enumerate(lines):
+        m1 = META_RE.match(line)
+        if line.strip() == '' or END_RE.match(line):
+            break  # blank line or end of YAML header - done
+        if m1:
+            key = m1.group('key').lower().strip()
+            value = m1.group('value').strip()
+            try:
+                meta[key].append(value)
+            except KeyError:
+                meta[key] = [value]
+            field_positions[key] = (line_no + 1, 0, len(line) - 1)
+        else:
+            m2 = META_MORE_RE.match(line)
+            if m2 and key:
+                # Add another line to existing key
+                meta[key].append(m2.group('value').strip())
+            else:
+                lines.insert(0, line)
+                break
+    return meta, field_positions

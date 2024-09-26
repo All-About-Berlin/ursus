@@ -4,7 +4,8 @@ from pathlib import Path
 from requests.exceptions import ConnectionError
 from urllib.parse import unquote, urlparse
 from ursus.config import config
-from ursus.linters import HeadMatterLinter, RegexLinter
+from ursus.linters import Linter, RegexLinter
+from ursus.utils import parse_markdown_head_matter
 import logging
 import re
 import requests
@@ -160,6 +161,23 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
             yield "Entry not found", logging.ERROR
         elif title_slug and title_slug not in self.get_title_slugs(file_path):
             yield "URL fragment not found", logging.ERROR
+
+
+class HeadMatterLinter(Linter):
+    def lint(self, file_path: Path):
+        if file_path.suffix.lower() != '.md':
+            return
+
+        meta: dict[str, Any] = {}
+        field_positions: dict[str, tuple] = {}
+
+        with (config.content_path / file_path).open() as file:
+            meta, field_positions = parse_markdown_head_matter(file.readlines())
+
+        yield from self.lint_meta(meta, field_positions)
+
+    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]):
+        raise NotImplementedError
 
 
 class RelatedEntriesLinter(HeadMatterLinter):
