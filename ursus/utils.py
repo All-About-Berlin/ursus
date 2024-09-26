@@ -124,7 +124,7 @@ def get_image_size(path: Path):
 
 def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None) -> list[Path]:
     """
-    Returns a list of valid, visible files under a given path.
+    Returns a list of valid, visible files under a given path. The returned paths are relative to the supplied path.
 
     Args:
         path (Path): The path under which to find files

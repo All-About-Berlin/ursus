@@ -285,7 +285,7 @@ class MarkdownProcessor(EntryContextProcessor):
             extension_configs=config.markdown_extensions,
         )
 
-    def _parse_metadata(self, raw_metadata):
+    def parse_metadata(self, raw_metadata):
         metadata = {}
         for key, value in raw_metadata.items():
             if len(value) == 0:
@@ -313,7 +313,7 @@ class MarkdownProcessor(EntryContextProcessor):
                 html = self.markdown.reset().convert(f.read())
 
             context['entries'][entry_uri].update({
-                **self._parse_metadata(self.markdown.Meta),
+                **self.parse_metadata(self.markdown.Meta),
                 'body': html,
                 'table_of_contents': self.markdown.toc_tokens,
                 'url': f"{config.site_url}/{str(Path(entry_uri).with_suffix(config.html_url_extension))}",

@@ -11,6 +11,7 @@ class StaticSiteGenerator(Generator):
     """
     Turns a group of files and templates into a static website
     """
+
     def __init__(self):
         super().__init__()
 

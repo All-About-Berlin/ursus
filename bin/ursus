@@ -80,6 +80,5 @@ if __name__ == '__main__':
         except:
             logging.exception("Could not generate site")
             sys.exit(1)
-
     elif args.action == 'lint':
         lint(files_to_lint=args.files or None, min_level=getattr(logging, args.level))
