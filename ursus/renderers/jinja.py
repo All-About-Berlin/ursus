@@ -1,6 +1,5 @@
 from . import Renderer
 from jinja2 import Environment, FileSystemLoader, nodes, pass_context, select_autoescape, StrictUndefined
-from jinja2.exceptions import TemplateError
 from jinja2.ext import Extension, do
 from jinja2.meta import find_referenced_templates
 from jinja2_simple_tags import StandaloneTag, ContainerTag
@@ -10,6 +9,7 @@ from ordered_set import OrderedSet
 from pathlib import Path
 from rjsmin import jsmin
 from rcssmin import cssmin
+from typing import Generator
 from ursus.config import config
 from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
 import logging
@@ -134,10 +134,6 @@ def is_entry_template(template_path: Path) -> bool:
     return template_path.with_suffix('').stem == 'entry'
 
 
-def template_can_render_entry(template_path: Path, entry_uri: str) -> bool:
-    return Path(entry_uri).parent == template_path.parent
-
-
 class JinjaRenderer(Renderer):
     """
     Renders all .jinja templates in the templates directory, unless their name starts with '_'.
@@ -164,7 +160,10 @@ class JinjaRenderer(Renderer):
             dependencies.update(self.get_child_templates(child_template_path))
         return dependencies
 
-    def render_template(self, template_path: Path, context: dict, output_path: Path):
+    def template_can_render_entry(self, template_path: Path, entry_uri: str) -> bool:
+        return Path(entry_uri).parent == template_path.parent
+
+    def render_template(self, template_path: Path, context: dict, output_path: Path) -> Generator[Path, None, None]:
         """Returns an entry into a template, and saves it under output_path
         Args:
             template_path (Path): Path to the template to use, relative to output_path.
@@ -176,7 +175,7 @@ class JinjaRenderer(Renderer):
         abs_output_path.parent.mkdir(parents=True, exist_ok=True)
         template = self.template_environment.get_template(str(template_path))
         template.stream(**context).dump(str(abs_output_path))
-        return output_path
+        yield output_path
 
     def get_entry_output_path(self, template_path: Path, entry_uri: str) -> Path:
         """Gets the path where the rendered template will be saved
@@ -186,10 +185,10 @@ class JinjaRenderer(Renderer):
         Returns:
             Path: Rendered template output path, relative to the output_path.
         """
-        output_suffix = template_path.with_suffix('').suffix
+        output_suffix = template_path.with_suffix('').suffix  # Remove .jinja, so that .html.jinja becomes .html
         return Path(entry_uri).with_suffix(output_suffix)
 
-    def render_entry(self, template_path: Path, context: dict, entry_uri: str) -> Path:
+    def render_entry(self, template_path: Path, context: dict, entry_uri: str) -> Generator[Path, None, None]:
         """Returns an entry into a template, and saves it under output_path
         Args:
             template_path (Path): Path to the template to use, relative to output_path.
@@ -204,7 +203,7 @@ class JinjaRenderer(Renderer):
             'entry_uri': entry_uri,
         }
         output_path = self.get_entry_output_path(template_path, entry_uri)
-        return self.render_template(template_path, specific_context, output_path)
+        yield from self.render_template(template_path, specific_context, output_path)
 
     def render(self, context: dict, changed_files: set = None) -> set:
         template_paths = get_files_in_path(config.templates_path, suffix='.jinja')
@@ -239,7 +238,7 @@ class JinjaRenderer(Renderer):
         # Process edited entries
         for entry_uri in changed_entry_uris:
             for tp in template_paths:
-                if is_entry_template(tp) and template_can_render_entry(tp, entry_uri):
+                if is_entry_template(tp) and self.template_can_render_entry(tp, entry_uri):
                     render_queue.add(('entry', tp, entry_uri))
 
         # Process edited templates
@@ -248,7 +247,7 @@ class JinjaRenderer(Renderer):
                 continue
             elif is_entry_template(template_path):
                 for entry_uri in context['entries']:
-                    if template_can_render_entry(template_path, entry_uri):
+                    if self.template_can_render_entry(template_path, entry_uri):
                         render_queue.add(('entry', template_path, entry_uri))
             else:
                 render_queue.add(('template', template_path, template_path.with_suffix('')))
@@ -257,7 +256,7 @@ class JinjaRenderer(Renderer):
         for template_path in template_paths:
             if is_entry_template(template_path):
                 for entry_uri in context['entries']:
-                    if template_can_render_entry(template_path, entry_uri):
+                    if self.template_can_render_entry(template_path, entry_uri):
                         if config.fast_rebuilds:
                             (config.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
                         else:
@@ -271,8 +270,8 @@ class JinjaRenderer(Renderer):
 
         for render_type, template_path, value in render_queue:
             if render_type == 'entry':
-                files_to_keep.add(self.render_entry(template_path, context, value))
+                files_to_keep.update(self.render_entry(template_path, context, value))
             elif render_type == 'template':
-                files_to_keep.add(self.render_template(template_path, context, value))
+                files_to_keep.update(self.render_template(template_path, context, value))
 
         return files_to_keep

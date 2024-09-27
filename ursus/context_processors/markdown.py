@@ -308,9 +308,9 @@ class MarkdownProcessor(EntryContextProcessor):
 
     def process_entry(self, context: dict, entry_uri: str):
         if entry_uri.lower().endswith('.md'):
-            with (config.content_path / entry_uri).open(encoding='utf-8') as f:
-                self.markdown.context = context
-                html = self.markdown.reset().convert(f.read())
+            self.markdown.context = context
+            markdown_text = (config.content_path / entry_uri).read_text()
+            html = self.markdown.reset().convert(markdown_text)
 
             context['entries'][entry_uri].update({
                 **self.parse_metadata(self.markdown.Meta),

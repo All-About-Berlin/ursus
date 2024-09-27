@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from markdown.extensions.wikilinks import build_url
 from markdown.extensions.toc import slugify
 from pathlib import Path
+from platformdirs import user_cache_dir
+from typing import Iterable
 import logging
 
 
@@ -9,7 +11,8 @@ def default_context_processors() -> list:
     return [
         'ursus.context_processors.stale.StaleEntriesProcessor',
         'ursus.context_processors.image.ImageProcessor',
-        'ursus.context_processors.markdown.MarkdownProcessor',
+        # 'ursus.context_processors.markdown.MarkdownProcessor',
+        'ursus.context_processors.translations.MultilingualMarkdownProcessor',
         'ursus.context_processors.get_entries.GetEntriesProcessor',
         'ursus.context_processors.related.RelatedEntriesProcessor',
         # 'ursus.context_processors.git_date.GitDateProcessor',
@@ -76,7 +79,8 @@ def default_renderers() -> list:
         'ursus.renderers.static.StaticAssetRenderer',
         'ursus.renderers.static.ArchiveRenderer',
         'ursus.renderers.image.ImageTransformRenderer',
-        'ursus.renderers.jinja.JinjaRenderer',
+        # 'ursus.renderers.jinja.JinjaRenderer',
+        'ursus.renderers.translations.MultilingualJinjaRenderer',
         'ursus.renderers.lunr.LunrIndexRenderer',
         'ursus.renderers.sass.SassRenderer',
     ]
@@ -87,6 +91,7 @@ class UrsusConfig():
     content_path: Path = Path('content').resolve()
     templates_path: Path = Path('templates').resolve()
     output_path: Path = Path('output').resolve()
+    cache_path: Path = Path(user_cache_dir('ursus', 'nicolasb'))
 
     # The URL of this website's root, without a trailing slash. For example, https://allaboutberlin.com
     site_url: str = ''
@@ -133,6 +138,10 @@ class UrsusConfig():
     context_globals: dict = field(default_factory=dict)
 
     markdown_extensions: dict = field(default_factory=default_markdown_extensions)
+
+    # For translation
+    openai_api_key: str = None
+    metadata_fields_to_translate: Iterable = ()
 
     # The renderers that take your templates and content, and populate the output dir
     renderers: list = field(default_factory=default_renderers)
