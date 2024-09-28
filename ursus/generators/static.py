@@ -1,5 +1,5 @@
 from ursus.config import config
-from ursus.utils import import_class
+from ursus.utils import import_class, get_files_in_path
 from . import Generator
 import logging
 
@@ -43,8 +43,13 @@ class StaticSiteGenerator(Generator):
         else:
             logger.info("Building context...")
 
+        for file_path in get_files_in_path(config.content_path, changed_files):
+            entry_uri = str(file_path)
+            self.context['entries'].setdefault(entry_uri, {
+                'entry_uri': entry_uri,
+            })
+
         for context_processor in self.context_processors:
-            logger.debug(f"Processing context with {type(context_processor).__name__}")
             self.context = context_processor.process(self.context, changed_files)
 
         """

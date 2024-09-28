@@ -160,7 +160,7 @@ class JinjaRenderer(Renderer):
             dependencies.update(self.get_child_templates(child_template_path))
         return dependencies
 
-    def template_can_render_entry(self, template_path: Path, entry_uri: str) -> bool:
+    def template_can_render_entry(self, template_path: Path, context: dict, entry_uri: str) -> bool:
         return Path(entry_uri).parent == template_path.parent
 
     def render_template(self, template_path: Path, context: dict, output_path: Path) -> Generator[Path, None, None]:
@@ -238,7 +238,7 @@ class JinjaRenderer(Renderer):
         # Process edited entries
         for entry_uri in changed_entry_uris:
             for tp in template_paths:
-                if is_entry_template(tp) and self.template_can_render_entry(tp, entry_uri):
+                if is_entry_template(tp) and self.template_can_render_entry(tp, context, entry_uri):
                     render_queue.add(('entry', tp, entry_uri))
 
         # Process edited templates
@@ -247,7 +247,7 @@ class JinjaRenderer(Renderer):
                 continue
             elif is_entry_template(template_path):
                 for entry_uri in context['entries']:
-                    if self.template_can_render_entry(template_path, entry_uri):
+                    if self.template_can_render_entry(template_path, context, entry_uri):
                         render_queue.add(('entry', template_path, entry_uri))
             else:
                 render_queue.add(('template', template_path, template_path.with_suffix('')))
@@ -256,7 +256,7 @@ class JinjaRenderer(Renderer):
         for template_path in template_paths:
             if is_entry_template(template_path):
                 for entry_uri in context['entries']:
-                    if self.template_can_render_entry(template_path, entry_uri):
+                    if self.template_can_render_entry(template_path, context, entry_uri):
                         if config.fast_rebuilds:
                             (config.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
                         else:

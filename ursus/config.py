@@ -15,6 +15,7 @@ def default_context_processors() -> list:
         'ursus.context_processors.translations.MultilingualMarkdownProcessor',
         'ursus.context_processors.get_entries.GetEntriesProcessor',
         'ursus.context_processors.related.RelatedEntriesProcessor',
+        'ursus.context_processors.translations.TranslationsReferenceProcessor',
         # 'ursus.context_processors.git_date.GitDateProcessor',
     ]
 
@@ -141,6 +142,7 @@ class UrsusConfig():
 
     # For translation
     openai_api_key: str = None
+    default_language: str = None
     metadata_fields_to_translate: Iterable = ()
 
     # The renderers that take your templates and content, and populate the output dir

@@ -68,6 +68,7 @@ class GetEntriesProcessor(ContextProcessor):
     Adds the get_entries() method to the context root. This function filters and
     sorts entries.
     """
+
     def process(self, context: dict, changed_files: set = None) -> dict:
         if 'get_entries' not in context:
             context['get_entries'] = partial(get_entries, context['entries'])

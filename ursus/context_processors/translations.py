@@ -1,12 +1,16 @@
+from . import ContextProcessor
+from collections import UserDict
 from hashlib import sha256
 from openai import OpenAI
 from pathlib import Path
 from typing import List, Tuple
 from ursus.config import config
 from ursus.context_processors.markdown import MarkdownProcessor
+from ursus.context_processors.related import RelatedEntryReferenceDict
 from ursus.utils import parse_markdown_head_matter, format_markdown_head_matter, get_language_name
 import logging
 import re
+import sys
 
 
 class MultilingualMarkdownProcessor(MarkdownProcessor):
@@ -14,9 +18,6 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
     MarkdownProcessor that also adds a "translations" attribute with AI-translated
     versions of the entry.
     """
-
-    def get_translation_cache_path(self, entry_uri: str, language_code: str) -> Path:
-        return config.cache_path / 'translations' / entry_uri / language_code
 
     def split_document(self, text: str) -> Tuple[str, str]:
         """
@@ -161,26 +162,86 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
 
         original_text = (config.content_path / entry_uri).read_text()
         desired_translations = {
-            key.removeprefix('translation_'): url
-            for key, url in context['entries'][entry_uri].items()
+            key.removeprefix('translation_'): translation_url
+            for key, translation_url in context['entries'][entry_uri].items()
             if key.startswith('translation_')
         }
 
+        translations_dict = {
+            config.default_language: entry_uri,
+        }
+
         for language_code, translation_url in desired_translations.items():
-            logging.info(f"Translating {entry_uri} to {language_code}")
+            translation_uri = str(Path(translation_url).with_suffix('.md'))
+            logging.info(f"Translating {entry_uri} to {get_language_name(language_code)} as {translation_uri}")
 
             head_matter, body = self.split_document(original_text)
-            translation_cache_path = self.get_translation_cache_path(entry_uri, language_code)
+            translation_cache_path = config.cache_path / 'translations' / translation_uri
 
             translated_head_matter = self.translate_head_matter(head_matter, language_code, cache_path=translation_cache_path)
             translated_body = self.translate_body(body, language_code, cache_path=translation_cache_path)
             translated_text = f"{translated_head_matter}\n{translated_body}"
             html = self.markdown.reset().convert(translated_text)
 
-            context['entries'][entry_uri].setdefault('translations', {})
-            context['entries'][entry_uri]['translations'].update({
+            context['entries'].setdefault(translation_uri, {})
+            context['entries'][translation_uri].update({
                 **self.parse_metadata(self.markdown.Meta),
                 'body': html,
                 'table_of_contents': self.markdown.toc_tokens,
-                'url': f"{config.site_url}/{str(Path(entry_uri).with_suffix(config.html_url_extension))}",
+                'url': f"{config.site_url}/{str(Path(translation_uri).with_suffix(config.html_url_extension))}",
             })
+            translations_dict[language_code] = translation_uri
+
+        if desired_translations:
+            for language_code, translation_uri in translations_dict.items():
+                # Don't override the language attribute if it's hard-coded in the head matter
+                context['entries'][translation_uri]['language'] = language_code
+                context['entries'][translation_uri]['translations'] = translations_dict
+
+
+class MultilingualRelatedEntriesProcessor(ContextProcessor):
+    """
+    Entry fields that start with related_* return a list of entries, instead of
+    a list of entry URIs.
+
+    The multilingual version also applies this to translations
+    """
+
+    def process(self, context: dict, changed_files: set = None) -> dict:
+        for uri, entry in context['entries'].items():
+            if not isinstance(context['entries'][uri], RelatedEntryReferenceDict):
+                context['entries'][uri] = RelatedEntryReferenceDict(entry, context['entries'])
+
+                for language_code in context['entries'][uri].get('translations', {}).keys():
+                    context['entries'][uri]['translations'][language_code] = RelatedEntryReferenceDict(
+                        context['entries'][uri]['translations'][language_code],
+                        context['entries']
+                    )
+
+
+class TranslationReferenceDict(UserDict):
+    def __init__(self, translations_dict: dict, all_entries: dict):
+        self.all_entries = all_entries
+        super().__init__(translations_dict)
+
+    def __getitem__(self, key):
+        if key in self.data:
+            translation_uri = self.data[key]
+            try:
+                return self.all_entries[translation_uri]
+            except KeyError:
+                raise ValueError(f"{key} contains invalid value {sys.exc_info()[1]}")
+        return super().__getitem__(key)
+
+
+class TranslationsReferenceProcessor(ContextProcessor):
+    """
+    context['entries'][uri]['translations']['de'] returns the German entry instead of the Germany entry URI
+    """
+
+    def process(self, context: dict, changed_files: set = None) -> dict:
+        for uri, entry in context['entries'].items():
+            if ('translations' in entry and not isinstance(entry['translations'], TranslationReferenceDict)):
+                entry['translations'] = TranslationReferenceDict(entry['translations'], context['entries'])
+
+        return context
