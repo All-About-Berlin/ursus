@@ -23,8 +23,12 @@ setup(
             'tasklist = ursus.context_processors.markdown:TaskListExtension',
         ]
     },
+    package_data={
+        'ursus.babel': ['*', ],
+    },
     python_requires='>=3.11',
     install_requires=[
+        'babel==2.16.0',
         'GitPython==3.1.43',
         'imagesize==1.4.1',
         'Jinja2==3.1.4',

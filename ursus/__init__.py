@@ -1,3 +1,5 @@
+from importlib.resources import files
+from subprocess import run, STDOUT
 from ursus.utils import import_class, get_files_in_path, log_colors
 from ursus.config import config
 from watchdog.observers import Observer
@@ -62,3 +64,33 @@ def lint(files_to_lint=None, min_level=logging.INFO):
                     else:
                         logging.log(level, f"{str(file_path)} - {message}")
     sys.exit(1 if has_errors else 0)
+
+
+def translate():
+    babel_config = files("ursus") / 'babel' / 'pybabel.cfg'
+    pot_path = config.translations_path / 'messages.pot'
+
+    config.translations_path.mkdir(parents=True, exist_ok=True)
+    run(
+        [
+            'pybabel', 'extract',
+            '--mapping', str(babel_config),
+            '--output-file', str(pot_path), str(config.templates_path)
+        ],
+        check=True, stdout=sys.stdout, stderr=STDOUT
+    )
+    for language_code in set([config.default_language, *config.translation_languages]):
+        command = 'update' if (config.translations_path / language_code / 'LC_MESSAGES' / 'messages.po').exists() else 'init'
+        run(
+            [
+                'pybabel', command,
+                '--input-file', str(pot_path),
+                '--locale', language_code,
+                '--output-dir', str(config.translations_path),
+            ],
+            check=True, stdout=sys.stdout, stderr=STDOUT
+        )
+    run(
+        ['pybabel', 'compile', '--directory', str(config.translations_path)],
+        check=True, stdout=sys.stdout, stderr=STDOUT
+    )

@@ -12,6 +12,7 @@ from rcssmin import cssmin
 from typing import Generator
 from ursus.config import config
 from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
+import gettext
 import logging
 import sass
 
@@ -141,12 +142,20 @@ class JinjaRenderer(Renderer):
 
     def __init__(self):
         super().__init__()
+        translations = gettext.translation(
+            domain='messages',
+            localedir=config.translations_path,
+            languages=['de'],
+        )
+        translations.install()  # Magically make the _ function globally available
+
         self.template_environment = Environment(
             loader=FileSystemLoader(config.templates_path),
-            extensions=[do, JsLoaderExtension, CssLoaderExtension, ScssLoaderExtension, ResponsiveImageExtension],
+            extensions=['jinja2.ext.i18n', do, JsLoaderExtension, CssLoaderExtension, ScssLoaderExtension, ResponsiveImageExtension],
             autoescape=select_autoescape(),
             undefined=StrictUndefined
         )
+        self.template_environment.install_gettext_translations(translations, newstyle=True)
         self.template_environment.filters['render'] = render_filter
         self.template_environment.filters.update(config.jinja_filters)
 

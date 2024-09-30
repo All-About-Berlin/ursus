@@ -80,8 +80,7 @@ def default_renderers() -> list:
         'ursus.renderers.static.StaticAssetRenderer',
         'ursus.renderers.static.ArchiveRenderer',
         'ursus.renderers.image.ImageTransformRenderer',
-        # 'ursus.renderers.jinja.JinjaRenderer',
-        'ursus.renderers.translations.MultilingualJinjaRenderer',
+        'ursus.renderers.jinja.JinjaRenderer',
         'ursus.renderers.lunr.LunrIndexRenderer',
         'ursus.renderers.sass.SassRenderer',
     ]
@@ -93,6 +92,7 @@ class UrsusConfig():
     templates_path: Path = Path('templates').resolve()
     output_path: Path = Path('output').resolve()
     cache_path: Path = Path(user_cache_dir('ursus', 'nicolasb'))
+    translations_path: Path = Path('translations').resolve()
 
     # The URL of this website's root, without a trailing slash. For example, https://allaboutberlin.com
     site_url: str = ''
@@ -143,7 +143,8 @@ class UrsusConfig():
     # For translation
     openai_api_key: str = None
     default_language: str = None
-    metadata_fields_to_translate: Iterable = ()
+    translation_languages: Iterable[str] = None
+    metadata_fields_to_translate: Iterable[str] = ()
 
     # The renderers that take your templates and content, and populate the output dir
     renderers: list = field(default_factory=default_renderers)
