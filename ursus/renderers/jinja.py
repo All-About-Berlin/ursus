@@ -20,6 +20,27 @@ import sass
 logger = logging.getLogger(__name__)
 
 
+class MultilingualGNUTranslations(gettext.GNUTranslations):
+    """
+    Loads translations in different languages based on the "language" variable in the template context.
+    """
+    translations = {}
+
+    def __init__(self, *args, **kwargs):
+        for language_code in set([config.default_language, *config.translation_languages]):
+            self.translations[language_code] = gettext.translation(
+                domain='messages',
+                localedir=config.translations_path,
+                languages=[language_code],
+                fallback=True,
+            )
+
+    @pass_context
+    def gettext(self, context, *args, **kwargs):
+        print(f"Translating to {context.get('language', config.default_language)}")
+        return self.translations[context.get('language', config.default_language)].gettext(*args, **kwargs)
+
+
 class JsLoaderExtension(Extension):
     """
     Jinja extension. Adds the {% js %} and {% alljs %} tags.
@@ -148,6 +169,7 @@ class JinjaRenderer(Renderer):
             localedir=config.translations_path,
             languages=['de'],
             fallback=True,
+            class_=MultilingualTranslations
         )
 
         self.template_environment = Environment(
