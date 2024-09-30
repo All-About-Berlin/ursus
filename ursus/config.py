@@ -92,7 +92,6 @@ class UrsusConfig():
     templates_path: Path = Path('templates').resolve()
     output_path: Path = Path('output').resolve()
     cache_path: Path = Path(user_cache_dir('ursus', 'nicolasb'))
-    translations_path: Path = Path('translations').resolve()
 
     # The URL of this website's root, without a trailing slash. For example, https://allaboutberlin.com
     site_url: str = ''
@@ -140,10 +139,12 @@ class UrsusConfig():
 
     markdown_extensions: dict = field(default_factory=default_markdown_extensions)
 
-    # For translation
-    openai_api_key: str = None
+    # Translations
+    translations_path: Path = Path('templates/translations').resolve()
     default_language: str = None
     translation_languages: Iterable[str] = None
+
+    openai_api_key: str = None
     metadata_fields_to_translate: Iterable[str] = ()
 
     # The renderers that take your templates and content, and populate the output dir

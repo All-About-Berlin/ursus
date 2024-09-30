@@ -70,6 +70,9 @@ def translate():
     babel_config = files("ursus") / 'babel' / 'pybabel.cfg'
     pot_path = config.translations_path / 'messages.pot'
 
+    if not config.default_language or not config.translation_languages:
+        raise Exception("Translations are not configured. You must set config.default_language and config.translation_languages.")
+
     config.translations_path.mkdir(parents=True, exist_ok=True)
     run(
         [

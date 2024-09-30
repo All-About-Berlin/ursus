@@ -177,6 +177,9 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
         }
 
         for language_code, translation_url in desired_translations.items():
+            if language_code not in config.translation_languages:
+                raise ValueError("Desired translation is not in config.translation_languages")
+
             translation_uri = str(Path(translation_url).with_suffix('.md'))
             logging.info(f"Translating {entry_uri} to {get_language_name(language_code)} as {translation_uri}")
 
