@@ -142,12 +142,13 @@ class JinjaRenderer(Renderer):
 
     def __init__(self):
         super().__init__()
+
         translations = gettext.translation(
             domain='messages',
             localedir=config.translations_path,
             languages=['de'],
+            fallback=True,
         )
-        translations.install()  # Magically make the _ function globally available
 
         self.template_environment = Environment(
             loader=FileSystemLoader(config.templates_path),
@@ -155,6 +156,7 @@ class JinjaRenderer(Renderer):
             autoescape=select_autoescape(),
             undefined=StrictUndefined
         )
+
         self.template_environment.install_gettext_translations(translations, newstyle=True)
         self.template_environment.filters['render'] = render_filter
         self.template_environment.filters.update(config.jinja_filters)
