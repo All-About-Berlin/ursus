@@ -155,7 +155,12 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
     def process_entry(self, context: dict, entry_uri: str):
         super().process_entry(context, entry_uri)
 
-        if not config.openai_api_key or not entry_uri.lower().endswith('.md'):
+        if not (
+            config.openai_api_key
+            and config.default_language
+            and config.translation_languages
+            and entry_uri.lower().endswith('.md')
+        ):
             return
 
         self.markdown.context = context
