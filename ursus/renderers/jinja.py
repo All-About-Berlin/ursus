@@ -169,7 +169,7 @@ class JinjaRenderer(Renderer):
             localedir=config.translations_path,
             languages=['de'],
             fallback=True,
-            class_=MultilingualTranslations
+            class_=MultilingualGNUTranslations
         )
 
         self.template_environment = Environment(
