@@ -77,6 +77,7 @@ def translate():
     run(
         [
             'pybabel', 'extract',
+            '--ignore-dirs', '.*',  # Prevent files/dirs starting with an underscore from being ignored
             '--mapping', str(babel_config),
             '--output-file', str(pot_path), str(config.templates_path)
         ],

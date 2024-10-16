@@ -140,7 +140,7 @@ class UrsusConfig():
     markdown_extensions: dict = field(default_factory=default_markdown_extensions)
 
     # Translations
-    translations_path: Path = Path('templates/translations').resolve()
+    translations_path: Path = Path('templates/_translations').resolve()
     default_language: str = None
     translation_languages: Iterable[str] = None
 
