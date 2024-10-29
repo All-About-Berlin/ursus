@@ -6,6 +6,14 @@ It also renders images in different sizes, renders SCSS, minifies JS and generat
 
 This project is in active use and development.
 
+### What's different
+
+- You can use Jinja `{% include %}` tags and `{{ variables }}` inside your Markdown content. This lets you insert constants and embed components inside your content. For example, I use it to insert a table of contents, calculators and constants in my content.
+- It transforms images and supports `imgsrc` and `srcset` out of the box, so responsive images are easy to implement. It can also create PDF thumbnails, and can be extended to transform other files.
+- You can build linters for your content. The default linters check if internal links and related entries exist. It's easy to write your own linters.
+- It's *very* extensible. You can add your own context processors, renderers and linters. You are not stuck with Markdown and Jinja. You can also create your own Markdown extensions.
+- It's relatively fast. [All About Berlin](https://allaboutberlin.com) and its hundreds of pages builds in 5 seconds on an M2 Macbook Air. Live reloads take around 400ms. It was originally built to run smoothly on a much older laptop.
+
 ## Setup
 
 ### Installation
