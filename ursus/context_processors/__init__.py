@@ -16,8 +16,8 @@ class ContextProcessor:
 class EntryContextProcessor(ContextProcessor):
     def process(self, context: dict, changed_files: set = None) -> dict:
         for entry_uri in list(context['entries'].keys()):
-            self.process_entry(context, entry_uri)
+            self.process_entry(context, entry_uri, changed_files)
         return context
 
-    def process_entry(self, context: dict, entry_uri: str):
+    def process_entry(self, context: dict, entry_uri: str, changed_files: set = None):
         raise NotImplementedError

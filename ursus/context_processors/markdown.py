@@ -306,8 +306,11 @@ class MarkdownProcessor(EntryContextProcessor):
             metadata[key] = value
         return metadata
 
-    def process_entry(self, context: dict, entry_uri: str):
+    def process_entry(self, context: dict, entry_uri: str, changed_files: set = None):
         if entry_uri.lower().endswith('.md'):
+            if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
+                return
+
             self.markdown.context = context
             markdown_text = (config.content_path / entry_uri).read_text()
             html = self.markdown.reset().convert(markdown_text)

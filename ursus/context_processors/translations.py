@@ -152,8 +152,8 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
 
         return "".join(translated_chunks)
 
-    def process_entry(self, context: dict, entry_uri: str):
-        super().process_entry(context, entry_uri)
+    def process_entry(self, context: dict, entry_uri: str, changed_files: set = None):
+        super().process_entry(context, entry_uri, changed_files)
 
         if not (
             config.openai_api_key
