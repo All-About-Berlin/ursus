@@ -39,6 +39,7 @@ setup(
         'lunr==0.7.0',
         'Markdown==3.5.2',
         'MarkupSafe==2.1.5',
+        'openai==1.52.2',
         'ordered-set==4.1.0',
         'platformdirs==4.3.6',
         'PyMuPDF==1.24.5',
