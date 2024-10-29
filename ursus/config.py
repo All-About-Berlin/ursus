@@ -103,9 +103,9 @@ class UrsusConfig():
     minify_js: bool = False
     minify_css: bool = False
 
-    # Rebuilds the output faster by only rebuilding templates for the changed files.
-    # Related pages (like index pages) will not be rebuild, even though they could change.
-    # If false, the pages that definitely changed are still rebuilt before others.
+    # Builds the static website faster by only rebuilding templates for files that changed.
+    # Related pages might not be rebuilt, even if they might be affected by the changes.
+    # If False, everything is rebuilt from scratch. It's recommended to disable fast_rebuilds in production.
     fast_rebuilds: bool = False
 
     # Sets the <img sizes=""> attribute for your content images

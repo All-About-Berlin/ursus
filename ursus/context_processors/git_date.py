@@ -1,19 +1,47 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from ursus.config import config
 from ursus.context_processors import ContextProcessor
 import git
+import logging
+
+
+def unescape_backslashes(s, encoding='utf-8'):
+    """
+    Convert backslash-escaped strings to normal strings
+    ("DerHimmel\303\234berBerlin" -> "DerHimmelÜberBerlin")
+    """
+    return (s.encode('latin1')
+             .decode('unicode-escape')
+             .encode('latin1')
+             .decode(encoding))
 
 
 class GitDateProcessor(ContextProcessor):
     """
     Sets entry.date_updated to the date of the latest commit.
     """
+
     def __init__(self):
         super().__init__()
+        self.entry_uri_commit_dates = {}
         if not config.fast_rebuilds:
             self.repo = git.Repo(config.content_path, search_parent_directories=True)
             self.repo_root = Path(self.repo.working_dir)
+
+            commit_date = None
+            git_log = self.repo.git.log('--format=">>>%cd"', '--date=unix', '--name-only', '--encoding=UTF-8')
+            for line in git_log.split('\n'):
+                # Remove wrapping quotes, convert backslash-escaped unicode characters back to unicode
+                line = unescape_backslashes(line.strip('"'))
+                if line.startswith('>>>'):
+                    commit_date = datetime.fromtimestamp(int(line.removeprefix('>>>'))).astimezone()
+                elif len(line) > 0:
+                    entry_uri = self.commit_path_to_entry_uri(line)
+                    if entry_uri in self.entry_uri_commit_dates:
+                        self.entry_uri_commit_dates[entry_uri] = max(commit_date, self.entry_uri_commit_dates[entry_uri])
+                    else:
+                        self.entry_uri_commit_dates[entry_uri] = commit_date
 
     def commit_path_to_entry_uri(self, commit_path: str):
         abs_commit_path = self.repo_root / commit_path
@@ -23,17 +51,11 @@ class GitDateProcessor(ContextProcessor):
             return None
 
     def process(self, context: dict, changed_files: set = None) -> dict:
-        if not config.fast_rebuilds:
-            for commit in self.repo.iter_commits("master"):
-                commit_date = datetime.fromtimestamp(commit.authored_date, tz=timezone.utc)
-                for file in self.repo.git.show(commit.hexsha, name_only=True, diff_filter='ACMR').split('\n'):
-                    entry_uri = self.commit_path_to_entry_uri(file)
-                    if entry_uri and entry_uri in context['entries']:
-                        entry = context['entries'][entry_uri]
-                        if not entry.get('date_updated') or commit_date > entry['date_updated']:
-                            # Make the date timezone-aware, then convert it to the local timezone
-                            entry['date_updated'] = commit_date.astimezone()
-
-        for entry in context['entries'].values():
-            entry.setdefault('date_updated', datetime.now().astimezone())
+        for entry_uri, entry in context['entries'].items():
+            if entry_uri in self.entry_uri_commit_dates:
+                entry['date_updated'] = self.entry_uri_commit_dates.get(entry_uri)
+            else:
+                if not config.fast_rebuilds:
+                    logging.warning(f"Entry {entry_uri} has no commit date")
+                entry['date_updated'] = datetime.now().astimezone()
         return context
