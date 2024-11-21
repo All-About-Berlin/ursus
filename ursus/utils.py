@@ -2,12 +2,13 @@ from importlib import import_module
 from langcodes import Language
 from markdown.extensions.meta import BEGIN_RE, META_RE, META_MORE_RE, END_RE
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageCms
 from typing import Any, Iterator, Iterable, Tuple, List
 from ursus.config import config
 from xml.etree import ElementTree
 import fitz
 import imagesize
+import io
 import logging
 import shutil
 import sys
@@ -169,6 +170,24 @@ def copy_file(input_path: Path, output_path: Path):
     shutil.copy(input_path, output_path)
 
 
+def convert_to_srgb(pil_image: Image):
+    """
+    Convert PIL image to sRGB color space (if possible), since the profile
+    information is stripped when resizing the images.
+    """
+
+    icc = pil_image.info.get('icc_profile', '')
+    if icc:
+        io_handle = io.BytesIO(icc)     # virtual file
+        src_profile = ImageCms.ImageCmsProfile(io_handle)
+        dst_profile = ImageCms.createProfile('sRGB')
+        try:
+            pil_image = ImageCms.profileToProfile(pil_image, src_profile, dst_profile)
+        except ImageCms.PyCMSError:
+            logging.warning("Could not convert image color profile. Skipping conversion.")
+    return pil_image
+
+
 def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
     """Creates a thumbnail of an image. Strips EXIF metadata.
 
@@ -179,6 +198,7 @@ def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
     """
     assert output_path.is_absolute(), f"output_path {str(output_path)} is relative. It must be absolute."
 
+    pil_image = convert_to_srgb(pil_image)
     pil_image.thumbnail(max_size, Image.Resampling.LANCZOS)
     save_args = {'optimize': True}
     if output_path.suffix.lower() == '.jpg':
