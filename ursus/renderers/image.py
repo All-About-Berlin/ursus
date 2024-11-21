@@ -12,8 +12,6 @@ class ImageTransformRenderer(Renderer):
     """
     Resizes images and generate PDF thumbnails
     """
-    def __init__(self):
-        super().__init__()
 
     def render(self, context: dict, changed_files: set = None) -> set:
         logger.info("Rendering image transforms...")
