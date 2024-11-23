@@ -206,7 +206,6 @@ class JinjaRenderer(Renderer):
         entry_has_dedicated_template = (
             config.templates_path / template_path.parent / (entry_path.stem + template_suffixes)
         ).exists()
-        print(template_path, (template_path.parent / (entry_path.stem + template_suffixes)), entry_has_dedicated_template)
         if self.is_entry_template(template_path) and not entry_has_dedicated_template:
             return True
 
