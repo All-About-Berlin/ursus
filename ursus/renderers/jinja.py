@@ -152,9 +152,6 @@ def render_filter(context, value):
     return context.eval_ctx.environment.from_string(value).render(**context)
 
 
-def is_entry_template(template_path: Path) -> bool:
-    return template_path.with_suffix('').stem == 'entry'
-
 
 class JinjaRenderer(Renderer):
     """
@@ -193,8 +190,27 @@ class JinjaRenderer(Renderer):
             dependencies.update(self.get_child_templates(child_template_path))
         return dependencies
 
+    def is_entry_template(self, template_path: Path) -> bool:
+        return template_path.with_suffix('').stem == 'entry'
+
     def template_can_render_entry(self, template_path: Path, context: dict, entry_uri: str) -> bool:
-        return Path(entry_uri).parent == template_path.parent
+        entry_path = Path(entry_uri)
+        if entry_path.parent != template_path.parent:
+            return False
+
+        is_dedicated_template_for_this_entry = template_path.with_suffix('').stem == entry_path.stem
+        if is_dedicated_template_for_this_entry:
+            return True
+
+        template_suffixes = "".join([template_path.with_suffix('').suffix, template_path.suffix])
+        entry_has_dedicated_template = (
+            config.templates_path / template_path.parent / (entry_path.stem + template_suffixes)
+        ).exists()
+        print(template_path, (template_path.parent / (entry_path.stem + template_suffixes)), entry_has_dedicated_template)
+        if self.is_entry_template(template_path) and not entry_has_dedicated_template:
+            return True
+
+        return False
 
     def render_template(self, template_path: Path, context: dict, output_path: Path) -> Generator[Path, None, None]:
         """Returns an entry into a template, and saves it under output_path
@@ -271,30 +287,35 @@ class JinjaRenderer(Renderer):
         # Process edited entries
         for entry_uri in changed_entry_uris:
             for tp in template_paths:
-                if is_entry_template(tp) and self.template_can_render_entry(tp, context, entry_uri):
+                if self.template_can_render_entry(tp, context, entry_uri):
                     render_queue.add(('entry', tp, entry_uri))
 
         # Process edited templates
         for template_path in changed_templates:
             if is_ignored_file(config.templates_path / template_path, config.templates_path):
                 continue
-            elif is_entry_template(template_path):
-                for entry_uri in context['entries']:
-                    if self.template_can_render_entry(template_path, context, entry_uri):
-                        render_queue.add(('entry', template_path, entry_uri))
-            else:
+
+            can_render_an_entry = False
+            for entry_uri in context['entries']:
+                if self.template_can_render_entry(template_path, context, entry_uri):
+                    render_queue.add(('entry', template_path, entry_uri))
+                    can_render_an_entry = True
+
+            if not self.is_entry_template(template_path) and not can_render_an_entry:
                 render_queue.add(('template', template_path, template_path.with_suffix('')))
 
         # Process everything else
         for template_path in template_paths:
-            if is_entry_template(template_path):
-                for entry_uri in context['entries']:
-                    if self.template_can_render_entry(template_path, context, entry_uri):
-                        if config.fast_rebuilds:
-                            (config.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
-                        else:
-                            render_queue.add(('entry', template_path, entry_uri))
-            else:
+            can_render_an_entry = False
+            for entry_uri in context['entries']:
+                if self.template_can_render_entry(template_path, context, entry_uri):
+                    can_render_an_entry = True
+                    if config.fast_rebuilds:
+                        (config.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
+                    else:
+                        render_queue.add(('entry', template_path, entry_uri))
+
+            if not self.is_entry_template(template_path) and not can_render_an_entry:
                 output_path = template_path.with_suffix('')  # Remove .jinja
                 if config.fast_rebuilds:
                     (config.output_path / output_path).touch()

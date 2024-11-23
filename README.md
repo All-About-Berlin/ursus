@@ -441,7 +441,28 @@ my-website/
       └─ index.html
 ```
 
-Files named `entry.*.jinja` will render every entry with the same relative path.
+#### Dedicated templates
+
+Files named `[name].[extension].jinja` will render any entry with the same `[name]`. For example, `first-post.md` will render as `first-post.txt` using the template `first-post.txt.jinja`. It will also render as `first-post.html` using the template `first-post.html.jinja`.
+
+```
+my-website/
+├─ content/
+│  └─ posts/
+│     └─ first-post.md
+├─ templates/
+│  └─ posts/
+│     ├─ first-post.txt.jinja
+│     └─ first-post.html.jinja
+└─ output/
+   └─ posts/
+      ├─ first-post.txt
+      └─ first-post.html
+```
+
+#### Entry templates
+
+Files named `entry.*.jinja` will render every entry with the same relative path. For example, the template `entry.html.jinja` will be used to render `first-post.md` and `second-post.md`.
 
 ```
 my-website/
@@ -449,15 +470,26 @@ my-website/
 │  └─ posts/
 │     ├─ first-post.md
 │     ├─ second-post.md
+│     ├─ third-post.md
 │     └─ _draft.md
 ├─ templates/
 │  └─ posts/
-│     └─ entry.html.jinja
+│     ├─ entry.html.jinja
+│     ├─ second-post.txt.jinja
+│     └─ third-post.html.jinja
 └─ output/
    └─ posts/
       ├─ first-post.html
-      └─ second-post.html
+      ├─ second-post.html
+      ├─ second-post.txt  # Rendered with second-post.txt.jinja
+      └─ third-post.html  # Rendered with third-post.html.jinja
 ```
+
+Dedicated templates take precedence over entry templates with the same extension.
+
+In the example above, `third-post.md` is rendered by `third-post.html.jinja`, not by `entry.html.jinja`. `second-post.md` is rendered by `second-post.txt.jinja` *and* by `entry.html.jinja`.
+
+#### Ignored files
 
 Files or directory names that start with `.` or `_` are not rendered.
 
