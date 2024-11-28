@@ -1,5 +1,9 @@
+from ursus.context_processors import Context
+from pathlib import Path
+
+
 class Renderer:
-    def render(self, context: dict, changed_files: set = None) -> set:
+    def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
         """Creates, updates or touches files in output_path
 
         Args:

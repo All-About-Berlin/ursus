@@ -11,6 +11,7 @@ from rjsmin import jsmin
 from rcssmin import cssmin
 from typing import Generator
 from ursus.config import config
+from ursus.context_processors import Context, EntryURI
 from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
 import gettext
 import logging
@@ -24,7 +25,7 @@ class MultilingualGNUTranslations(gettext.GNUTranslations):
     """
     Loads translations in different languages based on the "language" variable in the template context.
     """
-    translations = {}
+    translations: dict[str, gettext.GNUTranslations] = {}
 
     def __init__(self, *args, **kwargs):
         for language_code in set([config.default_language, *config.translation_languages]):
@@ -37,7 +38,7 @@ class MultilingualGNUTranslations(gettext.GNUTranslations):
 
     @pass_context
     def gettext(self, context, *args, **kwargs):
-        print(f"Translating to {context.get('language', config.default_language)}")
+        logging.info(f"Translating to {context.get('language', config.default_language)}")
         return self.translations[context.get('language', config.default_language)].gettext(*args, **kwargs)
 
 
@@ -148,9 +149,8 @@ class ResponsiveImageExtension(StandaloneTag):
 
 
 @pass_context
-def render_filter(context, value):
+def render_filter(context, value) -> str:
     return context.eval_ctx.environment.from_string(value).render(**context)
-
 
 
 class JinjaRenderer(Renderer):
@@ -180,7 +180,7 @@ class JinjaRenderer(Renderer):
         self.template_environment.filters['render'] = render_filter
         self.template_environment.filters.update(config.jinja_filters)
 
-    def get_child_templates(self, template_path: Path):
+    def get_child_templates(self, template_path: Path) -> set[Path]:
         dependencies = set()
         with (config.templates_path / template_path).open() as template_file:
             ast = self.template_environment.parse(template_file.read())
@@ -193,7 +193,7 @@ class JinjaRenderer(Renderer):
     def is_entry_template(self, template_path: Path) -> bool:
         return template_path.with_suffix('').stem == 'entry'
 
-    def template_can_render_entry(self, template_path: Path, context: dict, entry_uri: str) -> bool:
+    def template_can_render_entry(self, template_path: Path, context: Context, entry_uri: EntryURI) -> bool:
         entry_path = Path(entry_uri)
         if entry_path.parent != template_path.parent:
             return False
@@ -211,7 +211,7 @@ class JinjaRenderer(Renderer):
 
         return False
 
-    def render_template(self, template_path: Path, context: dict, output_path: Path) -> Generator[Path, None, None]:
+    def render_template(self, template_path: Path, context: Context, output_path: Path) -> Generator[Path, None, None]:
         """Returns an entry into a template, and saves it under output_path
         Args:
             template_path (Path): Path to the template to use, relative to output_path.
@@ -225,7 +225,7 @@ class JinjaRenderer(Renderer):
         template.stream(**context).dump(str(abs_output_path))
         yield output_path
 
-    def get_entry_output_path(self, template_path: Path, entry_uri: str) -> Path:
+    def get_entry_output_path(self, template_path: Path, entry_uri: EntryURI) -> Path:
         """Gets the path where the rendered template will be saved
         Args:
             template_path (Path): Template used to render the entry
@@ -236,7 +236,7 @@ class JinjaRenderer(Renderer):
         output_suffix = template_path.with_suffix('').suffix  # Remove .jinja, so that .html.jinja becomes .html
         return Path(entry_uri).with_suffix(output_suffix)
 
-    def render_entry(self, template_path: Path, context: dict, entry_uri: str) -> Generator[Path, None, None]:
+    def render_entry(self, template_path: Path, context: Context, entry_uri: EntryURI) -> Generator[Path, None, None]:
         """Returns an entry into a template, and saves it under output_path
         Args:
             template_path (Path): Path to the template to use, relative to output_path.
@@ -253,11 +253,11 @@ class JinjaRenderer(Renderer):
         output_path = self.get_entry_output_path(template_path, entry_uri)
         yield from self.render_template(template_path, specific_context, output_path)
 
-    def render(self, context: dict, changed_files: set = None) -> set:
+    def render(self, context, changed_files=None) -> set[Path]:
         template_paths = get_files_in_path(config.templates_path, suffix='.jinja')
 
-        render_queue = OrderedSet()
-        files_to_keep = set()
+        render_queue: OrderedSet = OrderedSet()
+        files_to_keep: set[Path] = set()
 
         changed_entry_uris = set()
         changed_templates = set()
@@ -266,7 +266,7 @@ class JinjaRenderer(Renderer):
                 continue
 
             if file.is_relative_to(config.content_path) and not is_ignored_file(file, config.content_path):
-                changed_entry_uris.add(str(file.relative_to(config.content_path)))
+                changed_entry_uris.add(EntryURI(file.relative_to(config.content_path)))
             elif file.is_relative_to(config.templates_path):
                 changed_templates.add(file.relative_to(config.templates_path))
             else:

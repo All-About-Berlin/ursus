@@ -8,7 +8,7 @@ import sys
 import time
 
 
-def build(watch_for_changes: bool = False):
+def build(watch_for_changes: bool = False) -> None:
     """Runs ursus and builds a static website
 
     Args:
@@ -37,7 +37,7 @@ def build(watch_for_changes: bool = False):
         generator.generate()
 
 
-def lint(files_to_lint=None, min_level=logging.INFO):
+def lint(files_to_lint=None, min_level=logging.INFO) -> None:
     """Lints the content for errors"""
     linters = [import_class(linter_path)() for linter_path in config.linters]
 
@@ -66,7 +66,7 @@ def lint(files_to_lint=None, min_level=logging.INFO):
     sys.exit(1 if has_errors else 0)
 
 
-def translate():
+def translate() -> None:
     babel_config = files("ursus") / 'babel' / 'pybabel.cfg'
     pot_path = config.translations_path / 'messages.pot'
 

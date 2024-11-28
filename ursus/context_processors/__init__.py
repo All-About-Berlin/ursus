@@ -1,5 +1,14 @@
+from pathlib import Path
+from typing import NewType
+
+
+Context = NewType('Context', dict)
+EntryURI = NewType('EntryURI', str)
+Entry = NewType('Entry', dict)
+
+
 class ContextProcessor:
-    def process(self, context: dict, changed_files: set = None) -> dict:
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         """Transforms the context and returns it. The context is used to render templates.
 
         Args:
@@ -14,10 +23,10 @@ class ContextProcessor:
 
 
 class EntryContextProcessor(ContextProcessor):
-    def process(self, context: dict, changed_files: set = None) -> dict:
+    def process(self, context, changed_files=None):
         for entry_uri in list(context['entries'].keys()):
             self.process_entry(context, entry_uri, changed_files)
         return context
 
-    def process_entry(self, context: dict, entry_uri: str, changed_files: set = None):
+    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None):
         raise NotImplementedError

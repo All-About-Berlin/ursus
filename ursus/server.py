@@ -30,7 +30,7 @@ class HttpRequestHandler(SimpleHTTPRequestHandler):
         logging.debug(f"Request to {self.path}")
 
 
-def serve(port: int = 80):
+def serve(port: int = 80) -> None:
     """Start a static file server that serves Ursus on the given port.
 
     Args:
@@ -42,7 +42,7 @@ def serve(port: int = 80):
         server.serve_forever()
 
 
-def serve_async(port: int = 80):
+def serve_async(port: int = 80) -> Thread:
     thread = Thread(target=serve, args=(port, ), daemon=True)
     thread.start()
     return thread

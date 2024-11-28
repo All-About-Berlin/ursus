@@ -1,12 +1,12 @@
 from datetime import datetime
 from pathlib import Path
 from ursus.config import config
-from ursus.context_processors import ContextProcessor
+from ursus.context_processors import ContextProcessor, EntryURI
 import git
 import logging
 
 
-def unescape_backslashes(s, encoding='utf-8'):
+def unescape_backslashes(s: str, encoding='utf-8') -> str:
     """
     Convert backslash-escaped strings to normal strings
     ("DerHimmel\303\234berBerlin" -> "DerHimmelÜberBerlin")
@@ -22,9 +22,9 @@ class GitDateProcessor(ContextProcessor):
     Sets entry.date_updated to the date of the latest commit.
     """
 
-    def __init__(self):
+    def __init__(self: 'GitDateProcessor'):
         super().__init__()
-        self.entry_uri_commit_dates = {}
+        self.entry_uri_commit_dates: dict[EntryURI, datetime] = {}
         if not config.fast_rebuilds:
             self.repo = git.Repo(config.content_path, search_parent_directories=True)
             self.repo_root = Path(self.repo.working_dir)
@@ -50,7 +50,7 @@ class GitDateProcessor(ContextProcessor):
         except ValueError:
             return None
 
-    def process(self, context: dict, changed_files: set = None) -> dict:
+    def process(self, context, changed_files=None):
         for entry_uri, entry in context['entries'].items():
             if entry_uri in self.entry_uri_commit_dates:
                 entry['date_updated'] = self.entry_uri_commit_dates.get(entry_uri)

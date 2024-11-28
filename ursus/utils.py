@@ -3,8 +3,11 @@ from langcodes import Language
 from markdown.extensions.meta import BEGIN_RE, META_RE, META_MORE_RE, END_RE
 from pathlib import Path
 from PIL import Image, ImageCms
-from typing import Any, Iterator, Iterable, Tuple, List
+from PIL.Image import Image as ImageType
+from types import ModuleType
+from typing import Any, Iterator, Tuple, List
 from ursus.config import config
+from ursus.context_processors import Context, EntryURI
 from xml.etree import ElementTree
 import fitz
 import imagesize
@@ -29,7 +32,7 @@ def import_class(import_path):
     return getattr(module, class_name)
 
 
-def import_module_or_path(module_or_path: str) -> dict:
+def import_module_or_path(module_or_path: str | Path) -> ModuleType:
     """
     Imports a module (path.to.module.class or path/to/module.py)
 
@@ -40,7 +43,7 @@ def import_module_or_path(module_or_path: str) -> dict:
     if file_path.exists():
         sys.path.append(str(file_path.parent))
         return import_module(file_path.with_suffix('').name)
-    return import_module(module_or_path)
+    return import_module(str(module_or_path))
 
 
 def is_ignored_file(path: Path, root_path: Path) -> bool:
@@ -90,7 +93,7 @@ def is_pdf(path: Path) -> bool:
     return path.is_file() and path.suffix.lower() == '.pdf'
 
 
-def is_svg(path: Path):
+def is_svg(path: Path) -> bool:
     """Whether the given path points to an SVG image
 
     Args:
@@ -103,11 +106,11 @@ def is_svg(path: Path):
     return path.is_file() and path.suffix.lower() == '.svg'
 
 
-def is_raster_image(path: Path):
+def is_raster_image(path: Path) -> bool:
     return is_image(path) and not is_svg(path)
 
 
-def get_image_size(path: Path):
+def get_image_size(path: Path) -> tuple[int, int]:
     """
     Args:
         path (Path): The absolute Path to an image
@@ -125,7 +128,7 @@ def get_image_size(path: Path):
         raise Exception(f"Invalid image size: {path}") from e
 
 
-def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None) -> list[Path]:
+def get_files_in_path(path: Path, whitelist: set[Path] | None = None, suffix: str | None = None) -> list[Path]:
     """
     Returns a list of valid, visible files under a given path. The returned paths are relative to the supplied path.
 
@@ -144,7 +147,7 @@ def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None) -> 
             elif f.is_absolute() and f.is_relative_to(path):
                 files.append(f)
     else:
-        files = path.rglob('[!._]*' + (suffix or ''))
+        files = list(path.rglob('[!._]*' + (suffix or '')))
 
     return [
         f.relative_to(path) for f in files
@@ -156,7 +159,7 @@ def get_files_in_path(path: Path, whitelist: set = None, suffix: str = None) -> 
     ]
 
 
-def copy_file(input_path: Path, output_path: Path):
+def copy_file(input_path: Path, output_path: Path) -> None:
     """Copies a file
 
     Args:
@@ -170,7 +173,7 @@ def copy_file(input_path: Path, output_path: Path):
     shutil.copy(input_path, output_path)
 
 
-def convert_to_srgb(pil_image: Image):
+def convert_to_srgb(pil_image: ImageType) -> ImageType:
     """
     Convert PIL image to sRGB color space (if possible), since the profile
     information is stripped when resizing the images.
@@ -182,13 +185,13 @@ def convert_to_srgb(pil_image: Image):
         src_profile = ImageCms.ImageCmsProfile(io_handle)
         dst_profile = ImageCms.createProfile('sRGB')
         try:
-            pil_image = ImageCms.profileToProfile(pil_image, src_profile, dst_profile)
+            pil_image = ImageCms.profileToProfile(pil_image, src_profile, dst_profile) or pil_image
         except ImageCms.PyCMSError:
             logging.warning("Could not convert image color profile. Skipping conversion.")
     return pil_image
 
 
-def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
+def make_image_thumbnail(pil_image: ImageType, max_size, output_path: Path) -> None:
     """Creates a thumbnail of an image. Strips EXIF metadata.
 
     Args:
@@ -212,7 +215,7 @@ def make_image_thumbnail(pil_image: Image, max_size, output_path: Path):
     pil_image.save(output_path, **save_args)
 
 
-def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path):
+def make_pdf_thumbnail(pdf_path: Path, max_size, output_path: Path) -> None:
     """Creates an image preview of a PDF file
 
     Args:
@@ -292,7 +295,7 @@ def get_image_transforms(original_path: Path) -> Iterator[dict]:
                 }
 
 
-def make_picture_element(context: dict, entry_uri: str, img_attrs={}, sizes=None):
+def make_picture_element(context: Context, entry_uri: EntryURI, img_attrs={}, sizes=None) -> ElementTree.Element:
     """
     Creates a responsive HTML <picture> element
     """
@@ -303,7 +306,7 @@ def make_picture_element(context: dict, entry_uri: str, img_attrs={}, sizes=None
     default_src = None
 
     # Build a list of srcsets grouped by mimetype
-    sources_by_mimetype = {}
+    sources_by_mimetype: dict[str, list[str]] = {}
     for transform in context['entries'][entry_uri]['transforms']:
         width = transform['max_size'][0]
         mimetype = transform['output_mimetype']
@@ -339,7 +342,7 @@ def make_picture_element(context: dict, entry_uri: str, img_attrs={}, sizes=None
     return picture
 
 
-def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=None, sizes=None):
+def make_figure_element(context: Context, entry_uri: EntryURI, img_attrs={}, a_attrs=None, sizes=None):
     """
     Creates a responsive HTML <figure> element with the image title as <figcaption>. Returns a simple <picture> if there
     is no title.
@@ -364,7 +367,7 @@ def make_figure_element(context: dict, entry_uri: str, img_attrs={}, a_attrs=Non
     return figure
 
 
-def parse_markdown_head_matter(lines: Iterable[str]) -> Tuple[dict[str, List[int]], dict[str, Tuple]]:
+def parse_markdown_head_matter(lines: list[str]) -> Tuple[dict[str, List[int]], dict[str, Tuple]]:
     """
     Turns markdown head matter into a dictionary. Returns the dictionary, and the position of each dictionary key in
     the file (to allow linters to highlight invalid head matter keys)

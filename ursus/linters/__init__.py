@@ -19,7 +19,7 @@ class LineLinter(Linter):
     """
     Lints a text file line by line.
     """
-    file_suffixes = None
+    file_suffixes: tuple[str, ...] = ()
 
     def lint(self, file_path: Path):
         if self.file_suffixes and file_path.suffix.lower() not in self.file_suffixes:

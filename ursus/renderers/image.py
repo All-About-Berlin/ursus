@@ -1,4 +1,5 @@
 from . import Renderer
+from pathlib import Path
 from PIL import Image
 from ursus.config import config
 from ursus.utils import make_image_thumbnail, make_pdf_thumbnail, is_pdf, is_svg, copy_file
@@ -13,7 +14,7 @@ class ImageTransformRenderer(Renderer):
     Resizes images and generate PDF thumbnails
     """
 
-    def render(self, context: dict, changed_files: set = None) -> set:
+    def render(self, context, changed_files=None):
         logger.info("Rendering image transforms...")
 
         files_to_keep = set()

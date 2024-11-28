@@ -34,7 +34,7 @@ class StaticSiteGenerator(Generator):
     def get_watched_paths(self):
         return [*super().get_watched_paths(), config.templates_path]
 
-    def generate(self, changed_files: set = None):
+    def generate(self, changed_files=None):
         """
         Build a rendering context from the content
         """

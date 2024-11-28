@@ -6,7 +6,8 @@ class StaleEntriesProcessor(ContextProcessor):
     """
     Removes entries if their content file no longer exists
     """
-    def process(self, context: dict, changed_files: set = None) -> dict:
+
+    def process(self, context, changed_files=None):
         for file in (changed_files or set()):
             if file.is_relative_to(config.content_path) and not file.exists():
                 entry_uri = str(file.relative_to(config.content_path))

@@ -3,11 +3,11 @@ from markdown.extensions.wikilinks import build_url
 from markdown.extensions.toc import slugify
 from pathlib import Path
 from platformdirs import user_cache_dir
-from typing import Iterable
+from typing import Callable, Iterable
 import logging
 
 
-def default_context_processors() -> list:
+def default_context_processors() -> list[str]:
     return [
         'ursus.context_processors.stale.StaleEntriesProcessor',
         'ursus.context_processors.image.ImageProcessor',
@@ -28,7 +28,7 @@ def default_image_transforms(max_size=5000) -> dict:
     }
 
 
-def default_linters() -> list:
+def default_linters() -> list[str]:
     return [
         'ursus.linters.markdown.MarkdownLinkTextsLinter',
         'ursus.linters.markdown.MarkdownLinkTitlesLinter',
@@ -75,7 +75,7 @@ def default_markdown_extensions() -> dict:
     }
 
 
-def default_renderers() -> list:
+def default_renderers() -> list[str]:
     return [
         'ursus.renderers.static.StaticAssetRenderer',
         'ursus.renderers.static.ArchiveRenderer',
@@ -109,7 +109,7 @@ class UrsusConfig():
     fast_rebuilds: bool = False
 
     # Sets the <img sizes=""> attribute for your content images
-    image_default_sizes: str = None
+    image_default_sizes: str | None = None
 
     # Transforms applied to your content images
     image_transforms: dict = field(default_factory=default_image_transforms)
@@ -134,27 +134,27 @@ class UrsusConfig():
     generator: str = 'ursus.generators.static.StaticSiteGenerator'
 
     # The processors that update the context with extra data
-    context_processors: list = field(default_factory=default_context_processors)
+    context_processors: list[str] = field(default_factory=default_context_processors)
     context_globals: dict = field(default_factory=dict)
 
     markdown_extensions: dict = field(default_factory=default_markdown_extensions)
 
     # Translations
     translations_path: Path = Path('templates/_translations').resolve()
-    default_language: str = None
-    translation_languages: Iterable[str] = None
+    default_language: str | None = None
+    translation_languages: Iterable[str] | None = None
 
-    openai_api_key: str = None
+    openai_api_key: str | None = None
     metadata_fields_to_translate: Iterable[str] = ()
 
     # The renderers that take your templates and content, and populate the output dir
-    renderers: list = field(default_factory=default_renderers)
+    renderers: list[str] = field(default_factory=default_renderers)
 
     # Linters look for errors in your content
-    linters: list = field(default_factory=default_linters)
+    linters: list[str] = field(default_factory=default_linters)
 
     # Filter functions available in Jinja templates. The key is the filter name, and the value is a function
-    jinja_filters = {}
+    jinja_filters: dict[str, Callable] = field(default_factory=dict)
 
     logging = {
         'datefmt': '%Y-%m-%d %H:%M:%S',

@@ -2,6 +2,7 @@ from . import Renderer
 from lunr import lunr
 from pathlib import Path
 from ursus.config import config
+from ursus.context_processors import Entry, EntryURI
 import json
 import logging
 
@@ -18,10 +19,11 @@ class LunrIndexRenderer(Renderer):
     - 'documents': A dict of entry URI to documents that can be used to render
         search results (titles, URLs, excerpts, etc.)
     """
+
     def __init__(self):
         super().__init__()
 
-    def get_index_for_entry(self, index_config: dict, entry_uri: str, entry: dict):
+    def get_index_for_entry(self, index_config: dict, entry_uri: EntryURI, entry: Entry):
         if Path(entry_uri).match(index_config['uri_pattern']):
             # Data used to build the Lunr.js index (indexed fields, document boost)
             indexed_document = (
@@ -40,7 +42,7 @@ class LunrIndexRenderer(Renderer):
 
             yield indexed_document, returned_document
 
-    def render(self, context: dict, changed_files: set = None) -> set:
+    def render(self, context, changed_files=None) -> set[Path]:
         if config.fast_rebuilds:
             return set()
 

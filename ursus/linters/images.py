@@ -1,4 +1,3 @@
-from pathlib import Path
 from ursus.config import config
 from ursus.linters import Linter
 from ursus.linters.markdown import MarkdownLinksLinter
@@ -11,6 +10,7 @@ class UnusedImagesLinter(Linter):
     Verify that internal links point to existing entries. If the URL has a fragment,
     it should point to an existing title fragment.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.all_entry_links = set()
@@ -24,6 +24,6 @@ class UnusedImagesLinter(Linter):
                         entry_uri = match['url'].removeprefix('/')
                         self.all_entry_links.add(entry_uri)
 
-    def lint(self, file_path: Path):
+    def lint(self, file_path):
         if is_image(config.content_path / file_path) and str(file_path) not in self.all_entry_links:
             yield None, "Unused image", logging.WARNING

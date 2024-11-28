@@ -1,9 +1,8 @@
-from . import ContextProcessor
+from . import ContextProcessor, Entry, EntryURI
 from collections import UserDict
 from hashlib import sha256
 from openai import OpenAI
 from pathlib import Path
-from typing import List, Tuple
 from ursus.config import config
 from ursus.context_processors.markdown import MarkdownProcessor
 from ursus.context_processors.related import RelatedEntryReferenceDict
@@ -19,7 +18,7 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
     versions of the entry.
     """
 
-    def split_document(self, text: str) -> Tuple[str, str]:
+    def split_document(self, text: str) -> tuple[str, str]:
         """
         Split the document into head matter and body
         """
@@ -31,16 +30,16 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
         else:
             return "", text
 
-    def chunk_markdown(self, text: str) -> List[[str, str]]:
-        chunks = []
+    def chunk_markdown(self, text: str) -> list[list[str | None]]:
+        chunks: list[list[str | None]] = []
         for line in text.split('\n'):
             if line.startswith('## ') or not chunks:
-                chunks.append([
+                chunks.append((
                     line.removeprefix('## ') if line.startswith('## ') else None,
                     ''
-                ])
+                ))
 
-            chunks[-1][1] += (line + '\n')
+            chunks[-1][1] += ((line or '') + '\n')
 
         return chunks
 
@@ -77,14 +76,16 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
                 ],
                 n=1,
                 temperature=0.2,
-            ).choices[0].message.content.strip()
+            ).choices[0].message.content
+
+            translation = (translation or '').strip()
             string_cache_path.parent.mkdir(parents=True, exist_ok=True)
             string_cache_path.write_text(translation)
             return translation
 
     def translate_head_matter(self, head_matter: str, language_code: str, cache_path: Path) -> str:
         if not head_matter.strip():
-            return
+            return ''
 
         metadata, _ = parse_markdown_head_matter(head_matter.split('\n'))
         translated_metadata = {**metadata}
@@ -152,7 +153,7 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
 
         return "".join(translated_chunks)
 
-    def process_entry(self, context: dict, entry_uri: str, changed_files: set = None):
+    def process_entry(self, context, entry_uri, changed_files=None) -> None:
         super().process_entry(context, entry_uri, changed_files)
 
         if not (
@@ -215,7 +216,7 @@ class MultilingualRelatedEntriesProcessor(ContextProcessor):
     The multilingual version also applies this to translations
     """
 
-    def process(self, context: dict, changed_files: set = None) -> dict:
+    def process(self, context, changed_files=None):
         for uri, entry in context['entries'].items():
             if not isinstance(context['entries'][uri], RelatedEntryReferenceDict):
                 context['entries'][uri] = RelatedEntryReferenceDict(entry, context['entries'])
@@ -225,10 +226,11 @@ class MultilingualRelatedEntriesProcessor(ContextProcessor):
                         context['entries'][uri]['translations'][language_code],
                         context['entries']
                     )
+        return context
 
 
 class TranslationReferenceDict(UserDict):
-    def __init__(self, translations_dict: dict, all_entries: dict):
+    def __init__(self, translations_dict: dict, all_entries: dict[EntryURI, Entry]):
         self.all_entries = all_entries
         super().__init__(translations_dict)
 
@@ -247,7 +249,7 @@ class TranslationsReferenceProcessor(ContextProcessor):
     context['entries'][uri]['translations']['de'] returns the German entry instead of the Germany entry URI
     """
 
-    def process(self, context: dict, changed_files: set = None) -> dict:
+    def process(self, context, changed_files=None):
         for uri, entry in context['entries'].items():
             if ('translations' in entry and not isinstance(entry['translations'], TranslationReferenceDict)):
                 entry['translations'] = TranslationReferenceDict(entry['translations'], context['entries'])

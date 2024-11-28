@@ -1,4 +1,4 @@
-from . import ContextProcessor
+from . import ContextProcessor, Entry, EntryURI
 from operator import itemgetter
 from functools import partial
 from typing import Callable
@@ -19,16 +19,16 @@ def first_existing_item_getter(keys: list[str]):
 
 
 def get_entries(
-    entries: dict,
-    namespaces: str | list[str] = None,
-    filter_by: Callable = None,
-    sort_by: Callable | str | list[str] = None,
+    entries: dict[EntryURI, Entry],
+    namespaces: str | list[str] | None = None,
+    filter_by: Callable | None = None,
+    sort_by: Callable | str | list[str] | None = None,
     reverse: bool = False
-) -> list[dict]:
+) -> list[Entry]:
     """Returns a sorted, filtered list of entries
 
     Args:
-        entries (dict): The dictionary of entries. The key is the entry URI.
+        entries (dict): The dictionary of entries.
         namespace (str, list[str], optional): Only returns entries in the given namespace(s) (for example "posts" or "blog/posts"). In other
             words, only return entries in a given directory (like <content_path>/posts or <content_path>/blog/posts).
         filter_by (Callable, optional): Filter the items by the given filtering function.
@@ -37,7 +37,7 @@ def get_entries(
         reverse (bool, optional): Reverse the sorting order
     """
     if namespaces:
-        namespace_list = [namespaces, ] if type(namespaces) == str else namespaces
+        namespace_list = [namespaces, ] if isinstance(namespaces, str) else namespaces
         entries = {
             uri: value for uri, value in entries.items()
             if uri.startswith(tuple(ns + '/' for ns in namespace_list))
@@ -49,7 +49,7 @@ def get_entries(
             if filter_by(uri, value)
         }
 
-    entries = entries.values()
+    entry_list = list(entries.values())
 
     if sort_by:
         if callable(sort_by):
@@ -58,9 +58,9 @@ def get_entries(
             sorter = itemgetter(sort_by)
         else:
             sorter = first_existing_item_getter(sort_by)
-        entries = sorted(entries, key=sorter, reverse=reverse)
+        entry_list = sorted(entry_list, key=sorter, reverse=reverse)
 
-    return list(entries)
+    return entry_list
 
 
 class GetEntriesProcessor(ContextProcessor):
@@ -69,7 +69,7 @@ class GetEntriesProcessor(ContextProcessor):
     sorts entries.
     """
 
-    def process(self, context: dict, changed_files: set = None) -> dict:
+    def process(self, context, changed_files=None):
         if 'get_entries' not in context:
             context['get_entries'] = partial(get_entries, context['entries'])
         return context

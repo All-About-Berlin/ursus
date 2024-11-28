@@ -5,7 +5,7 @@ from ursus.utils import is_raster_image, get_image_size, get_image_transforms, i
 
 
 class ImageProcessor(EntryContextProcessor):
-    def process_entry(self, context: dict, entry_uri: str, changed_files: set = None):
+    def process_entry(self, context, entry_uri, changed_files=None):
         if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
             return
 

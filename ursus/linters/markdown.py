@@ -16,7 +16,7 @@ class MarkdownLinksLinter(RegexLinter):
     """
     Verifies external links in Markdown files
     """
-    file_suffixes = ('.md',)
+    file_suffixes = ('.md', )
 
     # Matches [], supports escaped brackets, ignores ![] images.
     first_half = r"(?P<first_half>!?\[(?P<alt_text>([^\]]|\\\])*)(?<!\\)\])"

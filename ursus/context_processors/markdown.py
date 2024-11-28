@@ -1,5 +1,6 @@
 from . import EntryContextProcessor
 from datetime import datetime
+from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.extensions.footnotes import FootnoteExtension, FN_BACKLINK_TEXT, NBSP_PLACEHOLDER
 from markdown.inlinepatterns import SimpleTagPattern
@@ -11,7 +12,6 @@ from ursus.config import config
 from ursus.utils import make_figure_element, make_picture_element
 from xml.etree import ElementTree
 import logging
-import markdown
 import re
 
 
@@ -279,13 +279,13 @@ class MarkdownProcessor(EntryContextProcessor):
     def __init__(self):
         super().__init__()
 
-        self.markdown = markdown.Markdown(
+        self.markdown = Markdown(
             output_format='html',
             extensions=list(config.markdown_extensions.keys()),
             extension_configs=config.markdown_extensions,
         )
 
-    def parse_metadata(self, raw_metadata):
+    def parse_metadata(self, raw_metadata) -> dict:
         metadata = {}
         for key, value in raw_metadata.items():
             if len(value) == 0:
@@ -306,7 +306,7 @@ class MarkdownProcessor(EntryContextProcessor):
             metadata[key] = value
         return metadata
 
-    def process_entry(self, context: dict, entry_uri: str, changed_files: set = None):
+    def process_entry(self, context, entry_uri, changed_files=None):
         if entry_uri.lower().endswith('.md'):
             if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
                 return

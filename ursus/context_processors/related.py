@@ -1,10 +1,10 @@
 from collections import UserDict
-from . import ContextProcessor
+from . import ContextProcessor, Entry, EntryURI
 import sys
 
 
 class RelatedEntryReferenceDict(UserDict):
-    def __init__(self, entry, all_entries):
+    def __init__(self, entry: Entry, all_entries: dict[EntryURI, Entry]):
         self.all_entries = all_entries
         super().__init__(entry)
 
@@ -27,7 +27,7 @@ class RelatedEntriesProcessor(ContextProcessor):
     a list of entry URIs.
     """
 
-    def process(self, context: dict, changed_files: set = None) -> dict:
+    def process(self, context, changed_files=None):
         for uri, entry in context['entries'].items():
             if not isinstance(context['entries'][uri], RelatedEntryReferenceDict):
                 context['entries'][uri] = RelatedEntryReferenceDict(entry, context['entries'])

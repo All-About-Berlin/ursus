@@ -9,14 +9,14 @@ class OrphanFootnotesLinter(RegexLinter):
     """
     Count footnotes; make sure that they all appear at least twice
     """
-    file_suffixes = '.md'
+    file_suffixes = ('.md', )
     regex = re.compile(r'(?P<footnote>\[\^(?P<id>\d+)\])(?P<colon>:?)')
 
     def lint(self, file_path: Path):
         if self.file_suffixes and file_path.suffix.lower() not in self.file_suffixes:
             return
 
-        footnotes = {}
+        footnotes: dict[str, list[dict]] = {}
 
         with (config.content_path / file_path).open() as file:
             for line_no, line in enumerate(file.readlines()):
