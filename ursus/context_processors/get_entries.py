@@ -1,17 +1,19 @@
-from . import ContextProcessor, Entry, EntryURI
-from operator import itemgetter
+from . import Context, ContextProcessor, Entry, EntryURI
 from functools import partial
-from typing import Callable
+from operator import itemgetter
+from pathlib import Path
+from typing import Any, Callable
 
 
-def first_existing_item_getter(keys: list[str]):
+def first_existing_item_getter(keys: list[str]) -> Any:
     """
     Returns the value of the first existing key from a list of dictionary keys
 
     Args:
         keys (list[str]): A list of dictionary keys
     """
-    def get_value(entry: dict):
+
+    def get_value(entry: Entry) -> Any:
         return list(
             filter(None, [entry.get(key) for key in keys])
         )[0]
@@ -21,20 +23,20 @@ def first_existing_item_getter(keys: list[str]):
 def get_entries(
     entries: dict[EntryURI, Entry],
     namespaces: str | list[str] | None = None,
-    filter_by: Callable | None = None,
-    sort_by: Callable | str | list[str] | None = None,
+    filter_by: Callable[[EntryURI, Entry], bool] | None = None,
+    sort_by: Callable[[Entry], Any] | str | list[str] | None = None,
     reverse: bool = False
 ) -> list[Entry]:
     """Returns a sorted, filtered list of entries
 
     Args:
-        entries (dict): The dictionary of entries.
-        namespace (str, list[str], optional): Only returns entries in the given namespace(s) (for example "posts" or "blog/posts"). In other
+        entries: The dictionary of entries.
+        namespace: Only returns entries in the given namespace(s) (for example "posts" or "blog/posts"). In other
             words, only return entries in a given directory (like <content_path>/posts or <content_path>/blog/posts).
-        filter_by (Callable, optional): Filter the items by the given filtering function.
-        sort_by (Callable | str | list[str], optional): Sort items by the given dict key, list of dict keys, or value
+        filter_by: Filter the items by the given filtering function.
+        sort_by: Sort items by the given dict key, list of dict keys, or value
             returned by the given function
-        reverse (bool, optional): Reverse the sorting order
+        reverse: Reverse the sorting order
     """
     if namespaces:
         namespace_list = [namespaces, ] if isinstance(namespaces, str) else namespaces
@@ -69,7 +71,7 @@ class GetEntriesProcessor(ContextProcessor):
     sorts entries.
     """
 
-    def process(self, context, changed_files=None):
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         if 'get_entries' not in context:
             context['get_entries'] = partial(get_entries, context['entries'])
         return context

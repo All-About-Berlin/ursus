@@ -1,11 +1,11 @@
 from pathlib import Path
 from ursus.config import config
-from ursus.context_processors import EntryContextProcessor
+from ursus.context_processors import Context, EntryContextProcessor, EntryURI
 from ursus.utils import is_raster_image, get_image_size, get_image_transforms, is_image, is_pdf
 
 
 class ImageProcessor(EntryContextProcessor):
-    def process_entry(self, context, entry_uri, changed_files=None):
+    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None) -> None:
         if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
             return
 

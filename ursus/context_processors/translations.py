@@ -1,4 +1,4 @@
-from . import ContextProcessor, Entry, EntryURI
+from . import Context, ContextProcessor, Entry, EntryURI
 from collections import UserDict
 from hashlib import sha256
 from openai import OpenAI
@@ -153,7 +153,7 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
 
         return "".join(translated_chunks)
 
-    def process_entry(self, context, entry_uri, changed_files=None) -> None:
+    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None) -> None:
         super().process_entry(context, entry_uri, changed_files)
 
         if not (
@@ -181,7 +181,7 @@ class MultilingualMarkdownProcessor(MarkdownProcessor):
             if language_code not in config.translation_languages:
                 raise ValueError("Desired translation is not in config.translation_languages")
 
-            translation_uri = str(Path(translation_url).with_suffix('.md'))
+            translation_uri = EntryURI(str(Path(translation_url).with_suffix('.md')))
             logging.info(f"Translating {entry_uri} to {get_language_name(language_code)} as {translation_uri}")
 
             head_matter, body = self.split_document(original_text)
@@ -216,7 +216,7 @@ class MultilingualRelatedEntriesProcessor(ContextProcessor):
     The multilingual version also applies this to translations
     """
 
-    def process(self, context, changed_files=None):
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         for uri, entry in context['entries'].items():
             if not isinstance(context['entries'][uri], RelatedEntryReferenceDict):
                 context['entries'][uri] = RelatedEntryReferenceDict(entry, context['entries'])
@@ -249,7 +249,7 @@ class TranslationsReferenceProcessor(ContextProcessor):
     context['entries'][uri]['translations']['de'] returns the German entry instead of the Germany entry URI
     """
 
-    def process(self, context, changed_files=None):
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         for uri, entry in context['entries'].items():
             if ('translations' in entry and not isinstance(entry['translations'], TranslationReferenceDict)):
                 entry['translations'] = TranslationReferenceDict(entry['translations'], context['entries'])

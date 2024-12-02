@@ -3,7 +3,7 @@ from markdown.extensions.wikilinks import build_url
 from markdown.extensions.toc import slugify
 from pathlib import Path
 from platformdirs import user_cache_dir
-from typing import Callable, Iterable
+from typing import Any, Callable, Iterable
 import logging
 
 
@@ -20,12 +20,16 @@ def default_context_processors() -> list[str]:
     ]
 
 
-def default_image_transforms(max_size=5000) -> dict:
+def default_image_transforms(max_size: int = 5000) -> dict:
     return {
         '': {
             'max_size': (max_size, max_size),
         },
     }
+
+
+def default_jinja_filters() -> dict[str, Any]:
+    return {}
 
 
 def default_linters() -> list[str]:
@@ -154,7 +158,7 @@ class UrsusConfig():
     linters: list[str] = field(default_factory=default_linters)
 
     # Filter functions available in Jinja templates. The key is the filter name, and the value is a function
-    jinja_filters: dict[str, Callable] = field(default_factory=dict)
+    jinja_filters: dict[str, Callable] = field(default_factory=default_jinja_filters)
 
     logging = {
         'datefmt': '%Y-%m-%d %H:%M:%S',
@@ -162,7 +166,7 @@ class UrsusConfig():
         'level': logging.INFO,
     }
 
-    def add_markdown_extension(self, name, config={}):
+    def add_markdown_extension(self, name: str, config: dict[str, Any] = {}) -> None:
         self.markdown_extensions[name] = config
 
 

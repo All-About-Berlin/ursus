@@ -25,6 +25,7 @@ setup(
     },
     package_data={
         'ursus.babel': ['*', ],
+        'ursus': ['py.typed', ],
     },
     python_requires='>=3.11',
     install_requires=[

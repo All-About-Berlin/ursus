@@ -1,4 +1,4 @@
-from . import EntryContextProcessor
+from . import Context, EntryContextProcessor, EntryURI
 from datetime import datetime
 from markdown import Markdown
 from markdown.extensions import Extension
@@ -8,9 +8,11 @@ from markdown.postprocessors import RawHtmlPostprocessor
 from markdown.preprocessors import Preprocessor
 from markdown.treeprocessors import Treeprocessor
 from pathlib import Path
+from typing import Any
 from ursus.config import config
 from ursus.utils import make_figure_element, make_picture_element
 from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 import logging
 import re
 
@@ -22,20 +24,20 @@ class TaskListProcessor(Treeprocessor):
     box_checked = '[x] '
     box_unchecked = '[ ] '
 
-    def run(self, root):
+    def run(self, root: Element) -> Element:
         for li in root.iter(tag='li'):
             text = (li.text or "")
 
             if text.lower().startswith((self.box_checked, self.box_unchecked)):
                 is_checked = text.lower().startswith(self.box_checked)
 
-                checkbox = ElementTree.Element("input", {'type': 'checkbox'})
+                checkbox = Element("input", {'type': 'checkbox'})
                 if is_checked:
                     checkbox.attrib['checked'] = 'checked'
                 if self.md.getConfig('checkbox_class'):
                     checkbox.attrib['class'] = self.md.getConfig('checkbox_class')
 
-                checkbox.tail = li.text.removeprefix(self.box_checked if is_checked else self.box_unchecked)
+                checkbox.tail = text.removeprefix(self.box_checked if is_checked else self.box_unchecked)
                 li.text = ''
                 li.insert(0, checkbox)
                 if self.md.getConfig('list_item_class'):
@@ -71,7 +73,7 @@ class JinjaPreprocessor(Preprocessor):
     """
     JINJA_RE = re.compile('({{([^}]+)}})|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
 
-    def run(self, lines):
+    def run(self, lines: list[str]) -> list[str]:
         text = "\n".join(lines)
 
         def replace_match(match):
@@ -87,7 +89,7 @@ class JinjaHtmlPostProcessor(RawHtmlPostprocessor):
     """
     JINJA_BLOCK_RE = re.compile('^{%([^}]+)%}$', re.MULTILINE | re.DOTALL)
 
-    def isblocklevel(self, html):
+    def isblocklevel(self, html: str) -> bool:
         m = self.JINJA_BLOCK_RE.match(html)
         if m:
             return True
@@ -111,7 +113,7 @@ class ResponsiveImageProcessor(Treeprocessor):
         'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
     )
 
-    def _swap_element(self, parent, old, new):
+    def _swap_element(self, parent: Element, old: Element, new: Element) -> None:
         """
         Replaces `old` element with `new` in `parent` element
         """
@@ -121,17 +123,17 @@ class ResponsiveImageProcessor(Treeprocessor):
                 new.tail = old.tail
                 return
 
-    def _upgrade_img(self, img, parents):
+    def _upgrade_img(self, img: Element, parents: list[Element]) -> None:
         # Create <picture> with <source> for the different image types and sizes
         # Only apply to local images
-        img_src = img.attrib.get('src')
+        img_src = img.attrib.get('src', '')
         if img_src.startswith('/') or img_src.startswith(config.site_url + '/'):
-            image_uri = img_src.removeprefix(config.site_url).removeprefix('/')
+            image_uri = EntryURI(img_src.removeprefix(config.site_url).removeprefix('/'))
 
             parent = parents[0]
             grandparent = parents[1]
 
-            def has_single_child(element):
+            def has_single_child(element: Element) -> bool:
                 return len(element) == 1 and not element.text
 
             img_attrs = img.attrib
@@ -176,7 +178,7 @@ class ResponsiveImageProcessor(Treeprocessor):
 
             self._swap_element(containing_element, element_to_swap, image)
 
-    def run(self, root):
+    def run(self, root: Element) -> None:
         parent_map = {}
         for parent in root.iter():
             for child in parent:
@@ -207,7 +209,7 @@ class ResponsiveImagesExtension(Extension):
         self.reset()
         md.treeprocessors.register(ResponsiveImageProcessor(md), 'figure', 0)
 
-    def reset(self):
+    def reset(self) -> None:
         pass
 
 
@@ -229,18 +231,18 @@ class FootnotesExtension(FootnoteExtension):
     def extendMarkdown(self, md):
         super().extendMarkdown(md)
 
-    def makeFootnotesDiv(self, root):
+    def makeFootnotesDiv(self, root: Element) -> Element | None:
         if not list(self.footnotes.keys()):
             return None
 
-        container = ElementTree.Element("details")
+        container = Element("details")
         container.set("class", "footnote")
         container.set("id", "footnotes")
         summary = ElementTree.SubElement(container, "summary")
         summary.text = "Sources and footnotes"
         ol = ElementTree.SubElement(container, "ol")
 
-        surrogate_parent = ElementTree.Element("div")
+        surrogate_parent = Element("div")
 
         backlink_title = self.getConfig("BACKLINK_TITLE").replace("%d", "{}")
 
@@ -254,7 +256,7 @@ class FootnotesExtension(FootnoteExtension):
             for el in list(surrogate_parent):
                 li.append(el)
                 surrogate_parent.remove(el)
-            backlink = ElementTree.Element("a")
+            backlink = Element("a")
             backlink.set("href", f"#{self.makeFootnoteRefId(id)}")
             backlink.set("class", "footnote-backref")
             backlink.set(
@@ -285,7 +287,7 @@ class MarkdownProcessor(EntryContextProcessor):
             extension_configs=config.markdown_extensions,
         )
 
-    def parse_metadata(self, raw_metadata) -> dict:
+    def parse_metadata(self, raw_metadata: dict[str, Any]) -> dict[str, Any]:
         metadata = {}
         for key, value in raw_metadata.items():
             if len(value) == 0:
@@ -306,7 +308,7 @@ class MarkdownProcessor(EntryContextProcessor):
             metadata[key] = value
         return metadata
 
-    def process_entry(self, context, entry_uri, changed_files=None):
+    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None) -> None:
         if entry_uri.lower().endswith('.md'):
             if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
                 return

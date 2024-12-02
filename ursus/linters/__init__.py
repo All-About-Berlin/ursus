@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Generator
 from ursus.config import config
 import logging
 import re
@@ -7,8 +8,11 @@ import re
 logger = logging.getLogger(__name__)
 
 
+LinterResult = Generator[tuple[tuple[int, int, int] | None, str, int], None, None]
+
+
 class Linter():
-    def lint(self, file_path: Path):
+    def lint(self, file_path: Path) -> LinterResult:
         """
         Lints the content for errors.
         """

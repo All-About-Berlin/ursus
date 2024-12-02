@@ -1,10 +1,14 @@
+from collections import UserDict
 from pathlib import Path
-from typing import NewType
+from typing import Any, NewType
 
 
-Context = NewType('Context', dict)
 EntryURI = NewType('EntryURI', str)
-Entry = NewType('Entry', dict)
+Entry = NewType('Entry', dict[str, Any])
+
+
+class Context(UserDict[str, Any]):
+    pass
 
 
 class ContextProcessor:
@@ -23,10 +27,10 @@ class ContextProcessor:
 
 
 class EntryContextProcessor(ContextProcessor):
-    def process(self, context, changed_files=None):
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         for entry_uri in list(context['entries'].keys()):
             self.process_entry(context, entry_uri, changed_files)
         return context
 
-    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None):
+    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None) -> None:
         raise NotImplementedError
