@@ -266,7 +266,7 @@ class JinjaRenderer(Renderer):
                 continue
 
             if file.is_relative_to(config.content_path) and not is_ignored_file(file, config.content_path):
-                changed_entry_uris.add(EntryURI(file.relative_to(config.content_path)))
+                changed_entry_uris.add(EntryURI(str(file.relative_to(config.content_path))))
             elif file.is_relative_to(config.templates_path):
                 changed_templates.add(file.relative_to(config.templates_path))
             else:
