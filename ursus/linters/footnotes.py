@@ -1,6 +1,6 @@
 from pathlib import Path
 from ursus.config import config
-from ursus.linters import RegexLinter
+from ursus.linters import RegexLinter, LinterResult
 import logging
 import re
 
@@ -12,7 +12,7 @@ class OrphanFootnotesLinter(RegexLinter):
     file_suffixes = ('.md', )
     regex = re.compile(r'(?P<footnote>\[\^(?P<id>\d+)\])(?P<colon>:?)')
 
-    def lint(self, file_path: Path):
+    def lint(self, file_path: Path) -> LinterResult:
         if self.file_suffixes and file_path.suffix.lower() not in self.file_suffixes:
             return
 

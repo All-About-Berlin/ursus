@@ -1,5 +1,6 @@
+from pathlib import Path
 from ursus.config import config
-from ursus.linters import Linter
+from ursus.linters import Linter, LinterResult
 from ursus.linters.markdown import MarkdownLinksLinter
 from ursus.utils import is_image, get_files_in_path
 import logging
@@ -24,6 +25,6 @@ class UnusedImagesLinter(Linter):
                         entry_uri = match['url'].removeprefix('/')
                         self.all_entry_links.add(entry_uri)
 
-    def lint(self, file_path):
+    def lint(self, file_path: Path) -> LinterResult:
         if is_image(config.content_path / file_path) and str(file_path) not in self.all_entry_links:
             yield None, "Unused image", logging.WARNING

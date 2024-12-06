@@ -2,7 +2,7 @@ from . import Renderer
 from lunr import lunr
 from pathlib import Path
 from ursus.config import config
-from ursus.context_processors import Entry, EntryURI
+from ursus.context_processors import Context, Entry, EntryURI
 import json
 import logging
 
@@ -42,7 +42,7 @@ class LunrIndexRenderer(Renderer):
 
             yield indexed_document, returned_document
 
-    def render(self, context, changed_files=None) -> set[Path]:
+    def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
         if config.fast_rebuilds:
             return set()
 

@@ -245,15 +245,15 @@ class JinjaRenderer(Renderer):
         Returns:
             Path: Path of the generated file, relative to the output_path.
         """
-        specific_context = {
+        specific_context = Context({
             **context,
             'entry': context['entries'][entry_uri],
             'entry_uri': entry_uri,
-        }
+        })
         output_path = self.get_entry_output_path(template_path, entry_uri)
         yield from self.render_template(template_path, specific_context, output_path)
 
-    def render(self, context, changed_files=None) -> set[Path]:
+    def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
         template_paths = get_files_in_path(config.templates_path, suffix='.jinja')
 
         render_queue: OrderedSet = OrderedSet()

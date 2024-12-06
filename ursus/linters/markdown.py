@@ -2,14 +2,14 @@ from itertools import chain
 from markdown.blockprocessors import HashHeaderProcessor
 from pathlib import Path
 from requests.exceptions import ConnectionError
+from typing import Any, Match
 from urllib.parse import unquote, urlparse
 from ursus.config import config
-from ursus.linters import Linter, RegexLinter
+from ursus.linters import Linter, LinterResult, MatchResult, RegexLinter
 from ursus.utils import parse_markdown_head_matter
 import logging
 import re
 import requests
-from typing import Any
 
 
 class MarkdownLinksLinter(RegexLinter):
@@ -26,7 +26,7 @@ class MarkdownLinksLinter(RegexLinter):
 
     regex = re.compile(first_half + second_half)
 
-    def handle_match(self, file_path: Path, match: re.Match):
+    def handle_match(self, file_path: Path, match: Match[str]) -> MatchResult:
         alt_text = match['alt_text'].strip()
         is_image = match['first_half'].startswith('!')
 
@@ -164,7 +164,7 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
 
 
 class HeadMatterLinter(Linter):
-    def lint(self, file_path: Path):
+    def lint(self, file_path: Path) -> LinterResult:
         if file_path.suffix.lower() != '.md':
             return
 
@@ -176,12 +176,12 @@ class HeadMatterLinter(Linter):
 
         yield from self.lint_meta(meta, field_positions)
 
-    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]):
+    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]) -> LinterResult:
         raise NotImplementedError
 
 
 class RelatedEntriesLinter(HeadMatterLinter):
-    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]):
+    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]) -> LinterResult:
         for key in meta.keys():
             if key.startswith('related_'):
                 for pos, entry_uri in enumerate(meta[key]):
