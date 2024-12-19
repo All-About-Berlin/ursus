@@ -13,17 +13,28 @@ import fitz
 import imagesize
 import io
 import logging
+import os
 import shutil
 import sys
 
 
-log_colors = {
-    logging.DEBUG: '',
-    logging.INFO: '\033[37m\033[0;100m',
-    logging.WARNING: '\033[1;90m\033[43m',
-    logging.ERROR: '\033[37m\033[41m',
-    logging.CRITICAL: '\033[37m\033[41m',
-}
+def log_color(level: int = logging.INFO) -> str:
+    if os.getenv('TERM') not in ['xterm-color', 'xterm-256color', 'screen']:
+        return ''
+
+    return {
+        logging.DEBUG: '',
+        logging.INFO: '\033[37m\033[0;100m',
+        logging.WARNING: '\033[1;90m\033[43m',
+        logging.ERROR: '\033[37m\033[41m',
+        logging.CRITICAL: '\033[37m\033[41m',
+    }[level]
+
+
+def log_color_end() -> str:
+    if os.getenv('TERM') not in ['xterm-color', 'xterm-256color', 'screen']:
+        return ''
+    return '\033[0m'
 
 
 def import_class(import_path):

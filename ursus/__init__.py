@@ -1,6 +1,6 @@
 from importlib.resources import files
 from subprocess import run, STDOUT
-from ursus.utils import import_class, get_files_in_path, log_colors
+from ursus.utils import import_class, get_files_in_path, log_color, log_color_end
 from ursus.config import config
 from watchdog.observers import Observer
 import logging
@@ -60,7 +60,7 @@ def lint(files_to_lint=None, min_level=logging.INFO) -> None:
                 if level >= min_level:
                     has_errors = True
                     if line_no is not None:
-                        logging.log(level, f"{log_colors[level]}{str(file_path)}:{line_no}:{col_start}-{col_end}\033[0m - {message}")
+                        logging.log(level, f"{log_color(level)}{str(file_path)}:{line_no}:{col_start}-{col_end}{log_color_end()} - {message}")
                     else:
                         logging.log(level, f"{str(file_path)} - {message}")
     sys.exit(1 if has_errors else 0)
