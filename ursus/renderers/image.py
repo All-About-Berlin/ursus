@@ -26,7 +26,7 @@ class ImageTransformRenderer(Renderer):
             for transform in entry.get('transforms', []):
                 output_path = transform['output_path']
                 abs_output_path = config.output_path / output_path
-                max_size = transform['max_size']
+                max_size = transform.get('max_size')  # Optional for PDFs and SVGs
 
                 has_changed = changed_files is None or abs_file_path in changed_files
                 if has_changed and (
