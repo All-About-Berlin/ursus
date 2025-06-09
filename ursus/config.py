@@ -11,11 +11,9 @@ def default_context_processors() -> list[str]:
     return [
         'ursus.context_processors.stale.StaleEntriesProcessor',
         'ursus.context_processors.image.ImageProcessor',
-        # 'ursus.context_processors.markdown.MarkdownProcessor',
-        'ursus.context_processors.translations.MultilingualMarkdownProcessor',
+        'ursus.context_processors.markdown.MarkdownProcessor',
         'ursus.context_processors.get_entries.GetEntriesProcessor',
         'ursus.context_processors.related.RelatedEntriesProcessor',
-        'ursus.context_processors.translations.TranslationsReferenceProcessor',
         # 'ursus.context_processors.git_date.GitDateProcessor',
     ]
 

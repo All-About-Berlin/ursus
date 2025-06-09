@@ -1,5 +1,4 @@
 from importlib import import_module
-from langcodes import Language
 from markdown.extensions.meta import BEGIN_RE, META_RE, META_MORE_RE, END_RE
 from pathlib import Path
 from PIL import Image, ImageCms
@@ -422,7 +421,3 @@ def format_markdown_head_matter(metadata: dict[str, List[int]]) -> str:
         lines.extend([f'    {value}' for value in value_list[1:]])
 
     return '\n'.join(['---', *lines, '---'])
-
-
-def get_language_name(language_code: str, display_language: str = 'en'):
-    return Language.get(language_code).display_name(display_language)

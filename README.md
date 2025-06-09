@@ -143,84 +143,8 @@ ursus --serve 80
 
 This is not meant for production. Use nginx, Caddy or some other static file server for that.
 
-## AI-translated multilingual site
 
-Ursus *can* use OpenAI to translate your content to multiple languages. This feature is disabled by default. This tool is designed to only translate the parts of your content that change. It does not retranslate entire markdown files, but only the sections that changed.
-
-### 1. Configure translations
-
-Add these to your configuration:
-
-```python
-# ursus_config.py
-
-# Where .po, .pot and .mo translation files for your templates are stored. Optional.
-config.translations_path = Path('...')
-
-# OpenAI API key used to get translations from ChatGPT
-config.openai_api_key = '...'
-
-# The language of the original content
-config.default_language = 'en'
-
-# The desired translation languages
-config.translation_languages = ['de', 'fr',]
-
-# The Markdown fields you wish to translate. Other fields do not get translated.
-config.metadata_fields_to_translate = ('title', 'short_title', 'description', )
-```
-
-### 2. Enable translations in your content
-
-To translate Markdown files, add `translation_*` attributes to the metadata. The value is the desired URL of the translated page, relative to `config.site_url`.
-
-```markdown
----
-title: How to change your address in Germany
-short_title: How to change your address
-description: ...
-...
-translation_de: de/ratgeber/adresswechsel.md
-translation_fr: fr/guides/changement-dadresse.md
----
-
-When you [move into a new apartment](/guides/moving-in), you must change your address. It's not automatic. This guide shows you how to do it.
-```
-
-In this example, the file `guides/address-change.md` would be turned into 3 entries in `context['entries']`:
-
-- `context['entries']['en/guides/address-change.md']`
-- `context['entries']['de/ratgeber/adresswechsel.md']`
-- `context['entries']['fr/guides/changement-dadresse.md']`
-
-Each entry has a `translations` attribute that points to other entries. You can use it in your templates to link between entries.
-
-```python
-context['entries']['en/guides/address-change.md'] == {
-    'en': 'en/guides/address-change.md',
-    'de': 'de/ratgeber/adresswechsel.md',
-    'fr': 'fr/guides/changement-dadresse.md',
-}
-```
-
-### 3. Render the entries
-
-Your context now contains the original entry and its translations. If a template can render them, they will be rendered.
-
-In the example above, you would need 3 templates:
-
-- `/en/guides/address-change.html.jinja`
-- `/de/ratgeber/adresswechsel.html.jinja`
-- `/fr/guides/changement-dadresse.html.jinja`
-
-You can use Jinja includes to use the same template in all 3 places:
-
-```jinja
-{# This is the content of de/ratgeber/entry.html.jinja #}
-{% include "guides/entry.html.jinja" %}
-```
-
-### 4. Translate the templates
+### Translating templates
 
 Jinja templates support localisation. Use `{% trans %}your string here{% endtrans %}` or `{{ _('your string here') }}`. Call `ursus translate` to generate gettext translation files, then call it again to compile your translation files.
 

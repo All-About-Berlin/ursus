@@ -4,7 +4,7 @@ long_description = (Path(__file__).parent / "README.md").read_text()
 
 setup(
     name='ursus_ssg',
-    version='1.3.0',
+    version='1.4.1',
     description='Static site generator',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -34,13 +34,10 @@ setup(
         'imagesize==1.4.1',
         'Jinja2==3.1.4',
         'jinja2-simple-tags==0.6.1',
-        'langcodes==3.4.1',
-        'language-data==1.2.0',
         'libsass==0.23.0',
         'lunr==0.7.0',
         'Markdown==3.5.2',
         'MarkupSafe==2.1.5',
-        'openai==1.52.2',
         'ordered-set==4.1.0',
         'platformdirs==4.3.6',
         'PyMuPDF==1.24.5',
