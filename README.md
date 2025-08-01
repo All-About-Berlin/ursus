@@ -1,5 +1,8 @@
 # Ursus
 
+[![PyPI version](https://badge.fury.io/py/ursus-ssg.svg)](https://badge.fury.io/py/ursus-ssg)
+[![License](https://img.shields.io/github/license/All-About-Berlin/ursus.svg)](LICENSE)
+
 Ursus is the static site generator used by [All About Berlin](https://allaboutberlin.com) and my [personal website](https://nicolasbouliane.com). It turns Markdown files and [Jinja](https://jinja.palletsprojects.com/) templates into a static website.
 
 It also renders images in different sizes, renders SCSS, minifies JS and generates Lunr.js search indexes.
