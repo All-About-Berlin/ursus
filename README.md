@@ -21,7 +21,13 @@ This project is in active use and development.
 
 ### Installation
 
-Install Ursus with pip:
+Install Ursus with [pipx](https://pipx.pypa.io/):
+
+```bash
+pipx install ursus-ssg
+```
+
+Alternatively install with pip:
 
 ```bash
 pip install ursus-ssg
