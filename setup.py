@@ -40,7 +40,7 @@ setup(
         'MarkupSafe==2.1.5',
         'ordered-set==4.1.0',
         'platformdirs==4.3.6',
-        'PyMuPDF==1.24.5',
+        'PyMuPDF==1.24.14',
         'Pillow==10.3.0',
         'watchdog==4.0.1',
         'requests==2.32.3',
