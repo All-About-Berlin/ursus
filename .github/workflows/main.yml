@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request: ~
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  build-and-install:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ['3.13', '3.12', '3.11']
+    steps:
+    - uses: actions/checkout@v4
+      id: tool-versions
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '${{ matrix.python-version }}'
+    - name : Install dependencies
+      run: pip install -r requirements-dev.txt
+    - name: Build package
+      run: python -m build
+    - name: Install package
+      run: pip install dist/*.whl
+    - name: Run ursus
+      run: ursus --help

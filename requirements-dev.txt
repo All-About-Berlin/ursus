@@ -1,2 +1,2 @@
 -r requirements.txt
-wheel==0.45.1
+build==1.2.0
