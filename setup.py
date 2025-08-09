@@ -1,6 +1,11 @@
 from setuptools import setup, find_packages
 from pathlib import Path
-long_description = (Path(__file__).parent / "README.md").read_text()
+
+root_dir = Path(__file__).parent
+
+long_description = (root_dir / "README.md").read_text()
+requirements_path = root_dir / "requirements.txt"
+install_requires = requirements_path.read_text().strip().split('\n')
 
 setup(
     name='ursus_ssg',
@@ -28,24 +33,6 @@ setup(
         'ursus': ['py.typed', ],
     },
     python_requires='>=3.11',
-    install_requires=[
-        'babel==2.16.0',
-        'GitPython==3.1.43',
-        'imagesize==1.4.1',
-        'Jinja2==3.1.4',
-        'jinja2-simple-tags==0.6.1',
-        'libsass==0.23.0',
-        'lunr==0.7.0',
-        'Markdown==3.5.2',
-        'MarkupSafe==2.1.5',
-        'ordered-set==4.1.0',
-        'platformdirs==4.3.6',
-        'PyMuPDF==1.24.5',
-        'Pillow==10.3.0',
-        'watchdog==4.0.1',
-        'requests==2.32.3',
-        'rjsmin==1.2.2',
-        'rcssmin==1.1.2',
-    ],
+    install_requires=install_requires,
     zip_safe=False,
 )
