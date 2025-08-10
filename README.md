@@ -116,10 +116,10 @@ my-website/
 └─ templates/
 ```
 
-You can also load a configuration file with the `-w` argument.
+You can also load a configuration file with the `-c` argument.
 
 ```bash
-ursus -c /path/to/config.py
+ursus -c /path/to/ursus_config.py
 ```
 
 ### Watching for changes
