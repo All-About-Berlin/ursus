@@ -2,7 +2,7 @@ from itertools import chain
 from markdown.blockprocessors import HashHeaderProcessor
 from pathlib import Path
 from requests.exceptions import ConnectionError
-from typing import Any, Match
+from typing import Any, Match, List, Tuple
 from urllib.parse import unquote, urlparse
 from ursus.config import config
 from ursus.linters import Linter, LinterResult, MatchResult, RegexLinter
@@ -168,20 +168,20 @@ class HeadMatterLinter(Linter):
         if file_path.suffix.lower() != '.md':
             return
 
-        meta: dict[str, Any] = {}
-        field_positions: dict[str, tuple] = {}
+        meta: dict[str, List[Any]] = {}
+        field_positions: dict[str, Tuple[int, int, int]] = {}
 
         with (config.content_path / file_path).open() as file:
             meta, field_positions = parse_markdown_head_matter(file.readlines())
 
-        yield from self.lint_meta(meta, field_positions)
+        yield from self.lint_meta(file_path, meta, field_positions)
 
-    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]) -> LinterResult:
+    def lint_meta(self, file_path: Path, meta: dict[str, List[Any]], field_positions: dict[str, Tuple[int, int, int]]) -> LinterResult:
         raise NotImplementedError
 
 
 class RelatedEntriesLinter(HeadMatterLinter):
-    def lint_meta(self, meta: dict[str, Any], field_positions: dict[str, tuple]) -> LinterResult:
+    def lint_meta(self, file_path: Path, meta: dict[str, List[Any]], field_positions: dict[str, Tuple[int, int, int]]) -> LinterResult:
         for key in meta.keys():
             if key.startswith('related_'):
                 for pos, entry_uri in enumerate(meta[key]):

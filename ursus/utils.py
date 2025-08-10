@@ -377,13 +377,13 @@ def make_figure_element(context: Context, entry_uri: EntryURI, img_attrs={}, a_a
     return figure
 
 
-def parse_markdown_head_matter(lines: list[str]) -> Tuple[dict[str, List[int]], dict[str, Tuple]]:
+def parse_markdown_head_matter(lines: list[str]) -> Tuple[dict[str, List[Any]], dict[str, Tuple[int, int, int]]]:
     """
     Turns markdown head matter into a dictionary. Returns the dictionary, and the position of each dictionary key in
     the file (to allow linters to highlight invalid head matter keys)
     """
-    meta: dict[str, Any] = {}
-    field_positions: dict[str, tuple] = {}
+    meta: dict[str, List[Any]] = {}
+    field_positions: dict[str, Tuple[int, int, int]] = {}
 
     if lines and BEGIN_RE.match(lines[0]):
         lines.pop(0)
