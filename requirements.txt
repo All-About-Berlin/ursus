@@ -1,5 +1,5 @@
 babel==2.16.0
-GitPython==3.1.43
+GitPython==3.1.45
 imagesize==1.4.1
 Jinja2==3.1.4
 jinja2-simple-tags==0.6.1
