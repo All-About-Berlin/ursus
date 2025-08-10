@@ -14,4 +14,4 @@ Pillow==10.3.0
 watchdog==4.0.1
 requests==2.32.4
 rjsmin==1.2.2
-rcssmin==1.1.2
+rcssmin==1.2.1
