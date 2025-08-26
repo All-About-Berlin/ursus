@@ -310,14 +310,18 @@ class JinjaRenderer(Renderer):
                 if self.template_can_render_entry(template_path, context, entry_uri):
                     can_render_an_entry = True
                     if config.fast_rebuilds:
-                        (config.output_path / self.get_entry_output_path(template_path, entry_uri)).touch()
+                        output_file = (config.output_path / self.get_entry_output_path(template_path, entry_uri))
+                        output_file.parent.mkdir(exist_ok=True)
+                        output_file.touch()
                     else:
                         render_queue.add(('entry', template_path, entry_uri))
 
             if not self.is_entry_template(template_path) and not can_render_an_entry:
                 output_path = template_path.with_suffix('')  # Remove .jinja
                 if config.fast_rebuilds:
-                    (config.output_path / output_path).touch()
+                    output_file = (config.output_path / output_path)
+                    output_file.parent.mkdir(exist_ok=True)
+                    output_file.touch()
                 else:
                     render_queue.add(('template', template_path, output_path))
 
