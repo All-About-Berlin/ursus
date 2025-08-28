@@ -6,7 +6,7 @@ jinja2-simple-tags==0.6.1
 libsass==0.23.0
 lunr==0.8.0
 Markdown==3.5.2
-MarkupSafe==2.1.5
+MarkupSafe==3.0.2
 ordered-set==4.1.0
 platformdirs==4.3.8
 PyMuPDF==1.26.3
