@@ -305,7 +305,7 @@ def get_image_transforms(original_path: Path) -> Iterator[dict]:
                 }
 
 
-def make_picture_element(context: Context, entry_uri: EntryURI, img_attrs={}, sizes=None) -> ElementTree.Element:
+def make_picture_element(context: Context, entry_uri: EntryURI, img_attrs={}, a_attrs=None, sizes=None) -> ElementTree.Element:
     """
     Creates a responsive HTML <picture> element
     """
