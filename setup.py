@@ -9,7 +9,7 @@ install_requires = requirements_path.read_text().strip().split('\n')
 
 setup(
     name='ursus_ssg',
-    version='1.4.1',
+    version='1.4.2',
     description='Static site generator',
     long_description=long_description,
     long_description_content_type='text/markdown',
