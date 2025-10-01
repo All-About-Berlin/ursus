@@ -5,7 +5,7 @@ Jinja2==3.1.6
 jinja2-simple-tags==0.6.1
 libsass==0.23.0
 lunr==0.8.0
-Markdown==3.5.2
+Markdown==3.9
 MarkupSafe==2.1.5
 ordered-set==4.1.0
 platformdirs==4.3.8
