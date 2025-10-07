@@ -16,26 +16,29 @@ class MarkdownLinksLinter(RegexLinter):
     """
     Verifies external links in Markdown files
     """
-    file_suffixes = ('.md', )
+
+    file_suffixes = (".md",)
 
     # Matches [], supports escaped brackets, ignores ![] images.
     first_half = r"(?P<first_half>!?\[(?P<alt_text>([^\]]|\\\])*)(?<!\\)\])"
 
     # Matches (), supports escaped parentheses
-    second_half = r"(?P<second_half>\((?P<url>([^\) ]|\\\))*)(\s+(?P<caption>\".*\"))?(?<!\\)\))"
+    second_half = (
+        r"(?P<second_half>\((?P<url>([^\) ]|\\\))*)(\s+(?P<caption>\".*\"))?(?<!\\)\))"
+    )
 
     regex = re.compile(first_half + second_half)
 
     def handle_match(self, file_path: Path, match: Match[str]) -> MatchResult:
-        alt_text = match['alt_text'].strip()
-        is_image = match['first_half'].startswith('!')
+        alt_text = match["alt_text"].strip()
+        is_image = match["first_half"].startswith("!")
 
-        caption = match['caption']
+        caption = match["caption"]
 
         for error, level in chain(
             self.validate_link_alt_text(alt_text, is_image, file_path),
             self.validate_link_caption(caption, is_image, file_path),
-            self.validate_link_url(match['url'], is_image, file_path),
+            self.validate_link_url(match["url"], is_image, file_path),
         ):
             yield f"{error}: {match.group(0)}", level
 
@@ -77,16 +80,18 @@ class MarkdownExternalLinksLinter(MarkdownLinksLinter):
     def validate_link_url(self, url: str, is_image: bool, file_path: Path):
         if not url:
             yield "Missing URL", logging.ERROR
-        elif not url.startswith(('/', '#', 'http://', 'https://', 'mailto:', 'tel:')):
+        elif not url.startswith(("/", "#", "http://", "https://", "mailto:", "tel:")):
             yield "Relative or invalid URL", logging.WARNING
         else:
-            if url.startswith(('http://', 'https://')):
+            if url.startswith(("http://", "https://")):
                 try:
                     cleaned_url = self.unescape_url(url)
                     if cleaned_url not in self.response_cache:
-                        self.response_cache[cleaned_url] = requests.get(cleaned_url, timeout=5, headers={
-                            'User-Agent': self.user_agent
-                        })
+                        self.response_cache[cleaned_url] = requests.get(
+                            cleaned_url,
+                            timeout=5,
+                            headers={"User-Agent": self.user_agent},
+                        )
                     response = self.response_cache[cleaned_url]
                     status_code = response.status_code
                 except ConnectionError:
@@ -97,16 +102,20 @@ class MarkdownExternalLinksLinter(MarkdownLinksLinter):
                     if status_code in (404, 410):
                         yield f"URL returns HTTP {status_code}", logging.ERROR
                     elif status_code >= 400:
-                        level = logging.WARNING if status_code in (403, 503) else logging.ERROR
+                        level = (
+                            logging.WARNING
+                            if status_code in (403, 503)
+                            else logging.ERROR
+                        )
                         yield f"URL returns HTTP {status_code}", level
                     elif response.history and response.history[-1].status_code == 301:
                         yield f"URL redirects to {response.url}", logging.INFO
 
     def escape_url(self, url: str) -> str:
-        return url.replace('(', '\\(').replace(')', '\\)')
+        return url.replace("(", "\\(").replace(")", "\\)")
 
     def unescape_url(self, url: str) -> str:
-        return url.replace('\\(', '(').replace('\\)', ')')
+        return url.replace("\\(", "(").replace("\\)", ")")
 
 
 class MarkdownInternalLinksLinter(MarkdownLinksLinter):
@@ -114,6 +123,7 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
     Verify that internal links point to existing entries. If the URL has a fragment,
     it should point to an existing title fragment.
     """
+
     header_regex = HashHeaderProcessor.RE
     ignored_urls = (
         # re.compile(r'^/ignored-url$')
@@ -130,7 +140,9 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
                 for line in file.readlines():
                     if bool(self.header_regex.search(line)):
                         self.title_slugs_cache[file_path].add(
-                            config.markdown_extensions['toc']['slugify'](line.lstrip('#').strip(), '-')
+                            config.markdown_extensions["toc"]["slugify"](
+                                line.lstrip("#").strip(), "-"
+                            )
                         )
         return self.title_slugs_cache[file_path]
 
@@ -144,10 +156,12 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
 
         # Convert relative and absolute URLs to content paths
         if config.site_url and url.startswith(config.site_url):
-            file_path = config.content_path / unquote(url_parts.path.removeprefix(config.site_url))
-        elif url.startswith('/'):
-            file_path = config.content_path / unquote(url_parts.path.lstrip('/'))
-        elif url.startswith('#'):
+            file_path = config.content_path / unquote(
+                url_parts.path.removeprefix(config.site_url)
+            )
+        elif url.startswith("/"):
+            file_path = config.content_path / unquote(url_parts.path.lstrip("/"))
+        elif url.startswith("#"):
             file_path = config.content_path / current_file_path
         elif not url_parts.scheme and not url_parts.netloc:  # Relative URL
             file_path = current_file_path.parent / unquote(url_parts.path)
@@ -155,7 +169,7 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
             return
 
         if file_path.suffix.lower() == config.html_url_extension:
-            file_path = file_path.with_suffix('.md')
+            file_path = file_path.with_suffix(".md")
 
         if not file_path.exists():
             yield "Entry not found", logging.ERROR
@@ -165,7 +179,7 @@ class MarkdownInternalLinksLinter(MarkdownLinksLinter):
 
 class HeadMatterLinter(Linter):
     def lint(self, file_path: Path) -> LinterResult:
-        if file_path.suffix.lower() != '.md':
+        if file_path.suffix.lower() != ".md":
             return
 
         meta: dict[str, List[Any]] = {}
@@ -176,14 +190,24 @@ class HeadMatterLinter(Linter):
 
         yield from self.lint_meta(file_path, meta, field_positions)
 
-    def lint_meta(self, file_path: Path, meta: dict[str, List[Any]], field_positions: dict[str, Tuple[int, int, int]]) -> LinterResult:
+    def lint_meta(
+        self,
+        file_path: Path,
+        meta: dict[str, List[Any]],
+        field_positions: dict[str, Tuple[int, int, int]],
+    ) -> LinterResult:
         raise NotImplementedError
 
 
 class RelatedEntriesLinter(HeadMatterLinter):
-    def lint_meta(self, file_path: Path, meta: dict[str, List[Any]], field_positions: dict[str, Tuple[int, int, int]]) -> LinterResult:
+    def lint_meta(
+        self,
+        file_path: Path,
+        meta: dict[str, List[Any]],
+        field_positions: dict[str, Tuple[int, int, int]],
+    ) -> LinterResult:
         for key in meta.keys():
-            if key.startswith('related_'):
+            if key.startswith("related_"):
                 for pos, entry_uri in enumerate(meta[key]):
                     if not (config.content_path / entry_uri).exists():
                         line_no, col, end_col = field_positions[key]
@@ -191,5 +215,5 @@ class RelatedEntriesLinter(HeadMatterLinter):
                         yield (
                             (line_no, 4, 4 + len(entry_uri)),
                             f"Entry does not exist: {entry_uri}",
-                            logging.ERROR
+                            logging.ERROR,
                         )

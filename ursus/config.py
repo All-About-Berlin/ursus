@@ -9,19 +9,19 @@ import logging
 
 def default_context_processors() -> list[str]:
     return [
-        'ursus.context_processors.stale.StaleEntriesProcessor',
-        'ursus.context_processors.image.ImageProcessor',
-        'ursus.context_processors.markdown.MarkdownProcessor',
-        'ursus.context_processors.get_entries.GetEntriesProcessor',
-        'ursus.context_processors.related.RelatedEntriesProcessor',
+        "ursus.context_processors.stale.StaleEntriesProcessor",
+        "ursus.context_processors.image.ImageProcessor",
+        "ursus.context_processors.markdown.MarkdownProcessor",
+        "ursus.context_processors.get_entries.GetEntriesProcessor",
+        "ursus.context_processors.related.RelatedEntriesProcessor",
         # 'ursus.context_processors.git_date.GitDateProcessor',
     ]
 
 
 def default_image_transforms(max_size: int = 5000) -> dict:
     return {
-        '': {
-            'max_size': (max_size, max_size),
+        "": {
+            "max_size": (max_size, max_size),
         },
     }
 
@@ -32,74 +32,74 @@ def default_jinja_filters() -> dict[str, Any]:
 
 def default_linters() -> list[str]:
     return [
-        'ursus.linters.markdown.MarkdownLinkTextsLinter',
-        'ursus.linters.markdown.MarkdownLinkTitlesLinter',
-        'ursus.linters.markdown.MarkdownInternalLinksLinter',
-        'ursus.linters.markdown.MarkdownExternalLinksLinter',
-        'ursus.linters.markdown.RelatedEntriesLinter',
-        'ursus.linters.images.UnusedImagesLinter',
+        "ursus.linters.markdown.MarkdownLinkTextsLinter",
+        "ursus.linters.markdown.MarkdownLinkTitlesLinter",
+        "ursus.linters.markdown.MarkdownInternalLinksLinter",
+        "ursus.linters.markdown.MarkdownExternalLinksLinter",
+        "ursus.linters.markdown.RelatedEntriesLinter",
+        "ursus.linters.images.UnusedImagesLinter",
     ]
 
 
 def default_markdown_extensions() -> dict:
     return {
-        'codehilite': {
-            'guess_lang': False,
+        "codehilite": {
+            "guess_lang": False,
         },
-        'fenced_code': {},
-        'jinja': {},
-        'meta': {},
-        'responsive_images': {},
-        'smarty': {},
-        'superscript': {},
-        'tables': {},
-        'tasklist': {
+        "fenced_code": {},
+        "jinja": {},
+        "meta": {},
+        "responsive_images": {},
+        "smarty": {},
+        "superscript": {},
+        "tables": {},
+        "tasklist": {
             # The CSS class of Markdown list items with a checkbox ("- [ ] a list item")
             # Sets the class of the <li> and the <input type="checkbox">
-            'list_item_class': None,
-            'checkbox_class': None,
+            "list_item_class": None,
+            "checkbox_class": None,
         },
-        'toc': {
-            'slugify': slugify,
+        "toc": {
+            "slugify": slugify,
         },
-        'wikilinks': {
+        "wikilinks": {
             # The base URL prepended to all markdown [[wikilinks]], without a trailing slash.
             # For example, https://allaboutberlin.com/glossary
-            'base_url': '/',
-            'end_url': '',
-            'build_url': build_url,
-            'html_class': None,
+            "base_url": "/",
+            "end_url": "",
+            "build_url": build_url,
+            "html_class": None,
         },
-        'better_footnotes': {
-            'BACKLINK_TEXT': '⤴',
-            'SUPERSCRIPT_TEXT': '{}',
+        "better_footnotes": {
+            "BACKLINK_TEXT": "⤴",
+            "SUPERSCRIPT_TEXT": "{}",
         },
     }
 
 
 def default_renderers() -> list[str]:
     return [
-        'ursus.renderers.static.StaticAssetRenderer',
-        'ursus.renderers.static.ArchiveRenderer',
-        'ursus.renderers.image.ImageTransformRenderer',
-        'ursus.renderers.jinja.JinjaRenderer',
-        'ursus.renderers.lunr.LunrIndexRenderer',
-        'ursus.renderers.sass.SassRenderer',
+        "ursus.renderers.static.StaticAssetRenderer",
+        "ursus.renderers.static.ArchiveRenderer",
+        "ursus.renderers.image.ImageTransformRenderer",
+        "ursus.renderers.jinja.JinjaRenderer",
+        "ursus.renderers.lunr.LunrIndexRenderer",
+        "ursus.renderers.sass.SassRenderer",
     ]
 
 
 @dataclass
-class UrsusConfig():
-    content_path: Path = Path('content').resolve()
-    templates_path: Path = Path('templates').resolve()
-    output_path: Path = Path('output').resolve()
-    cache_path: Path = Path(user_cache_dir('ursus', 'nicolasb'))
+class UrsusConfig:
+    content_path: Path = Path("content").resolve()
+    templates_path: Path = Path("templates").resolve()
+    output_path: Path = Path("output").resolve()
+    cache_path: Path = Path(user_cache_dir("ursus", "nicolasb"))
 
     # The URL of this website's root, without a trailing slash. For example, https://allaboutberlin.com
-    site_url: str = ''
+    site_url: str = ""
 
     # The URL extension of HTML pages. Change this if your server changes or removes the file extension.
-    html_url_extension: str = '.html'
+    html_url_extension: str = ".html"
 
     # Minify Javascript and CSS
     minify_js: bool = False
@@ -131,9 +131,9 @@ class UrsusConfig():
     }
     """
     lunr_indexes: dict = field(default_factory=dict)
-    lunr_index_output_path: Path = Path('search-index.json')  # Relative to output_path
+    lunr_index_output_path: Path = Path("search-index.json")  # Relative to output_path
 
-    generator: str = 'ursus.generators.static.StaticSiteGenerator'
+    generator: str = "ursus.generators.static.StaticSiteGenerator"
 
     # The processors that update the context with extra data
     context_processors: list[str] = field(default_factory=default_context_processors)
@@ -142,7 +142,7 @@ class UrsusConfig():
     markdown_extensions: dict = field(default_factory=default_markdown_extensions)
 
     # Translations
-    translations_path: Path = Path('templates/_translations').resolve()
+    translations_path: Path = Path("templates/_translations").resolve()
     default_language: str | None = None
     translation_languages: Iterable[str] | None = None
 
@@ -159,9 +159,9 @@ class UrsusConfig():
     jinja_filters: dict[str, Callable] = field(default_factory=default_jinja_filters)
 
     logging = {
-        'datefmt': '%Y-%m-%d %H:%M:%S',
-        'format': '%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s',
-        'level': logging.INFO,
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+        "format": "%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s",
+        "level": logging.INFO,
     }
 
     def add_markdown_extension(self, name: str, config: dict[str, Any] = {}) -> None:

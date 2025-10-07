@@ -10,9 +10,9 @@ class HttpRequestHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=config.output_path, **kwargs)
 
     def do_GET(self):
-        abs_path = config.output_path / self.path.removeprefix('/')
-        abs_html_path = abs_path.with_suffix('.html')
-        abs_index_path = abs_path / 'index.html'
+        abs_path = config.output_path / self.path.removeprefix("/")
+        abs_html_path = abs_path.with_suffix(".html")
+        abs_index_path = abs_path / "index.html"
 
         if not abs_path.exists():
             if abs_path.suffix == config.html_url_extension and abs_html_path.exists():
@@ -43,6 +43,6 @@ def serve(port: int = 80) -> None:
 
 
 def serve_async(port: int = 80) -> Thread:
-    thread = Thread(target=serve, args=(port, ), daemon=True)
+    thread = Thread(target=serve, args=(port,), daemon=True)
     thread.start()
     return thread

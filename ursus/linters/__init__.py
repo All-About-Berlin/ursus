@@ -13,7 +13,7 @@ LineLinterResult = Generator[tuple[tuple[int, int] | None, str, int], None, None
 MatchResult = Generator[tuple[str, int], None, None]
 
 
-class Linter():
+class Linter:
     def lint(self, file_path: Path) -> LinterResult:
         """
         Lints the content for errors.
@@ -25,6 +25,7 @@ class LineLinter(Linter):
     """
     Lints a text file line by line.
     """
+
     file_suffixes: tuple[str, ...] = ()
 
     def lint(self, file_path: Path) -> LinterResult:
@@ -41,7 +42,7 @@ class LineLinter(Linter):
 
 
 class RegexLinter(LineLinter):
-    regex = re.compile(r'')
+    regex = re.compile(r"")
 
     def lint_line(self, file_path: Path, line: str) -> LineLinterResult:
         for match in self.regex.finditer(line):

@@ -3,8 +3,8 @@ from pathlib import Path
 from typing import Any, NewType
 
 
-EntryURI = NewType('EntryURI', str)
-Entry = NewType('Entry', dict[str, Any])
+EntryURI = NewType("EntryURI", str)
+Entry = NewType("Entry", dict[str, Any])
 
 
 class Context(UserDict[str, Any]):
@@ -12,7 +12,9 @@ class Context(UserDict[str, Any]):
 
 
 class ContextProcessor:
-    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
+    def process(
+        self, context: Context, changed_files: set[Path] | None = None
+    ) -> Context:
         """Transforms the context and returns it. The context is used to render templates.
 
         Args:
@@ -27,10 +29,17 @@ class ContextProcessor:
 
 
 class EntryContextProcessor(ContextProcessor):
-    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
-        for entry_uri in list(context['entries'].keys()):
+    def process(
+        self, context: Context, changed_files: set[Path] | None = None
+    ) -> Context:
+        for entry_uri in list(context["entries"].keys()):
             self.process_entry(context, entry_uri, changed_files)
         return context
 
-    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None) -> None:
+    def process_entry(
+        self,
+        context: Context,
+        entry_uri: EntryURI,
+        changed_files: set[Path] | None = None,
+    ) -> None:
         raise NotImplementedError

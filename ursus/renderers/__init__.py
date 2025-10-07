@@ -3,7 +3,9 @@ from pathlib import Path
 
 
 class Renderer:
-    def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
+    def render(
+        self, context: Context, changed_files: set[Path] | None = None
+    ) -> set[Path]:
         """Creates, updates or touches files in output_path
 
         Args:

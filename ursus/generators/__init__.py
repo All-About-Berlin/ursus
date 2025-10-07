@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class GeneratorObserverEventHandler(FileSystemEventHandler):
-    def __init__(self, generator: 'Generator', **kwargs):
+    def __init__(self, generator: "Generator", **kwargs):
         self.generator = generator
 
         self.queued_events: set = set()
@@ -26,7 +26,7 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
         self.debounce_timer.start()
 
     def dispatch(self, event) -> None:
-        if event.event_type in ('created', 'modified', 'moved', 'deleted'):
+        if event.event_type in ("created", "modified", "moved", "deleted"):
             self.queued_events.add(event)
             self.reschedule_rebuild()
 
@@ -38,7 +38,9 @@ class GeneratorObserverEventHandler(FileSystemEventHandler):
         self.is_rebuilding = True
 
         changed_files = set(Path(event.src_path) for event in self.queued_events)
-        changed_files.update([Path(e.dest_path) for e in self.queued_events if e.event_type == 'moved'])
+        changed_files.update(
+            [Path(e.dest_path) for e in self.queued_events if e.event_type == "moved"]
+        )
         self.queued_events.clear()
         if len(changed_files):
             try:
@@ -53,7 +55,9 @@ class Generator:
         raise NotImplementedError
 
     def get_watched_paths(self) -> list[Path]:
-        return [config.content_path, ]
+        return [
+            config.content_path,
+        ]
 
     def get_observer_event_handler(self) -> FileSystemEventHandler:
         return GeneratorObserverEventHandler(generator=self)

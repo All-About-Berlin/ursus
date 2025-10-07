@@ -2,7 +2,11 @@ from . import Context, EntryContextProcessor, EntryURI
 from datetime import datetime
 from markdown import Markdown
 from markdown.extensions import Extension
-from markdown.extensions.footnotes import FootnoteExtension, FN_BACKLINK_TEXT, NBSP_PLACEHOLDER
+from markdown.extensions.footnotes import (
+    FootnoteExtension,
+    FN_BACKLINK_TEXT,
+    NBSP_PLACEHOLDER,
+)
 from markdown.inlinepatterns import SimpleTagPattern
 from markdown.postprocessors import RawHtmlPostprocessor
 from markdown.preprocessors import Preprocessor
@@ -21,29 +25,31 @@ logger = logging.getLogger(__name__)
 
 
 class TaskListProcessor(Treeprocessor):
-    box_checked = '[x] '
-    box_unchecked = '[ ] '
+    box_checked = "[x] "
+    box_unchecked = "[ ] "
 
     def run(self, root: Element) -> Element:
-        for li in root.iter(tag='li'):
-            text = (li.text or "")
+        for li in root.iter(tag="li"):
+            text = li.text or ""
 
             if text.lower().startswith((self.box_checked, self.box_unchecked)):
                 is_checked = text.lower().startswith(self.box_checked)
 
-                checkbox = Element("input", {'type': 'checkbox'})
+                checkbox = Element("input", {"type": "checkbox"})
                 if is_checked:
-                    checkbox.attrib['checked'] = 'checked'
-                if self.md.getConfig('checkbox_class'):
-                    checkbox.attrib['class'] = self.md.getConfig('checkbox_class')
+                    checkbox.attrib["checked"] = "checked"
+                if self.md.getConfig("checkbox_class"):
+                    checkbox.attrib["class"] = self.md.getConfig("checkbox_class")
 
-                checkbox.tail = text.removeprefix(self.box_checked if is_checked else self.box_unchecked)
-                li.text = ''
+                checkbox.tail = text.removeprefix(
+                    self.box_checked if is_checked else self.box_unchecked
+                )
+                li.text = ""
                 li.insert(0, checkbox)
-                if self.md.getConfig('list_item_class'):
-                    css_classes = set(li.attrib.get('class', '').split())
-                    css_classes.update(self.md.getConfig('list_item_class').split())
-                    li.attrib['class'] = " ".join(css_classes)
+                if self.md.getConfig("list_item_class"):
+                    css_classes = set(li.attrib.get("class", "").split())
+                    css_classes.update(self.md.getConfig("list_item_class").split())
+                    li.attrib["class"] = " ".join(css_classes)
 
         return root
 
@@ -58,8 +64,8 @@ class TaskListExtension(Extension):
 
     def __init__(self, **kwargs):
         self.config = {
-            "list_item_class": ['', 'CSS class to add to the <li> element'],
-            "checkbox_class": ['', 'CSS class to add to the checkbox <input>'],
+            "list_item_class": ["", "CSS class to add to the <li> element"],
+            "checkbox_class": ["", "CSS class to add to the checkbox <input>"],
         }
         super().__init__(**kwargs)
 
@@ -71,7 +77,8 @@ class JinjaPreprocessor(Preprocessor):
     """
     Ignore Jinja {{ ... }} and {% ... %} tags.
     """
-    JINJA_RE = re.compile('({{([^}]+)}})|({%([^}]+)%})', re.MULTILINE | re.DOTALL)
+
+    JINJA_RE = re.compile("({{([^}]+)}})|({%([^}]+)%})", re.MULTILINE | re.DOTALL)
 
     def run(self, lines: list[str]) -> list[str]:
         text = "\n".join(lines)
@@ -87,7 +94,8 @@ class JinjaHtmlPostProcessor(RawHtmlPostprocessor):
     Patch RawHtmlPostprocessor to recognize {% ... %} tags as block-level
     elements, and prevent them from being wrapped in a <p> tag.
     """
-    JINJA_BLOCK_RE = re.compile('^{%([^}]+)%}$', re.MULTILINE | re.DOTALL)
+
+    JINJA_BLOCK_RE = re.compile("^{%([^}]+)%}$", re.MULTILINE | re.DOTALL)
 
     def isblocklevel(self, html: str) -> bool:
         m = self.JINJA_BLOCK_RE.match(html)
@@ -102,15 +110,34 @@ class JinjaExtension(Extension):
     """
 
     def extendMarkdown(self, md):
-        md.postprocessors.deregister('raw_html')
-        md.preprocessors.register(JinjaPreprocessor(md), 'jinja', 25)
-        md.postprocessors.register(JinjaHtmlPostProcessor(md), 'raw_html', 30)
+        md.postprocessors.deregister("raw_html")
+        md.preprocessors.register(JinjaPreprocessor(md), "jinja", 25)
+        md.postprocessors.register(JinjaHtmlPostProcessor(md), "raw_html", 30)
 
 
 class ResponsiveImageProcessor(Treeprocessor):
     allowed_parents = (
-        'a', 'p', 'pre', 'ul', 'ol', 'dl', 'div', 'blockquote', 'noscript', 'section', 'nav', 'article',
-        'aside', 'header', 'footer', 'table', 'form', 'fieldset', 'menu', 'canvas', 'details'
+        "a",
+        "p",
+        "pre",
+        "ul",
+        "ol",
+        "dl",
+        "div",
+        "blockquote",
+        "noscript",
+        "section",
+        "nav",
+        "article",
+        "aside",
+        "header",
+        "footer",
+        "table",
+        "form",
+        "fieldset",
+        "menu",
+        "canvas",
+        "details",
     )
 
     def _swap_element(self, parent: Element, old: Element, new: Element) -> None:
@@ -126,9 +153,11 @@ class ResponsiveImageProcessor(Treeprocessor):
     def _upgrade_img(self, img: Element, parents: list[Element]) -> None:
         # Create <picture> with <source> for the different image types and sizes
         # Only apply to local images
-        img_src = img.attrib.get('src', '')
-        if img_src.startswith('/') or img_src.startswith(config.site_url + '/'):
-            image_uri = EntryURI(img_src.removeprefix(config.site_url).removeprefix('/'))
+        img_src = img.attrib.get("src", "")
+        if img_src.startswith("/") or img_src.startswith(config.site_url + "/"):
+            image_uri = EntryURI(
+                img_src.removeprefix(config.site_url).removeprefix("/")
+            )
 
             parent = parents[0]
             grandparent = parents[1]
@@ -147,7 +176,7 @@ class ResponsiveImageProcessor(Treeprocessor):
             # In this case, wrap the <figure> around the <a>
             # li > a > img becomes li > figure > a > picture
             if (
-                parent.tag == 'a'
+                parent.tag == "a"
                 and has_single_child(parent)
                 and grandparent.tag in self.allowed_parents
             ):
@@ -158,7 +187,7 @@ class ResponsiveImageProcessor(Treeprocessor):
                 # An empty <p> with an empty <a> with this <img>
                 # Replace the whole thing with a <figure> containing the <a>
                 # p > a > img becomes p > figure > a > picture
-                if grandparent.tag == 'p' and has_single_child(grandparent):
+                if grandparent.tag == "p" and has_single_child(grandparent):
                     element_to_swap = grandparent
 
                     greatgrandparent = parents[2]
@@ -166,7 +195,7 @@ class ResponsiveImageProcessor(Treeprocessor):
 
             # An empty <p> with this <img>
             # p > img becomes figure > picture
-            elif parent.tag == 'p' and has_single_child(parent):
+            elif parent.tag == "p" and has_single_child(parent):
                 element_to_swap = parent
                 containing_element = grandparent
 
@@ -174,7 +203,13 @@ class ResponsiveImageProcessor(Treeprocessor):
             elif parent.tag not in self.allowed_parents:
                 image_maker = make_picture_element
 
-            image = image_maker(self.md.context, image_uri, img_attrs, a_attrs, sizes=config.image_default_sizes)
+            image = image_maker(
+                self.md.context,
+                image_uri,
+                img_attrs,
+                a_attrs,
+                sizes=config.image_default_sizes,
+            )
 
             self._swap_element(containing_element, element_to_swap, image)
 
@@ -184,7 +219,7 @@ class ResponsiveImageProcessor(Treeprocessor):
             for child in parent:
                 parent_map[child] = parent
 
-        for img in root.iter('img'):
+        for img in root.iter("img"):
             child = img
             parents = []
             while parent := parent_map.get(child):
@@ -207,7 +242,7 @@ class ResponsiveImagesExtension(Extension):
         md.registerExtension(self)
         self.md = md
         self.reset()
-        md.treeprocessors.register(ResponsiveImageProcessor(md), 'figure', 0)
+        md.treeprocessors.register(ResponsiveImageProcessor(md), "figure", 0)
 
     def reset(self) -> None:
         pass
@@ -224,7 +259,9 @@ class SuperscriptExtension(Extension):
     def extendMarkdown(self, md):
         """Insert 'superscript' pattern before 'not_strong' pattern (priority 70)."""
 
-        md.inlinePatterns.register(SimpleTagPattern(self.SUPERSCRIPT_RE, "sup"), 'superscript', 60)
+        md.inlinePatterns.register(
+            SimpleTagPattern(self.SUPERSCRIPT_RE, "sup"), "superscript", 60
+        )
 
 
 class FootnotesExtension(FootnoteExtension):
@@ -259,10 +296,7 @@ class FootnotesExtension(FootnoteExtension):
             backlink = Element("a")
             backlink.set("href", f"#{self.makeFootnoteRefId(id)}")
             backlink.set("class", "footnote-backref")
-            backlink.set(
-                "title",
-                backlink_title.format(index)
-            )
+            backlink.set("title", backlink_title.format(index))
             backlink.text = FN_BACKLINK_TEXT
 
             if len(li):
@@ -282,7 +316,7 @@ class MarkdownProcessor(EntryContextProcessor):
         super().__init__()
 
         self.markdown = Markdown(
-            output_format='html',
+            output_format="html",
             extensions=list(config.markdown_extensions.keys()),
             extension_configs=config.markdown_extensions,
         )
@@ -295,31 +329,42 @@ class MarkdownProcessor(EntryContextProcessor):
             if len(value) == 1:
                 value = value[0]
 
-            if key.startswith('date_'):
-                value = datetime.strptime(value, '%Y-%m-%d').astimezone()
+            if key.startswith("date_"):
+                value = datetime.strptime(value, "%Y-%m-%d").astimezone()
 
-            if key.startswith('related_'):
+            if key.startswith("related_"):
                 if isinstance(value, list):
                     values = list(filter(bool, [v.strip() for v in value]))
                 else:
-                    values = [v.strip() for v in value.split(',')]
+                    values = [v.strip() for v in value.split(",")]
                 value = values if len(values) > 1 else values[0]
 
             metadata[key] = value
         return metadata
 
-    def process_entry(self, context: Context, entry_uri: EntryURI, changed_files: set[Path] | None = None) -> None:
-        if entry_uri.lower().endswith('.md'):
-            if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
+    def process_entry(
+        self,
+        context: Context,
+        entry_uri: EntryURI,
+        changed_files: set[Path] | None = None,
+    ) -> None:
+        if entry_uri.lower().endswith(".md"):
+            if (
+                config.fast_rebuilds
+                and changed_files
+                and (config.content_path / entry_uri) not in changed_files
+            ):
                 return
 
             self.markdown.context = context
             markdown_text = (config.content_path / entry_uri).read_text()
             html = self.markdown.reset().convert(markdown_text)
 
-            context['entries'][entry_uri].update({
-                **self.parse_metadata(self.markdown.Meta),
-                'body': html,
-                'table_of_contents': self.markdown.toc_tokens,
-                'url': f"{config.site_url}/{str(Path(entry_uri).with_suffix(config.html_url_extension))}",
-            })
+            context["entries"][entry_uri].update(
+                {
+                    **self.parse_metadata(self.markdown.Meta),
+                    "body": html,
+                    "table_of_contents": self.markdown.toc_tokens,
+                    "url": f"{config.site_url}/{str(Path(entry_uri).with_suffix(config.html_url_extension))}",
+                }
+            )
