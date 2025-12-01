@@ -13,5 +13,5 @@ PyMuPDF==1.26.4
 Pillow==11.3.0
 watchdog==4.0.1
 requests==2.32.4
-rjsmin==1.2.4
+rjsmin==1.2.5
 rcssmin==1.2.1
