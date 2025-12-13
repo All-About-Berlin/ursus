@@ -1,14 +1,11 @@
 # Changelog
 
-## [1.5.0] - 2024-??-??
+## [1.4.3] - 2025-12-13
 
 ### Changed
 
-- Log all uncaught exceptions through the default logger.
-- Feed `config.logging` to `logging.basicConfig` instead of `coloredlogs` to allow fancier logging configs like multiple log handlers.
-
-### Removed
-
+- Fixed performance issues with watching a large number of templates.
+- Removed unused translation code
 - Removed `coloredlogs`.
 
 ## [1.4.0] - 2024-08-07
