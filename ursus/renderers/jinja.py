@@ -247,6 +247,7 @@ class JinjaRenderer(Renderer):
 
         changed_entry_uris = set()
         changed_templates = set()
+
         for file in changed_files or set():
             if not (file.exists() and file.is_file()):
                 continue
@@ -258,8 +259,8 @@ class JinjaRenderer(Renderer):
             else:
                 continue
 
-        if changed_files is not None and config.fast_rebuilds:
-            # Also rerender templates that depend on the changed templates (_style.css > _layout.html > index.html)
+        if changed_templates and config.fast_rebuilds:
+            # Also rerender templates that depend on the changed templates (for example style.css > layout.html > index.html)
             changed_parent_templates = set()
             for template_path in template_paths:
                 dependencies = self.get_child_templates(template_path)
