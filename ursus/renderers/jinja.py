@@ -164,14 +164,29 @@ class JinjaRenderer(Renderer):
         self.template_environment.filters["render"] = render_filter
         self.template_environment.filters.update(config.jinja_filters)
 
-    def get_child_templates(self, template_path: Path) -> set[Path]:
+        self._direct_child_templates_cache = {}
+
+    def get_child_templates(self, template_path: Path, changed_templates: set[Path]) -> set[Path]:
         dependencies = set()
-        with (config.templates_path / template_path).open() as template_file:
-            ast = self.template_environment.parse(template_file.read())
-        child_template_paths = [Path(t.removeprefix("/")) for t in find_referenced_templates(ast)]
+
+        # Parsing all the templates is slow, so we cache the list of child templates unless
+        # that template has changed.
+
+        if template_path in changed_templates:
+            self._direct_child_templates_cache.pop(template_path, None)
+
+        if template_path not in self._direct_child_templates_cache:
+            with (config.templates_path / template_path).open() as template_file:
+                ast = self.template_environment.parse(template_file.read())
+            self._direct_child_templates_cache[template_path] = set(
+                [Path(t.removeprefix("/")) for t in find_referenced_templates(ast)]
+            )
+
+        child_template_paths = self._direct_child_templates_cache[template_path]
+
         for child_template_path in child_template_paths:
             dependencies.add(child_template_path)
-            dependencies.update(self.get_child_templates(child_template_path))
+            dependencies.update(self.get_child_templates(child_template_path, changed_templates))
         return dependencies
 
     def is_entry_template(self, template_path: Path) -> bool:
@@ -263,7 +278,7 @@ class JinjaRenderer(Renderer):
             # Also rerender templates that depend on the changed templates (for example style.css > layout.html > index.html)
             changed_parent_templates = set()
             for template_path in template_paths:
-                dependencies = self.get_child_templates(template_path)
+                dependencies = self.get_child_templates(template_path, changed_templates)
                 for changed_template in changed_templates:
                     if changed_template in dependencies:
                         logger.info(f"{template_path} is affected by {changed_template} change")
