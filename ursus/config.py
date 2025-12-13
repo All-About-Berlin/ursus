@@ -3,7 +3,7 @@ from markdown.extensions.wikilinks import build_url
 from markdown.extensions.toc import slugify
 from pathlib import Path
 from platformdirs import user_cache_dir
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 import logging
 
 
@@ -140,14 +140,6 @@ class UrsusConfig:
     context_globals: dict = field(default_factory=dict)
 
     markdown_extensions: dict = field(default_factory=default_markdown_extensions)
-
-    # Translations
-    translations_path: Path = Path("templates/_translations").resolve()
-    default_language: str | None = None
-    translation_languages: Iterable[str] | None = None
-
-    openai_api_key: str | None = None
-    metadata_fields_to_translate: Iterable[str] = ()
 
     # The renderers that take your templates and content, and populate the output dir
     renderers: list[str] = field(default_factory=default_renderers)

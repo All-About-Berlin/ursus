@@ -29,9 +29,6 @@ setup(
         ]
     },
     package_data={
-        "ursus.babel": [
-            "*",
-        ],
         "ursus": [
             "py.typed",
         ],

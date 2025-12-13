@@ -152,11 +152,6 @@ ursus --serve 80
 
 This is not meant for production. Use nginx, Caddy or some other static file server for that.
 
-
-### Translating templates
-
-Jinja templates support localisation. Use `{% trans %}your string here{% endtrans %}` or `{{ _('your string here') }}`. Call `ursus translate` to generate gettext translation files, then call it again to compile your translation files.
-
 ## How Ursus works
 
 1. **Context processors** generate the context used to render templates. The context is just a big dictionary that represent your site's entire content. Usually, each content file is turned into an entry.

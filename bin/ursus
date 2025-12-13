@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from pathlib import Path
-from ursus import build, lint, translate
+from ursus import build, lint
 from ursus.config import config
 from ursus.server import serve, serve_async
 from ursus.utils import import_module_or_path
@@ -9,49 +9,44 @@ import logging
 import sys
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        prog='ursus',
-        description='Static site generator',
-        epilog='Made with ❤️ in Berlin'
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="ursus", description="Static site generator", epilog="Made with ❤️ in Berlin")
+    parser.add_argument("action", nargs="?", default="build", choices=("build", "lint"), help="Action to perform.")
+    parser.add_argument(
+        "-c",
+        "--config",
+        help="Path to a Python config file or module. The `config` variable will be imported from that file.",
     )
     parser.add_argument(
-        'action',
-        nargs='?',
-        default='build',
-        choices=('build', 'lint', 'translate'),
-        help='Action to perform.'
+        "-f",
+        "--fast",
+        action="store_true",
+        help="Fast rebuilds. Prefer faster page rebuilds to completeness. Related pages might not be reloaded.",
     )
     parser.add_argument(
-        '-c', '--config',
-        help="Path to a Python config file or module. The `config` variable will be imported from that file."
+        "--level",
+        default="INFO",
+        help="Log level for ursus lint (INFO, WARNING, ERROR). Errors below this level are ignored.",
     )
     parser.add_argument(
-        '-f', '--fast', action='store_true',
-        help="Fast rebuilds. Prefer faster page rebuilds to completeness. Related pages might not be reloaded."
+        "-s",
+        "--serve",
+        dest="port",
+        nargs="?",
+        const=80,
+        default=None,
+        help="Start a static file server, and serve the generated website on the given port. The default port is 80.",
     )
     parser.add_argument(
-        '--level', default='INFO',
-        help="Log level for ursus lint (INFO, WARNING, ERROR). Errors below this level are ignored."
+        "-w", "--watch", action="store_true", help="Regenerate files when <content_path> and <templates_path> change."
     )
-    parser.add_argument(
-        '-s', '--serve', dest='port', nargs='?', const=80, default=None,
-        help="Start a static file server, and serve the generated website on the given port. The default port is 80."
-    )
-    parser.add_argument(
-        '-w', '--watch', action='store_true',
-        help="Regenerate files when <content_path> and <templates_path> change."
-    )
-    parser.add_argument(
-        'files', type=Path, nargs='*',
-        help="Only lint the given file(s)"
-    )
+    parser.add_argument("files", type=Path, nargs="*", help="Only lint the given file(s)")
     args = parser.parse_args()
 
     if args.config:
         import_module_or_path(args.config)
-    elif Path('./ursus_config.py').exists():
-        import_module_or_path('ursus_config.py')
+    elif Path("./ursus_config.py").exists():
+        import_module_or_path("ursus_config.py")
 
     if args.fast:
         config.fast_rebuilds = True
@@ -60,7 +55,7 @@ if __name__ == '__main__':
 
     if args.config:
         logging.info(f"Loaded config from {args.config}")
-    elif Path('./ursus_config.py').exists():
+    elif Path("./ursus_config.py").exists():
         logging.info("Loaded config from ./ursus_config.py")
     else:
         logging.warning("No config supplied. Using default config.")
@@ -72,7 +67,7 @@ if __name__ == '__main__':
             serve(args.port)
 
     logging.info(f"Content path: {str(config.content_path)}")
-    if args.action == 'build':
+    if args.action == "build":
         logging.info(f"Templates path: {str(config.templates_path)}")
         logging.info(f"Output path: {str(config.output_path)}")
         try:
@@ -80,7 +75,5 @@ if __name__ == '__main__':
         except:
             logging.exception("Could not generate site")
             sys.exit(1)
-    elif args.action == 'lint':
+    elif args.action == "lint":
         lint(files_to_lint=args.files or None, min_level=getattr(logging, args.level))
-    elif args.action == 'translate':
-        translate()

@@ -21,9 +21,7 @@ class ImageTransformRenderer(Renderer):
     Resizes images and generate PDF thumbnails
     """
 
-    def render(
-        self, context: Context, changed_files: set[Path] | None = None
-    ) -> set[Path]:
+    def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
         logger.info("Rendering image transforms...")
 
         files_to_keep = set()
@@ -38,8 +36,7 @@ class ImageTransformRenderer(Renderer):
 
                 has_changed = changed_files is None or abs_file_path in changed_files
                 if has_changed and (
-                    (not abs_output_path.exists())
-                    or abs_file_path.stat().st_mtime > abs_output_path.stat().st_mtime
+                    (not abs_output_path.exists()) or abs_file_path.stat().st_mtime > abs_output_path.stat().st_mtime
                 ):
                     if is_pdf(abs_file_path):
                         if abs_output_path.suffix.lower() == ".pdf":
