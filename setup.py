@@ -23,6 +23,7 @@ setup(
         "markdown.extensions": [
             "better_footnotes = ursus.context_processors.markdown:FootnotesExtension",
             "jinja = ursus.context_processors.markdown:JinjaExtension",
+            "base_url = ursus.context_processors.markdown:BaseUrlExtension",
             "responsive_images = ursus.context_processors.markdown:ResponsiveImagesExtension",
             "superscript = ursus.context_processors.markdown:SuperscriptExtension",
             "tasklist = ursus.context_processors.markdown:TaskListExtension",

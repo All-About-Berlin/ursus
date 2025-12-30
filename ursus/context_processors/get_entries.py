@@ -46,15 +46,11 @@ def get_entries(
             else namespaces
         )
         entries = {
-            uri: value
-            for uri, value in entries.items()
-            if uri.startswith(tuple(ns + "/" for ns in namespace_list))
+            uri: value for uri, value in entries.items() if uri.startswith(tuple(ns + "/" for ns in namespace_list))
         }
 
     if filter_by:
-        entries = {
-            uri: value for uri, value in entries.items() if filter_by(uri, value)
-        }
+        entries = {uri: value for uri, value in entries.items() if filter_by(uri, value)}
 
     entry_list = list(entries.values())
 
@@ -76,9 +72,7 @@ class GetEntriesProcessor(ContextProcessor):
     sorts entries.
     """
 
-    def process(
-        self, context: Context, changed_files: set[Path] | None = None
-    ) -> Context:
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         if "get_entries" not in context:
             context["get_entries"] = partial(get_entries, context["entries"])
         return context

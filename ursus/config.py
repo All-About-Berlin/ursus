@@ -53,6 +53,7 @@ def default_markdown_extensions() -> dict:
         "smarty": {},
         "superscript": {},
         "tables": {},
+        "base_url": {},
         "tasklist": {
             # The CSS class of Markdown list items with a checkbox ("- [ ] a list item")
             # Sets the class of the <li> and the <input type="checkbox">

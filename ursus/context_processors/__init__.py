@@ -12,9 +12,7 @@ class Context(UserDict[str, Any]):
 
 
 class ContextProcessor:
-    def process(
-        self, context: Context, changed_files: set[Path] | None = None
-    ) -> Context:
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         """Transforms the context and returns it. The context is used to render templates.
 
         Args:
@@ -29,9 +27,7 @@ class ContextProcessor:
 
 
 class EntryContextProcessor(ContextProcessor):
-    def process(
-        self, context: Context, changed_files: set[Path] | None = None
-    ) -> Context:
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
         for entry_uri in list(context["entries"].keys()):
             self.process_entry(context, entry_uri, changed_files)
         return context

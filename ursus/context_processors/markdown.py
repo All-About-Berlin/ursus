@@ -24,6 +24,25 @@ import re
 logger = logging.getLogger(__name__)
 
 
+class BaseUrlProcessor(Treeprocessor):
+    """
+    Adds the base URL from config.site_url to absolute links.
+
+    /blog/test-post becomes https://example.com/blog/test-post
+    """
+
+    def run(self, root):
+        for el in root.iter("a"):
+            href = el.get("href", "")
+            if href.startswith("/"):
+                el.set("href", config.site_url + href)
+
+
+class BaseUrlExtension(Extension):
+    def extendMarkdown(self, md):
+        md.treeprocessors.register(BaseUrlProcessor(md), "baseurl", 15)
+
+
 class TaskListProcessor(Treeprocessor):
     box_checked = "[x] "
     box_unchecked = "[ ] "
@@ -41,9 +60,7 @@ class TaskListProcessor(Treeprocessor):
                 if self.md.getConfig("checkbox_class"):
                     checkbox.attrib["class"] = self.md.getConfig("checkbox_class")
 
-                checkbox.tail = text.removeprefix(
-                    self.box_checked if is_checked else self.box_unchecked
-                )
+                checkbox.tail = text.removeprefix(self.box_checked if is_checked else self.box_unchecked)
                 li.text = ""
                 li.insert(0, checkbox)
                 if self.md.getConfig("list_item_class"):
@@ -70,7 +87,7 @@ class TaskListExtension(Extension):
         super().__init__(**kwargs)
 
     def extendMarkdown(self, md):
-        md.treeprocessors.register(TaskListProcessor(self), "gfm-tasklist", 100)
+        md.treeprocessors.register(TaskListProcessor(md), "gfm-tasklist", 100)
 
 
 class JinjaPreprocessor(Preprocessor):
@@ -155,9 +172,7 @@ class ResponsiveImageProcessor(Treeprocessor):
         # Only apply to local images
         img_src = img.attrib.get("src", "")
         if img_src.startswith("/") or img_src.startswith(config.site_url + "/"):
-            image_uri = EntryURI(
-                img_src.removeprefix(config.site_url).removeprefix("/")
-            )
+            image_uri = EntryURI(img_src.removeprefix(config.site_url).removeprefix("/"))
 
             parent = parents[0]
             grandparent = parents[1]
@@ -175,11 +190,7 @@ class ResponsiveImageProcessor(Treeprocessor):
             # A valid <figure> parent with an empty <a> wrapping this <img>
             # In this case, wrap the <figure> around the <a>
             # li > a > img becomes li > figure > a > picture
-            if (
-                parent.tag == "a"
-                and has_single_child(parent)
-                and grandparent.tag in self.allowed_parents
-            ):
+            if parent.tag == "a" and has_single_child(parent) and grandparent.tag in self.allowed_parents:
                 a_attrs = parent.attrib
                 element_to_swap = parent
                 containing_element = grandparent
@@ -259,9 +270,7 @@ class SuperscriptExtension(Extension):
     def extendMarkdown(self, md):
         """Insert 'superscript' pattern before 'not_strong' pattern (priority 70)."""
 
-        md.inlinePatterns.register(
-            SimpleTagPattern(self.SUPERSCRIPT_RE, "sup"), "superscript", 60
-        )
+        md.inlinePatterns.register(SimpleTagPattern(self.SUPERSCRIPT_RE, "sup"), "superscript", 60)
 
 
 class FootnotesExtension(FootnoteExtension):
@@ -349,11 +358,7 @@ class MarkdownProcessor(EntryContextProcessor):
         changed_files: set[Path] | None = None,
     ) -> None:
         if entry_uri.lower().endswith(".md"):
-            if (
-                config.fast_rebuilds
-                and changed_files
-                and (config.content_path / entry_uri) not in changed_files
-            ):
+            if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
                 return
 
             self.markdown.context = context
