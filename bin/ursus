@@ -40,7 +40,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "-w", "--watch", action="store_true", help="Regenerate files when <content_path> and <templates_path> change."
     )
-    parser.add_argument("files", type=Path, nargs="*", help="Only lint the given file(s)")
+    parser.add_argument(
+        "files",
+        type=Path,
+        nargs="*",
+        help="Only lint the given file(s). The paths must be relative to the <content_path>. For example, 'blog/first-post.md'.",
+    )
     args = parser.parse_args()
 
     if args.config:
@@ -76,4 +81,8 @@ if __name__ == "__main__":
             logging.exception("Could not generate site")
             sys.exit(1)
     elif args.action == "lint":
+        for file_to_lint in args.files:
+            absolute_path = config.content_path / file_to_lint
+            if not absolute_path.exists():
+                raise ValueError(f"{file_to_lint} does not exist in content path ({config.content_path})")
         lint(files_to_lint=args.files or None, min_level=getattr(logging, args.level))
