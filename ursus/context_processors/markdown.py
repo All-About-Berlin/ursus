@@ -47,6 +47,9 @@ class TaskListProcessor(Treeprocessor):
     box_checked = "[x] "
     box_unchecked = "[ ] "
 
+    def __init__(self, extension: "TaskListExtension"):
+        self.extension = extension
+
     def run(self, root: Element) -> Element:
         for li in root.iter(tag="li"):
             text = li.text or ""
@@ -57,15 +60,15 @@ class TaskListProcessor(Treeprocessor):
                 checkbox = Element("input", {"type": "checkbox"})
                 if is_checked:
                     checkbox.attrib["checked"] = "checked"
-                if self.md.getConfig("checkbox_class"):
-                    checkbox.attrib["class"] = self.md.getConfig("checkbox_class")
+                if self.extension.getConfig("checkbox_class"):
+                    checkbox.attrib["class"] = self.extension.getConfig("checkbox_class")
 
                 checkbox.tail = text.removeprefix(self.box_checked if is_checked else self.box_unchecked)
                 li.text = ""
                 li.insert(0, checkbox)
-                if self.md.getConfig("list_item_class"):
+                if self.extension.getConfig("list_item_class"):
                     css_classes = set(li.attrib.get("class", "").split())
-                    css_classes.update(self.md.getConfig("list_item_class").split())
+                    css_classes.update(self.extension.getConfig("list_item_class").split())
                     li.attrib["class"] = " ".join(css_classes)
 
         return root
@@ -87,7 +90,7 @@ class TaskListExtension(Extension):
         super().__init__(**kwargs)
 
     def extendMarkdown(self, md):
-        md.treeprocessors.register(TaskListProcessor(md), "gfm-tasklist", 100)
+        md.treeprocessors.register(TaskListProcessor(self), "gfm-tasklist", 100)
 
 
 class JinjaPreprocessor(Preprocessor):
