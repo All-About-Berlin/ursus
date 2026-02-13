@@ -1,7 +1,7 @@
-from . import Renderer
 from pathlib import Path
 from ursus.config import config
 from ursus.context_processors import Context
+from ursus.renderers import Renderer
 from ursus.utils import get_files_in_path
 import logging
 import sass
@@ -15,13 +15,9 @@ class SassRenderer(Renderer):
     Renders Sass .scss files as .css
     """
 
-    def render(
-        self, context: Context, changed_files: set[Path] | None = None
-    ) -> set[Path]:
+    def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
         files_to_keep = set()
-        for scss_path in get_files_in_path(
-            config.templates_path, changed_files, suffix=".scss"
-        ):
+        for scss_path in get_files_in_path(config.templates_path, changed_files, suffix=".scss"):
             output_path = scss_path.with_suffix(".css")
 
             logger.info("Rendering %s", str(output_path))

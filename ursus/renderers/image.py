@@ -1,8 +1,8 @@
-from . import Renderer
 from pathlib import Path
 from PIL import Image
 from ursus.config import config
 from ursus.context_processors import Context
+from ursus.renderers import Renderer
 from ursus.utils import (
     make_image_thumbnail,
     make_pdf_thumbnail,
