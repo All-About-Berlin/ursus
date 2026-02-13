@@ -30,6 +30,16 @@ def default_jinja_filters() -> dict[str, Any]:
     return {}
 
 
+def default_jinja_extensions() -> list[Any]:
+    return [
+        "jinja2.ext.do",
+        "ursus.renderers.jinja.JsLoaderExtension",
+        "ursus.renderers.jinja.CssLoaderExtension",
+        "ursus.renderers.jinja.ScssLoaderExtension",
+        "ursus.renderers.jinja.ResponsiveImageExtension",
+    ]
+
+
 def default_linters() -> list[str]:
     return [
         "ursus.linters.markdown.MarkdownLinkTextsLinter",
@@ -150,6 +160,8 @@ class UrsusConfig:
 
     # Filter functions available in Jinja templates. The key is the filter name, and the value is a function
     jinja_filters: dict[str, Callable] = field(default_factory=default_jinja_filters)
+
+    jinja_extensions: list[str] = field(default_factory=default_jinja_extensions)
 
     logging = {
         "datefmt": "%Y-%m-%d %H:%M:%S",

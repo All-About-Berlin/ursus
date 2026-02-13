@@ -1,4 +1,3 @@
-from . import Renderer
 from jinja2 import (
     Environment,
     FileSystemLoader,
@@ -7,18 +6,19 @@ from jinja2 import (
     select_autoescape,
     StrictUndefined,
 )
-from jinja2.ext import Extension, do
+from jinja2.ext import Extension
 from jinja2.meta import find_referenced_templates
 from jinja2_simple_tags import StandaloneTag, ContainerTag
 from markdown.serializers import to_html_string
 from markupsafe import Markup
 from ordered_set import OrderedSet
 from pathlib import Path
-from rjsmin import jsmin
 from rcssmin import cssmin
+from rjsmin import jsmin
 from typing import Generator
 from ursus.config import config
 from ursus.context_processors import Context, EntryURI
+from ursus.renderers import Renderer
 from ursus.utils import get_files_in_path, make_picture_element, is_ignored_file
 import logging
 import sass
@@ -150,13 +150,7 @@ class JinjaRenderer(Renderer):
 
         self.template_environment = Environment(
             loader=FileSystemLoader(config.templates_path),
-            extensions=[
-                do,
-                JsLoaderExtension,
-                CssLoaderExtension,
-                ScssLoaderExtension,
-                ResponsiveImageExtension,
-            ],
+            extensions=config.jinja_extensions,
             autoescape=select_autoescape(),
             undefined=StrictUndefined,
         )
