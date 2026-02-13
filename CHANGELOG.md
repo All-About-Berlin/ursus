@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.4] - 2026-02-13
+
+### Added
+
+- `config.jinja_extensions` allows user-defined Jinja extensions
+
+### Changed
+
+- Verify that paths passed to `ursus lint` are valid and relative to `config.content_path`.
+- Append the `config.site_url` to Markdown URLs and images when rendering them. In other words, convert relative URLs in Markdown files to absolute URLs in HTML files.
+
 ## [1.4.3] - 2025-12-13
 
 ### Changed
