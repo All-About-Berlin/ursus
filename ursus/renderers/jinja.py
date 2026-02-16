@@ -263,7 +263,7 @@ class JinjaRenderer(Renderer):
 
             if file.is_relative_to(config.content_path) and not is_ignored_file(file, config.content_path):
                 changed_entry_uris.add(EntryURI(str(file.relative_to(config.content_path))))
-            elif file.is_relative_to(config.templates_path):
+            elif file.is_relative_to(config.templates_path) and file.suffix == ".jinja":
                 changed_templates.add(file.relative_to(config.templates_path))
             else:
                 continue
@@ -287,7 +287,9 @@ class JinjaRenderer(Renderer):
 
         # Process edited templates
         for template_path in changed_templates:
-            if is_ignored_file(config.templates_path / template_path, config.templates_path):
+            if template_path.suffix != ".jinja" or is_ignored_file(
+                config.templates_path / template_path, config.templates_path
+            ):
                 continue
 
             can_render_an_entry = False

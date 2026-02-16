@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.5] - 2026-02-17
+
+### Fixed
+
+- `JinjaRenderer` only renders changed template files if they have the `.jinja` extension.
+
 ## [1.4.4] - 2026-02-13
 
 ### Added
