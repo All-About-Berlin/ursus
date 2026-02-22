@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.4.6] - 2026-02-22
+
+### Added
+
+- `JinjaRenderer`'s `{% js %}` minifier is easier to override
+
+### Fixed
+
+- `JinjaRenderer` re-renders `.jinja` files that include non-Jinja files
+
 ## [1.4.5] - 2026-02-17
 
 ### Fixed

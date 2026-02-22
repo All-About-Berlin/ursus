@@ -1,5 +1,3 @@
-from importlib.resources import files
-from subprocess import run, STDOUT
 from ursus.utils import import_class, get_files_in_path, log_color, log_color_end
 from ursus.config import config
 from watchdog.observers import Observer

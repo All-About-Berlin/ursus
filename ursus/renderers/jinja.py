@@ -55,10 +55,13 @@ class JsLoaderExtension(Extension):
             body = parser.parse_statements(["name:endjs"], drop_needle=True)
             return nodes.CallBlock(self.call_method("_queue_js"), [], [], body).set_lineno(token.lineno)
 
+    def minify_js(self, js_code: str) -> str:
+        return str(jsmin(js_code))
+
     def _render_js(self, caller):
         output = "\n".join(self.environment.js_fragments)
         if config.minify_js:
-            output = jsmin(output)
+            output = self.minify_js(output)
         self.environment.js_fragments.clear()
         return Markup(output)
 
