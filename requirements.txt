@@ -8,7 +8,7 @@ Markdown==3.9
 MarkupSafe==3.0.3
 ordered-set==4.1.0
 platformdirs==4.5.0
-PyMuPDF==1.26.4
+PyMuPDF==1.27.2.2
 Pillow==11.3.0
 watchdog==4.0.1
 requests==2.32.4
