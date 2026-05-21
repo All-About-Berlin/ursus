@@ -1,5 +1,5 @@
 from . import Context, EntryContextProcessor, EntryURI
-from datetime import datetime
+from datetime import date as date_type, datetime, time as time_type
 from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.extensions.footnotes import (
@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from ursus.config import config
 from ursus.utils import make_figure_element, make_picture_element
+import yaml
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 import logging
@@ -333,24 +334,25 @@ class MarkdownProcessor(EntryContextProcessor):
             extension_configs=config.markdown_extensions,
         )
 
-    def parse_metadata(self, raw_metadata: dict[str, Any]) -> dict[str, Any]:
+    def _extract_frontmatter(self, text: str) -> tuple[dict, str]:
+        if not text.startswith("---\n"):
+            return {}, text
+        end = text.find("\n---\n", 4)
+        if end != -1:
+            return yaml.safe_load(text[4:end]) or {}, text[end + 5 :]
+        if text.endswith("\n---"):
+            return yaml.safe_load(text[4:-4]) or {}, ""
+        return {}, text
+
+    def parse_frontmatter(self, raw_frontmatter: dict[str, Any]) -> dict[str, Any]:
         metadata = {}
-        for key, value in raw_metadata.items():
-            if len(value) == 0:
-                continue
-            if len(value) == 1:
-                value = value[0]
-
+        for key, value in raw_frontmatter.items():
+            key = key.lower()
             if key.startswith("date_"):
-                value = datetime.strptime(value, "%Y-%m-%d").astimezone()
-
-            if key.startswith("related_"):
-                if isinstance(value, list):
-                    values = list(filter(bool, [v.strip() for v in value]))
-                else:
-                    values = [v.strip() for v in value.split(",")]
-                value = values if len(values) > 1 else values[0]
-
+                if isinstance(value, date_type) and not isinstance(value, datetime):
+                    value = datetime.combine(value, time_type.min).astimezone()
+                elif isinstance(value, str):
+                    value = datetime.strptime(value, "%Y-%m-%d").astimezone()
             metadata[key] = value
         return metadata
 
@@ -364,13 +366,15 @@ class MarkdownProcessor(EntryContextProcessor):
             if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
                 return
 
-            self.markdown.context = context
             markdown_text = (config.content_path / entry_uri).read_text()
-            html = self.markdown.reset().convert(markdown_text)
+            frontmatter, body = self._extract_frontmatter(markdown_text)
+
+            self.markdown.context = context
+            html = self.markdown.reset().convert(body)
 
             context["entries"][entry_uri].update(
                 {
-                    **self.parse_metadata(self.markdown.Meta),
+                    **self.parse_frontmatter(frontmatter),
                     "body": html,
                     "table_of_contents": self.markdown.toc_tokens,
                     "url": f"{config.site_url}/{str(Path(entry_uri).with_suffix(config.html_url_extension))}",

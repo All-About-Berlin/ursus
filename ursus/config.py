@@ -1,4 +1,3 @@
-from dataclasses import dataclass, field
 from markdown.extensions.wikilinks import build_url
 from markdown.extensions.toc import slugify
 from pathlib import Path
@@ -58,7 +57,6 @@ def default_markdown_extensions() -> dict:
         },
         "fenced_code": {},
         "jinja": {},
-        "meta": {},
         "responsive_images": {},
         "smarty": {},
         "superscript": {},

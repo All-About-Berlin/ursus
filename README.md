@@ -237,10 +237,24 @@ The `MarkdownProcessor` creates context for all `.md` files in `content_path`. T
 }
 ```
 
+Front matter uses standard YAML syntax:
+
+```markdown
+---
+title: Hello world!
+related_guides:
+    - guides/other-post.md
+    - guides/another-post.md
+related_expert: experts/john-doe.md
+date_created: 2022-10-10
+---
+```
+
 It makes a few changes to the default markdown output:
 
 - Put the front matter in the context
-    - `related_*` keys are replaced by a list of related entry dicts
+    - `related_*` keys with a list of entry URIs are replaced with a list of entries.
+    - `related_*` keys with a single entry URI are replaced with a single entry
     - `date_` keys are converted to `datetime` objects
     - Other attributes are added to the entry object.
 - Use responsive images based on `config.image_transforms` settings.

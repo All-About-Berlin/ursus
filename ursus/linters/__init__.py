@@ -8,6 +8,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
+# Line number, column range
 LinterResult = Generator[tuple[tuple[int, int, int] | None, str, int], None, None]
 LineLinterResult = Generator[tuple[tuple[int, int] | None, str, int], None, None]
 MatchResult = Generator[tuple[str, int], None, None]

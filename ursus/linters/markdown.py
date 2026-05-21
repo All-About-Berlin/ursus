@@ -182,7 +182,7 @@ class HeadMatterLinter(Linter):
         if file_path.suffix.lower() != ".md":
             return
 
-        meta: dict[str, List[Any]] = {}
+        meta: dict[str, Any] = {}
         field_positions: dict[str, Tuple[int, int, int]] = {}
 
         with (config.content_path / file_path).open() as file:
@@ -193,7 +193,7 @@ class HeadMatterLinter(Linter):
     def lint_meta(
         self,
         file_path: Path,
-        meta: dict[str, List[Any]],
+        meta: dict[str, Any],
         field_positions: dict[str, Tuple[int, int, int]],
     ) -> LinterResult:
         raise NotImplementedError
@@ -203,12 +203,13 @@ class RelatedEntriesLinter(HeadMatterLinter):
     def lint_meta(
         self,
         file_path: Path,
-        meta: dict[str, List[Any]],
+        meta: dict[str, Any],
         field_positions: dict[str, Tuple[int, int, int]],
     ) -> LinterResult:
         for key in meta.keys():
             if key.startswith("related_"):
-                for pos, entry_uri in enumerate(meta[key]):
+                values = meta[key] if isinstance(meta[key], list) else [meta[key]]
+                for pos, entry_uri in enumerate(values):
                     if not (config.content_path / entry_uri).exists():
                         line_no, col, end_col = field_positions[key]
                         line_no += pos

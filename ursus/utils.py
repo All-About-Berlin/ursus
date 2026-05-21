@@ -1,5 +1,4 @@
 from importlib import import_module
-from markdown.extensions.meta import BEGIN_RE, META_RE, META_MORE_RE, END_RE
 from pathlib import Path
 from PIL import Image, ImageCms
 from PIL.Image import Image as ImageType
@@ -13,8 +12,10 @@ import imagesize
 import io
 import logging
 import os
+import re
 import shutil
 import sys
+import yaml
 
 
 def log_color(level: int = logging.INFO) -> str:
@@ -406,47 +407,40 @@ def make_figure_element(
 
 def parse_markdown_head_matter(
     lines: list[str],
-) -> Tuple[dict[str, List[Any]], dict[str, Tuple[int, int, int]]]:
+) -> Tuple[dict[str, Any], dict[str, Tuple[int, int, int]]]:
     """
-    Turns markdown head matter into a dictionary. Returns the dictionary, and the position of each dictionary key in
-    the file (to allow linters to highlight invalid head matter keys)
+    Parses YAML frontmatter from markdown lines. Returns the parsed data and the
+    line position of each key (to allow linters to report errors at the right location).
     """
-    meta: dict[str, List[Any]] = {}
-    field_positions: dict[str, Tuple[int, int, int]] = {}
-
-    if lines and BEGIN_RE.match(lines[0]):
-        lines.pop(0)
-
-    # The key is a string. The value is always a list, although it usually has only one item
-    # This mirrors the behaviour of Python-Markdown's meta extension, which Ursus relies on.
-    for line_no, line in enumerate(lines):
-        m1 = META_RE.match(line)
-        if line.strip() == "" or END_RE.match(line):
-            break  # blank line or end of YAML header - done
-        if m1:
-            key = m1.group("key").lower().strip()
-            value = m1.group("value").strip()
-            try:
-                meta[key].append(value)
-            except KeyError:
-                meta[key] = [value]
-            field_positions[key] = (line_no + 1, 0, len(line) - 1)
+    text = "".join(lines)
+    if not text.startswith("---\n"):
+        return {}, {}
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        if text.endswith("\n---") or text.endswith("\n---\n"):
+            end = len(text) - (4 if text.endswith("\n---") else 5)
         else:
-            m2 = META_MORE_RE.match(line)
-            if m2 and key:
-                # Add another line to existing key
-                meta[key].append(m2.group("value").strip())
-            else:
-                lines.insert(0, line)
-                break
-    return meta, field_positions
+            return {}, {}
+
+    data: dict[str, Any] = {k.lower(): v for k, v in (yaml.safe_load(text[4:end]) or {}).items()}
+
+    field_positions: dict[str, Tuple[int, int, int]] = {}
+    for line_no, line in enumerate(lines[1:], start=1):  # skip opening ---
+        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*):", line)
+        if m:
+            key = m.group(1).lower()
+            field_positions[key] = (line_no, 0, len(line) - 1)
+
+    return data, field_positions
 
 
-def format_markdown_head_matter(metadata: dict[str, List[int]]) -> str:
-    lines = []
-
-    for key, value_list in metadata.items():
-        lines.append(f"{key.lower()}: {value_list[0]}")
-        lines.extend([f"    {value}" for value in value_list[1:]])
-
-    return "\n".join(["---", *lines, "---"])
+def format_markdown_head_matter(metadata: dict[str, Any]) -> str:
+    lines = ["---"]
+    for key, value in metadata.items():
+        if isinstance(value, list):
+            lines.append(f"{key}:")
+            lines.extend([f"  - {item}" for item in value])
+        else:
+            lines.append(f"{key}: {value}")
+    lines.append("---")
+    return "\n".join(lines)
