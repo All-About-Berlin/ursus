@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0] - 2026-05-21
+
+### Changed
+
+- Markdown frontmatter now supports full YAML.
+
+### Fixed
+
+- Fixed pyright errors when adding custom attributes to `UrsusConfig`.
+
 ## [1.4.6] - 2026-02-22
 
 ### Added
