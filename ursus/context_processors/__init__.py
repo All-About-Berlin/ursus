@@ -28,14 +28,12 @@ class ContextProcessor:
 
 class EntryContextProcessor(ContextProcessor):
     def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
+        from ursus.config import config
         for entry_uri in list(context["entries"].keys()):
-            self.process_entry(context, entry_uri, changed_files)
+            if config.fast_rebuilds and changed_files is not None and (config.content_path / entry_uri) not in changed_files:
+                continue
+            self.process_entry(context, entry_uri)
         return context
 
-    def process_entry(
-        self,
-        context: Context,
-        entry_uri: EntryURI,
-        changed_files: set[Path] | None = None,
-    ) -> None:
+    def process_entry(self, context: Context, entry_uri: EntryURI) -> None:
         raise NotImplementedError

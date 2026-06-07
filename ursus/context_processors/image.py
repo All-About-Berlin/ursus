@@ -11,19 +11,7 @@ from ursus.utils import (
 
 
 class ImageProcessor(EntryContextProcessor):
-    def process_entry(
-        self,
-        context: Context,
-        entry_uri: EntryURI,
-        changed_files: set[Path] | None = None,
-    ) -> None:
-        if (
-            config.fast_rebuilds
-            and changed_files
-            and (config.content_path / entry_uri) not in changed_files
-        ):
-            return
-
+    def process_entry(self, context: Context, entry_uri: EntryURI) -> None:
         abs_path = config.content_path / entry_uri
         if is_raster_image(abs_path):
             width, height = get_image_size(abs_path)

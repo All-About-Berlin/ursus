@@ -356,16 +356,8 @@ class MarkdownProcessor(EntryContextProcessor):
             metadata[key] = value
         return metadata
 
-    def process_entry(
-        self,
-        context: Context,
-        entry_uri: EntryURI,
-        changed_files: set[Path] | None = None,
-    ) -> None:
+    def process_entry(self, context: Context, entry_uri: EntryURI) -> None:
         if entry_uri.lower().endswith(".md"):
-            if config.fast_rebuilds and changed_files and (config.content_path / entry_uri) not in changed_files:
-                return
-
             markdown_text = (config.content_path / entry_uri).read_text()
             frontmatter, body = self._extract_frontmatter(markdown_text)
 
