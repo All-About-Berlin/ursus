@@ -57,4 +57,3 @@ class GitDateProcessor(ContextProcessor):
                 if not config.fast_rebuilds:
                     logging.warning(f"Entry {entry_uri} has no commit date")
                 entry["date_updated"] = datetime.now().astimezone()
-        return context

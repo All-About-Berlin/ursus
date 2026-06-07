@@ -46,7 +46,7 @@ class StaticSiteGenerator(Generator):
             )
 
         for context_processor in self.context_processors:
-            self.context = context_processor.process(self.context, changed_files)
+            context_processor.process(self.context, changed_files)
 
         """
         Render entries and other templates

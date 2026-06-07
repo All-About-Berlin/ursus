@@ -72,7 +72,6 @@ class GetEntriesProcessor(ContextProcessor):
     sorts entries.
     """
 
-    def process(self, context: Context, changed_files: set[Path] | None = None) -> Context:
+    def process(self, context: Context, changed_files: set[Path] | None = None) -> None:
         if "get_entries" not in context:
             context["get_entries"] = partial(get_entries, context["entries"])
-        return context

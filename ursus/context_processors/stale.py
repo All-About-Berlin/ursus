@@ -19,4 +19,3 @@ class StaleEntriesProcessor(ContextProcessor):
                 except KeyError:
                     pass
 
-        return context

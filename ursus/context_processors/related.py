@@ -34,4 +34,3 @@ class RelatedEntriesProcessor(ContextProcessor):
             if not isinstance(context["entries"][uri], RelatedEntryReferenceDict):
                 context["entries"][uri] = RelatedEntryReferenceDict(entry, context["entries"])
 
-        return context
