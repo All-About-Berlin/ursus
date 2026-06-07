@@ -34,10 +34,7 @@ class StaticSiteGenerator(Generator):
         """
         Build a rendering context from the content
         """
-        if config.fast_rebuilds and changed_files is not None:
-            logger.info("Updating context...")
-        else:
-            logger.info("Building context...")
+        logger.info("Building context...")
 
         for file_path in get_files_in_path(config.content_path, changed_files):
             entry_uri = str(file_path)
@@ -60,17 +57,16 @@ class StaticSiteGenerator(Generator):
             files_to_keep.update(renderer.render(self.context, changed_files))
 
         """
-        Delete output files older than this build. This is how stale output files are deleted.
+        Delete output files that are not explicitly part of this build, because they are stale.
         """
-        if not config.fast_rebuilds:
-            for file in config.output_path.rglob("*"):
-                if (
-                    file.is_file()
-                    and file.relative_to(config.output_path) not in files_to_keep
-                ):
-                    logger.warning(
-                        f"Deleting stale output file {str(file.relative_to(config.output_path))}"
-                    )
-                    file.unlink()
+        for file in config.output_path.rglob("*"):
+            if (
+                file.is_file()
+                and file.relative_to(config.output_path) not in files_to_keep
+            ):
+                logger.warning(
+                    f"Deleting stale output file {str(file.relative_to(config.output_path))}"
+                )
+                file.unlink()
 
         logger.info("Done.")

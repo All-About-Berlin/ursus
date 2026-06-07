@@ -40,6 +40,8 @@ class LunrIndexRenderer(Renderer):
 
     def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
         if config.fast_rebuilds:
+            if (config.output_path / config.lunr_index_output_path).exists():
+                return {config.lunr_index_output_path}
             return set()
 
         index_output_path = config.output_path / config.lunr_index_output_path
