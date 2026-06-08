@@ -241,13 +241,11 @@ class JinjaRenderer(Renderer):
         Returns:
             Path: Path of the generated file, relative to the output_path.
         """
-        specific_context = Context(
-            {
-                **context,
-                "entry": context["entries"][entry_uri],
-                "entry_uri": entry_uri,
-            }
-        )
+        specific_context = {
+            **context,
+            "entry": context["entries"][entry_uri],
+            "entry_uri": entry_uri,
+        }
         output_path = self.get_entry_output_path(template_path, entry_uri)
         yield from self.render_template(template_path, specific_context, output_path)
 

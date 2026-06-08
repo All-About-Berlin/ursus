@@ -1,4 +1,3 @@
-from collections import UserDict
 from pathlib import Path
 from typing import Any, NewType
 
@@ -6,9 +5,7 @@ from typing import Any, NewType
 EntryURI = NewType("EntryURI", str)
 Entry = NewType("Entry", dict[str, Any])
 
-
-class Context(UserDict[str, Any]):
-    pass
+type Context = dict[str, Any]
 
 
 class ContextProcessor:
