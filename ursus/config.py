@@ -150,8 +150,6 @@ class UrsusConfig:
         self.lunr_indexes: dict = {}
         self.lunr_index_output_path: Path = Path("search-index.json")  # Relative to output_path
 
-        self.generator: str = "ursus.generators.static.StaticSiteGenerator"
-
         # The processors that update the context with extra data
         self.context_processors: list[str] = default_context_processors()
         self.context_globals: dict = {}

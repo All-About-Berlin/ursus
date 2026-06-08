@@ -1,5 +1,6 @@
-from ursus.utils import import_class, get_files_in_path, log_color, log_color_end
+from ursus.utils import get_files_in_path, log_color, log_color_end
 from ursus.config import config
+from ursus.generators.static import StaticSiteGenerator
 from watchdog.observers import Observer
 import logging
 import sys
@@ -12,7 +13,7 @@ def build(watch_for_changes: bool = False) -> None:
     Args:
         watch_for_changes (bool, optional): Keep running, and rebuild when content or templates change
     """
-    generator = import_class(config.generator)()
+    generator = StaticSiteGenerator()
 
     if watch_for_changes:
         observer = Observer()
