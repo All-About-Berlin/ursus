@@ -80,12 +80,7 @@ class StaticSiteGenerator:
 
         for file_path in get_files_in_path(config.content_path, changed_files):
             entry_uri = str(file_path)
-            self.context["entries"].setdefault(
-                entry_uri,
-                {
-                    "entry_uri": entry_uri,
-                },
-            )
+            self.context["entries"][entry_uri] = {"entry_uri": entry_uri}
 
         for context_processor in self.context_processors:
             context_processor.process(self.context, changed_files)
