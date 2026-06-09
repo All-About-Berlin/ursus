@@ -458,10 +458,10 @@ my-website/
 ```
 {% queueJs %}
     alert('Hello!')
-{% endQueueJs %}
+{% endqueueJs %}
 {% queueJs %}
     alert('Hello!')
-{% endQueueJs %}
+{% endqueueJs %}
 
 <script>
     // Will only include alert('Hello!') once
