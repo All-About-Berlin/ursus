@@ -40,7 +40,7 @@ class FragmentLoaderExtension(Extension):
 
     def __init__(self, environment):
         super().__init__(environment)
-        environment.extend(**{self.fragments_attr: OrderedSet()})
+        environment.extend(**{self.fragments_attr: OrderedSet([])})
 
     def parse(self, parser):
         token = next(parser.stream)
@@ -282,7 +282,7 @@ class JinjaRenderer(Renderer):
     def render(self, context: Context, changed_files: set[Path] | None = None) -> set[Path]:
         template_paths = get_files_in_path(config.templates_path, suffix=".jinja")
 
-        render_queue: OrderedSet = OrderedSet()
+        render_queue: OrderedSet = OrderedSet([])
         files_to_keep: set[Path] = set()
 
         changed_entry_uris = set()
