@@ -1,4 +1,4 @@
-from ursus.utils import get_files_in_path, log_color, log_color_end
+from ursus.utils import get_files_in_path, import_class, log_color, log_color_end
 from ursus.config import config
 from ursus.generators.static import StaticSiteGenerator
 from watchdog.observers import Observer
