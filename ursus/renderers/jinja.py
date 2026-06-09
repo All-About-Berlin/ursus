@@ -27,64 +27,94 @@ import sass
 logger = logging.getLogger(__name__)
 
 
-class JsLoaderExtension(Extension):
+class FragmentLoaderExtension(Extension):
     """
-    Jinja extension. Adds the {% js %} and {% alljs %} tags.
+    Base class for {% tag %}/{% allTag %} queue-and-render extensions.
 
-    All javascript code between {% js %} tags is combined and queued for future
-    output. It's minified if config.minify_js is True.
+    Subclasses define `tags`, `render_tag`, and `fragments_attr`, and override
+    `should_minify()` and `minify()`.
+    """
+
+    render_tag: str
+    fragments_attr: str
+
+    def __init__(self, environment):
+        super().__init__(environment)
+        environment.extend(**{self.fragments_attr: OrderedSet()})
+
+    def parse(self, parser):
+        token = next(parser.stream)
+
+        if token.test(f"name:{self.render_tag}"):
+            call = self.call_method("_render", args=[nodes.ContextReference()])
+            return nodes.Output([nodes.MarkSafe(call)]).set_lineno(token.lineno)
+        else:
+            body = parser.parse_statements([f"name:end{token.value}"], drop_needle=True)
+            return nodes.CallBlock(self.call_method("_queue"), [], [], body).set_lineno(token.lineno)
+
+    def should_minify(self) -> bool:
+        return False
+
+    def minify(self, code: str) -> str:
+        return code
+
+    def _render(self, caller):
+        fragments = getattr(self.environment, self.fragments_attr)
+        output = "\n".join(fragments)
+        if self.should_minify():
+            output = self.minify(output)
+        fragments.clear()
+        return Markup(output)
+
+    def _queue(self, caller):
+        getattr(self.environment, self.fragments_attr).add(caller())
+        return ""
+
+
+class JsLoaderExtension(FragmentLoaderExtension):
+    """
+    Jinja extension. Adds the {% js %}, {% queueJs %}, and {% alljs %} tags.
+
+    All javascript code between {% js %} or {% queueJs %} tags is combined and
+    queued for future output. It's minified if config.minify_js is True.
 
     {% alljs %} outputs the queued javascript code. The code is included in
     order of addition. If the same code is queued multiple times, it's only
     output once.
     """
 
-    tags = {"js", "alljs"}
+    tags = {"js", "queueJs", "alljs"}
+    render_tag = "alljs"
+    fragments_attr = "js_fragments"
 
-    def __init__(self, environment):
-        super().__init__(environment)
-        environment.extend(js_fragments=OrderedSet())
+    def should_minify(self) -> bool:
+        return config.minify_js
 
-    def parse(self, parser):
-        token = next(parser.stream)
-
-        if token.test("name:alljs"):
-            call = self.call_method("_render_js", args=[nodes.ContextReference()])
-            return nodes.Output([nodes.MarkSafe(call)]).set_lineno(token.lineno)
-        else:
-            body = parser.parse_statements(["name:endjs"], drop_needle=True)
-            return nodes.CallBlock(self.call_method("_queue_js"), [], [], body).set_lineno(token.lineno)
-
-    def minify_js(self, js_code: str) -> str:
-        return str(jsmin(js_code))
-
-    def _render_js(self, caller):
-        output = "\n".join(self.environment.js_fragments)
-        if config.minify_js:
-            output = self.minify_js(output)
-        self.environment.js_fragments.clear()
-        return Markup(output)
-
-    def _queue_js(self, caller):
-        self.environment.js_fragments.add(caller())
-        return ""
+    def minify(self, code: str) -> str:
+        return str(jsmin(code))
 
 
-class CssLoaderExtension(ContainerTag):
+class CssLoaderExtension(FragmentLoaderExtension):
     """
-    Jinja extension. Adds the {% css %} tag.
+    Jinja extension. Adds the {% css %}, {% queueCss %}, and {% allCss %} tags.
 
-    All CSS code in {% css %} tags is minified if config.minify_css is True.
+    All CSS code between {% css %} or {% queueCss %} tags is combined and
+    queued for future output. It's minified if config.minify_css is True.
+
+    {% allCss %} outputs the queued CSS code. The code is included in
+    order of addition. If the same code is queued multiple times, it's only
+    output once.
     """
 
-    tags = {"css"}
-    safe_output = True
+    tags = {"css", "queueCss", "allCss"}
+    render_tag = "allCss"
+    fragments_attr = "css_fragments"
 
-    def render(self, caller):
-        output = caller()
-        if config.minify_css:
-            output = cssmin(output)
-        return Markup(output)
+    def should_minify(self) -> bool:
+        return config.minify_css
+
+    def minify(self, code: str) -> str:
+        return str(cssmin(code))
 
 
 class ScssLoaderExtension(ContainerTag):
