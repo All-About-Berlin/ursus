@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.6.0] - 2026-06-09
+
+### Added
+
+- `{% css %}` now works like `{% js %}`: code in `{% css %}` blocks is queued and output exactly once when calling `{% allCss %}`.
+- `{% queueJs %}` and `{% queueCss %}` are aliases for `{% js %}` and `{% css %}`.
+
+### Changed
+
+- `JsLoaderExtension` and `CssLoaderExtension` now share a common base class `FragmentLoaderExtension`. Subclasses that override `minify_js()` should rename the method to `minify()`.
+- `EntryContextProcessor.process()` and `process_entry()` no longer return the `context` object.
+- `ArchiveRenderer` now inherits from `StaticFileRenderer`.
+
+### Fixed
+
+- Fixed removed entry keys staying in the context when rebuilding with `--fast`.
+
 ## [1.5.0] - 2026-05-21
 
 ### Changed

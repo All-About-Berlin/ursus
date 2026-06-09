@@ -451,6 +451,24 @@ my-website/
       └─ hello-world.html
 ```
 
+#### Utilities
+
+`{% queueJs %}` and `{% queueCss %}` allow queueing a block of JS or CSS. Calling it multiple times on identical code only queues it once. Render it with `{% allJs %}` and `{% allCss %}`.
+
+```
+{% queueJs %}
+    alert('Hello!')
+{% endQueueJs %}
+{% queueJs %}
+    alert('Hello!')
+{% endQueueJs %}
+
+<script>
+    // Will only include alert('Hello!') once
+    {% allJs %}
+</script>
+```
+
 ### StaticAssetRenderer
 
 Copies all files under `./templates` except `.jinja` files to the same subdirectory in `./output`. Files starting with `.` are ignored. Files and directories starting with `_` are ignored.
