@@ -32,6 +32,7 @@ if __name__ == "__main__":
         "-s",
         "--serve",
         dest="port",
+        type=int,
         nargs="?",
         const=80,
         default=None,
