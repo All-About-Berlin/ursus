@@ -92,7 +92,6 @@ def default_renderers() -> list[str]:
         "ursus.renderers.static.ArchiveRenderer",
         "ursus.renderers.image.ImageTransformRenderer",
         "ursus.renderers.jinja.JinjaRenderer",
-        "ursus.renderers.lunr.LunrIndexRenderer",
         "ursus.renderers.sass.SassRenderer",
     ]
 
@@ -135,23 +134,6 @@ class UrsusConfig:
 
         # Transforms applied to your content images
         self.image_transforms: dict = default_image_transforms()
-
-        """
-        Parametres to generate a search index for lunr.js
-        Example:
-        {
-            'indexed_fields': ('body', ),  # Index these fields only
-            'indexes': [
-                {
-                    'uri_pattern': '*.md',  # Index entries with URIs that match this glob pattern
-                    'returned_fields': ('body', 'url', ),  # Return these fields only in the document list
-                    'boost': 1,  # Documents matching this pattern should be boosted n times over others
-                },
-            ]
-        }
-        """
-        self.lunr_indexes: dict = {}
-        self.lunr_index_output_path: Path = Path("search-index.json")  # Relative to output_path
 
         # The processors that update the context with extra data
         self.context_processors: list[str] = default_context_processors()

@@ -5,7 +5,7 @@
 
 Ursus is the static site generator used by [All About Berlin](https://allaboutberlin.com) and my [personal website](https://nicolasbouliane.com). It turns Markdown files and [Jinja](https://jinja.palletsprojects.com/) templates into a static website.
 
-It also renders images in different sizes, renders SCSS, minifies JS and generates Lunr.js search indexes.
+It also renders images in different sizes, renders SCSS and minifies JS.
 
 This project is in active use and development.
 

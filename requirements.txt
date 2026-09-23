@@ -3,7 +3,6 @@ imagesize==1.4.1
 Jinja2==3.1.6
 jinja2-simple-tags==0.6.1
 libsass==0.23.0
-lunr==0.8.0
 Markdown==3.5.2
 PyYAML
 MarkupSafe==2.1.5
