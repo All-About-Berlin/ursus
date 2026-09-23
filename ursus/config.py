@@ -127,6 +127,9 @@ class UrsusConfig:
         # If False, everything is rebuilt from scratch. It's recommended to disable fast_rebuilds in production.
         self.fast_rebuilds: bool = False
 
+        # If set, GitDateProcessor ignores commits whose message contains this keyword (fixed-string match).
+        self.git_date_ignore_keyword: str | None = None
+
         # Sets the <img sizes=""> attribute for your content images
         self.image_default_sizes: str | None = None
 

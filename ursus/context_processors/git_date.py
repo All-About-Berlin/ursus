@@ -27,7 +27,21 @@ class GitDateProcessor(ContextProcessor):
             self.repo_root = Path(self.repo.working_dir)
 
             commit_date = None
-            git_log = self.repo.git.log('--format=">>>%cd"', "--date=unix", "--name-only", "--encoding=UTF-8")
+            relative_content_path = str(Path(config.content_path).relative_to(self.repo_root))
+            log_args = [
+                '--format=">>>%cd"',
+                "--date=unix",
+                "--name-only",
+                "--encoding=UTF-8",
+            ]
+            if config.git_date_ignore_keyword:
+                log_args += [
+                    f"--grep={config.git_date_ignore_keyword}",
+                    "--invert-grep",
+                    "--fixed-strings",
+                ]
+            log_args += ["--", relative_content_path]
+            git_log = self.repo.git.log(*log_args)
             for line in git_log.split("\n"):
                 # Remove wrapping quotes, convert backslash-escaped unicode characters back to unicode
                 line = unescape_backslashes(line.strip('"'))
