@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.7.0] - 2026-09-23
+
+### Changed
+
+- Improved `GitDateProcessor` performance
+- Add `config.git_date_ignore_keyword`. It makes `GitDateProcessor` ignore commits containing that keywords. Useful for changes that touch hundreds of entries without counting as a content update.
+
+### Removed
+
+- Removed `LunrIndexRenderer`
+
+### Fixed
+
+- Fixed `--port` argument type
+
 ## [1.6.0] - 2026-06-09
 
 ### Added
